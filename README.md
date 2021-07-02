@@ -6,10 +6,12 @@ This script changes the sample rate of the USB audio class driver on Android dev
 
 * Note: "USB_SampleRate_Changer.sh" requires to unlock the USB audio class driver's limitation (96kHz lock) if you specify greater than 96kHz
 
+I recommend to use Script Manager or like for easiness.
+
 ## DISCLAIMER
 
 * I am not responsible for any damage that may occur to your device, 
-   so it is your own choice to attempt this module.
+   so it is your own choice to attempt this script.
 
 ## Change logs
 
