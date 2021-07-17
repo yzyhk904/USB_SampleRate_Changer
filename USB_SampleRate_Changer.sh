@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 1.2.1
+# Version: 1.2.2
 #     by zyhk
 
 MYDIR=${0%/*}
@@ -24,12 +24,16 @@ MYDIR=${0%/*}
          offloadMode="true"
          shift
          ;;
+       "-b" | "--bypass-offload" )
+         offloadMode="bypass"
+         shift
+         ;;
        "-r" | "--reset" )
          resetMode="true"
          shift
          ;;
        "-h" | "--help" | -* )
-         echo "Usage: ${0##*/} [--reset][--offload] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
+         echo "Usage: ${0##*/} [--reset][--offload][--bypass-offload] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
          echo "  Note: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 192kHz offload lock)" 1>&2
          echo "           if you specify greater than 96kHz or 192kHz (in case of offload)" 1>&2
          exit 0
@@ -110,7 +114,7 @@ MYDIR=${0%/*}
       ;;
   esac
 
-  if [ "$offloadMode" = "false"  -a  $sRate -gt 96000 ]; then
+  if [ ! "$offloadMode" = "true"  -a  $sRate -gt 96000 ]; then
     echo "    Warning: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock)" 1>&2
   elif [ "$offloadMode" = "true"  -a  $sRate -gt 192000 ]; then
     echo "    Warning: ${0##*/} requires to unlock the USB audio hardware offload driver's limitation (upto 192kHz lock)" 1>&2
@@ -136,13 +140,20 @@ MYDIR=${0%/*}
 
 # Overlay a generated {usb} audio policy configuration file on "/vendor/etc/{usb_}audio_policy_configuration.xml"
   genfile="/data/local/tmp/usb_conf_generated.xml"
-  if "$offloadMode"; then
-    template="$MYDIR/usb_conf_offload_template.xml"
-    overlayTarget="/vendor/etc/audio_policy_configuration.xml"
-  else
-    template="$MYDIR/usb_conf_template.xml"
-    overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
-  fi
+  case "$offloadMode" in
+    "true" )
+       template="$MYDIR/usb_conf_offload_template.xml"
+       overlayTarget="/vendor/etc/audio_policy_configuration.xml"
+       ;;
+    "bypass" )
+       template="$MYDIR/usb_conf_bypass_offload_template.xml"
+       overlayTarget="/vendor/etc/audio_policy_configuration.xml"
+        ;;
+    "false" )
+       template="$MYDIR/usb_conf_template.xml"
+       overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
+       ;;
+  esac
 
   if [ -r "$template" ]; then
     if [ -e "$genfile" ]; then
