@@ -15,7 +15,7 @@ if [ "$rst" = "closed" ]; then
     if [ -r "/proc/asound/card0/pcm${i}p/sub0/hw_params" ]; then
       rst="`cat /proc/asound/card0/pcm${i}p/sub0/hw_params`"
       if [ ! "$rst" = "closed" ];then
-          echo "DAC Connection Status:"
+          echo "Active Audio Connection Status:"
           echo "$rst"
           break
       fi
