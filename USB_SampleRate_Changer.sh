@@ -34,8 +34,8 @@ MYDIR=${0%/*}
          ;;
        "-h" | "--help" | -* )
          echo "Usage: ${0##*/} [--reset][--offload][--bypass-offload] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
-         echo "  Note: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 192kHz offload lock)" 1>&2
-         echo "           if you specify greater than 96kHz or 192kHz (in case of offload)" 1>&2
+         echo "  Note: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock)" 1>&2
+         echo "           if you specify greater than 96kHz or 384kHz (in case of offload)" 1>&2
          exit 0
          ;;
      esac
@@ -116,8 +116,8 @@ MYDIR=${0%/*}
 
   if [ ! "$offloadMode" = "true"  -a  $sRate -gt 96000 ]; then
     echo "    Warning: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock)" 1>&2
-  elif [ "$offloadMode" = "true"  -a  $sRate -gt 192000 ]; then
-    echo "    Warning: ${0##*/} requires to unlock the USB audio hardware offload driver's limitation (upto 192kHz lock)" 1>&2
+  elif [ "$offloadMode" = "true"  -a  $sRate -gt 384000 ]; then
+    echo "    Warning: ${0##*/} requires to unlock the USB audio hardware offload driver's limitation (upto 384kHz lock)" 1>&2
   fi
 
   aFormat="AUDIO_FORMAT_PCM_32_BIT"
