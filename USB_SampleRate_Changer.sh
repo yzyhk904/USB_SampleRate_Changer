@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 1.2.2
+# Version: 1.2.3
 #     by zyhk
 
 MYDIR=${0%/*}
@@ -22,6 +22,10 @@ MYDIR=${0%/*}
      case "$1" in
        "-o" | "--offload" )
          offloadMode="true"
+         shift
+         ;;
+       "-o2" | "--offload2" )
+         offloadMode="alternate"
          shift
          ;;
        "-b" | "--bypass-offload" )
@@ -142,15 +146,19 @@ MYDIR=${0%/*}
   genfile="/data/local/tmp/usb_conf_generated.xml"
   case "$offloadMode" in
     "true" )
-       template="$MYDIR/usb_conf_offload_template.xml"
+       template="$MYDIR/templates/usb_conf_offload_template.xml"
+       overlayTarget="/vendor/etc/audio_policy_configuration.xml"
+       ;;
+    "alternate" )
+       template="$MYDIR/templates/usb_conf_offload_template_2.xml"
        overlayTarget="/vendor/etc/audio_policy_configuration.xml"
        ;;
     "bypass" )
-       template="$MYDIR/usb_conf_bypass_offload_template.xml"
+       template="$MYDIR/templates/usb_conf_bypass_offload_template.xml"
        overlayTarget="/vendor/etc/audio_policy_configuration.xml"
         ;;
     "false" )
-       template="$MYDIR/usb_conf_template.xml"
+       template="$MYDIR/templates/usb_conf_template.xml"
        overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
        ;;
   esac

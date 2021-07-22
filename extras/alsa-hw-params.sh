@@ -1,9 +1,10 @@
 #!/system/bin/sh
 
 rst="closed"
-if [ -r "/proc/asound/card1/pcm0p/sub0/hw_params" ]; then
+file="/proc/asound/card1/pcm0p/sub0/hw_params"
+if [ -r "$file" ]; then
 #  For non-hardware offload use
-  rst="`cat /proc/asound/card1/pcm0p/sub0/hw_params`"
+  rst="`cat $file`"
   if [ ! "$rst" = "closed" ];then
     echo "DAC Connection Status:"
     echo "$rst"
@@ -11,11 +12,12 @@ if [ -r "/proc/asound/card1/pcm0p/sub0/hw_params" ]; then
 fi
 if [ "$rst" = "closed" ]; then
 #  For USB hardware offload use
-  for i in `seq 0 60`; do
-    if [ -r "/proc/asound/card0/pcm${i}p/sub0/hw_params" ]; then
-      rst="`cat /proc/asound/card0/pcm${i}p/sub0/hw_params`"
+  for i in `seq 0 90`; do
+    file="/proc/asound/card0/pcm${i}p/sub0/hw_params"
+    if [ -r "$file" ]; then
+      rst="`cat $file`"
       if [ ! "$rst" = "closed" ];then
-          echo "Active Audio Connection Status:"
+          echo "Active Audio Connection Status (/proc/asound/card0/pcm${i}p):"
           echo "$rst"
           break
       fi
