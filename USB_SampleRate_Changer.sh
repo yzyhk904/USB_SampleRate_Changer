@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 1.2.3
+# Version: 1.3
 #     by zyhk
 
 MYDIR=${0%/*}
@@ -45,6 +45,17 @@ MYDIR=${0%/*}
      esac
   fi
 # End of help message
+
+  function reloadAudioServers() 
+  {
+    setprop ctl.restart audioserver
+    if [ $# -gt 0  -a  "$1" = "all" ]; then
+      audioHal="$(getprop |sed -nE 's/.*init\.svc\.(.*audio-hal[^]]*).*/\1/p')"
+      setprop ctl.restart "$audioHal" 1>"/dev/null" 2>&1
+      setprop ctl.restart vendor.audio-hal-2-0 1>"/dev/null" 2>&1
+      setprop ctl.restart audio-hal-2-0 1>"/dev/null" 2>&1
+    fi
+  }
  
 # Reset
   if "$resetMode"; then
@@ -55,7 +66,7 @@ MYDIR=${0%/*}
        fi
     done
     if [ "`getprop init.svc.audioserver`" = "running" ]; then
-      setprop ctl.restart audioserver
+      reloadAudioServers "all"
     fi
     exit 0
   fi
@@ -199,15 +210,18 @@ MYDIR=${0%/*}
   fi
 # End of overlay system files
 
-# Reload audio policy configuration files.
+# Reload audio policy configuration files.  
   if [ "`getprop init.svc.audioserver`" = "running" ]; then
-    setprop ctl.restart audioserver
-    if [ $? -gt 0 ]; then
-      echo "audioserver reload failed!" 1>&2
-      exit 1
+    if [ "`getenforce`" = "Enforcing" ]; then
+      setenforce 0
+      reloadAudioServers
+      # waiting for the audioserve reload completion during selnux permissive mode to avoid audio routing issues
+      sleep 4
+      setenforce 1
     else
-      exit 0
+      reloadAudioServers
     fi
+    exit 0
   else
     echo "audioserver is not running!" 1>&2 
     exit 1
