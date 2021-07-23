@@ -27,3 +27,6 @@ I recommend to use Script Manager or like for easiness.
 # V1.2
 * (USB) hardware offload support added (currently experimental)
 * Bypass (USB) offload (using a non- USB hardware offload driver while the 3.5mm jack and internal speaker use a hardware offload driver) support added (currently experimental)
+
+# V1.3
+* Selinux enforcing mode bug fixed. Now this script can be used under both selinux enforcing and permissive modes
