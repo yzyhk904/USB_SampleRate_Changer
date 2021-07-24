@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 1.3
+# Version: 1.3.1
 #     by zyhk
 
 MYDIR=${0%/*}
@@ -49,12 +49,14 @@ MYDIR=${0%/*}
   function reloadAudioServers() 
   {
     setprop ctl.restart audioserver
+    local stat=$?
     if [ $# -gt 0  -a  "$1" = "all" ]; then
       audioHal="$(getprop |sed -nE 's/.*init\.svc\.(.*audio-hal[^]]*).*/\1/p')"
       setprop ctl.restart "$audioHal" 1>"/dev/null" 2>&1
       setprop ctl.restart vendor.audio-hal-2-0 1>"/dev/null" 2>&1
       setprop ctl.restart audio-hal-2-0 1>"/dev/null" 2>&1
     fi
+    return $stat
   }
  
 # Reset
@@ -181,6 +183,7 @@ MYDIR=${0%/*}
     sed -e "s/%SAMPLING_RATE%/$sRate/g" -e "s/%AUDIO_FORMAT%/$aFormat/g" "$template" >"$genfile"
     if [ $? -eq 0 ]; then
       chmod 644 "$genfile"
+      chcon u:object_r:vendor_configs_file:s0 "$genfile"
       if [ -r "$overlayTarget" ]; then
         umount "$overlayTarget" 1>"/dev/null" 2>&1
         mount -o bind "$genfile" "$overlayTarget"
@@ -212,16 +215,13 @@ MYDIR=${0%/*}
 
 # Reload audio policy configuration files.  
   if [ "`getprop init.svc.audioserver`" = "running" ]; then
-    if [ "`getenforce`" = "Enforcing" ]; then
-      setenforce 0
-      reloadAudioServers
-      # waiting for the audioserve reload completion during selnux permissive mode to avoid audio routing issues
-      sleep 4
-      setenforce 1
+    reloadAudioServers
+    if [ $? -gt 0 ]; then
+      echo "audioserver reload failed!" 1>&2
+      exit 1
     else
-      reloadAudioServers
+      exit 0
     fi
-    exit 0
   else
     echo "audioserver is not running!" 1>&2 
     exit 1
