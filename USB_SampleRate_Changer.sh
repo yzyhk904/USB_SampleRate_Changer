@@ -1,9 +1,9 @@
 #!/system/bin/sh
 #
-# Version: 1.3.1
+# Version: 1.3.2
 #     by zyhk
 
-MYDIR=${0%/*}
+  MYDIR=${0%/*}
 
 # Check whether this script has been marked "disable", or not
   if [ ! -d "$MYDIR" ]; then
@@ -46,27 +46,13 @@ MYDIR=${0%/*}
   fi
 # End of help message
 
-  function reloadAudioServers() 
-  {
-    setprop ctl.restart audioserver
-    local stat=$?
-    if [ $# -gt 0  -a  "$1" = "all" ]; then
-      audioHal="$(getprop |sed -nE 's/.*init\.svc\.(.*audio-hal[^]]*).*/\1/p')"
-      setprop ctl.restart "$audioHal" 1>"/dev/null" 2>&1
-      setprop ctl.restart vendor.audio-hal-2-0 1>"/dev/null" 2>&1
-      setprop ctl.restart audio-hal-2-0 1>"/dev/null" 2>&1
-    fi
-    return $stat
-  }
+  . "$MYDIR/functions3.sh"
+
+  genfile="/data/local/tmp/usb_conf_generated.xml"
  
 # Reset
   if "$resetMode"; then
-    for i in "/vendor/etc/audio_policy_configuration.xml" "/vendor/etc/audio/audio_policy_configuration.xml" \
-  	  "/vendor/etc/usb_audio_policy_configuration.xml" "/system/etc/usb_audio_policy_configuration.xml"; do
-       if [ -r "$i" ]; then
-          umount "$i" 1>"/dev/null" 2>&1
-       fi
-    done
+    removeGenFile "$genfile"
     if [ "`getprop init.svc.audioserver`" = "running" ]; then
       reloadAudioServers "all"
     fi
@@ -156,7 +142,6 @@ MYDIR=${0%/*}
 # End of argument normalization
 
 # Overlay a generated {usb} audio policy configuration file on "/vendor/etc/{usb_}audio_policy_configuration.xml"
-  genfile="/data/local/tmp/usb_conf_generated.xml"
   case "$offloadMode" in
     "true" )
        template="$MYDIR/templates/usb_conf_offload_template.xml"
@@ -177,15 +162,16 @@ MYDIR=${0%/*}
   esac
 
   if [ -r "$template" ]; then
-    if [ -e "$genfile" ]; then
-      rm -f "$genfile"
-    fi
+    removeGenFile "$genfile"
     sed -e "s/%SAMPLING_RATE%/$sRate/g" -e "s/%AUDIO_FORMAT%/$aFormat/g" "$template" >"$genfile"
     if [ $? -eq 0 ]; then
       chmod 644 "$genfile"
       chcon u:object_r:vendor_configs_file:s0 "$genfile"
       if [ -r "$overlayTarget" ]; then
-        umount "$overlayTarget" 1>"/dev/null" 2>&1
+        isMounted "/proc/self/mountinfo" "$overlayTarget" 0
+        if [ $? -eq 0 ]; then
+          umount "$overlayTarget" 1>"/dev/null" 2>&1
+        fi
         mount -o bind "$genfile" "$overlayTarget"
         if [ $? -gt 0 ]; then
           echo "overlaying a generated USB configuration XML file failed!" 1>&2 
@@ -196,13 +182,19 @@ MYDIR=${0%/*}
         exit 1
       fi
       if [ "$overlayTarget" = "/vendor/etc/audio_policy_configuration.xml"  -a  -r "/vendor/etc/audio/audio_policy_configuration.xml" ]; then
-        umount "/vendor/etc/audio/audio_policy_configuration.xml" 1>"/dev/null" 2>&1
+        isMounted "/proc/self/mountinfo" "/vendor/etc/audio/audio_policy_configuration.xml" 0
+        if [ $? -eq 0 ]; then
+          umount "/vendor/etc/audio/audio_policy_configuration.xml" 1>"/dev/null" 2>&1
+        fi
         mount -o bind "$genfile" "/vendor/etc/audio/audio_policy_configuration.xml"
       fi
       if [ "$overlayTarget" = "/vendor/etc/usb_audio_policy_configuration.xml"  -a  -r "/system/etc/usb_audio_policy_configuration.xml" ]; then
-        umount "/system/etc/usb_audio_policy_configuration.xml" 1>"/dev/null" 2>&1
-        mount -o bind "$genfile" "/system/etc/usb_audio_policy_configuration.xml"
-      fi
+         isMounted "/proc/self/mountinfo" "/system/etc/usb_audio_policy_configuration.xml" 0
+         if [ $? -eq 0 ]; then
+           umount "/system/etc/usb_audio_policy_configuration.xml" 1>"/dev/null" 2>&1
+         fi
+         mount -o bind "$genfile" "/system/etc/usb_audio_policy_configuration.xml"
+       fi
     else
       echo "audio policy XML file genaration failed!" 1>&2 
       exit 1
