@@ -90,8 +90,8 @@
       }' <"$1"
   }
 
-# Remove arg1 file probaby bind mounted somewheres
-  function removeGenFile()
+# Remove somewheres bind mounted with arg1
+  function removeMountPoints()
   {
     if [ $# -eq 1 ]; then
       local mDirs="`findMounts \"/proc/self/mountinfo\" \"$1\" 0`"
@@ -103,14 +103,64 @@
               /data/local/tmp/* )
                   ;;
              * )
-                  umount "$i"
+                  umount "$i" 1>"/dev/null" 2>&1
                   ;;
             esac
           fi
         done
       fi
+    fi
+    return 0
+ }
+ 
+# Remove arg1 file probaby bind mounted somewheres
+  function removeGenFile()
+  {
+    if [ $# -eq 1 ]; then
+        removeMountPoints "$1"
+        if [ -e "$1" ]; then
+          rm -f "$1"
+        fi
+        # Remove Magisk overlayed files. The above remove may fail.
+        removeMountPoints "$1"
+        return $?
+    fi
+    return 1
+ }
+
+# Get the active audio policy configuration fille from the audioserever
+  function getActivePolicyFile()
+  {
+     dumpsys media.audio_policy | awk ' 
+	 /^ Config source: / {
+	     print $3
+	  }' 
+  }
+  
+# Make a configuration file for this script
+  function makeConfigFile()
+  {
+    if [ $# -eq 1 ]; then
+      local policyFile="`getActivePolicyFile`"
+      if [ ! -e "$policyFile" ]; then
+        policyFile="/vendor/etc/audio_policy_configuration.xml"
+      fi
+      local bltHal
+      if [ "`getprop persist.bluetooth.bluetooth_audio_hal.disabled`" = "true" ];then
+         bltHal="legacy"
+      elif [ -e "/vendor/lib64/hw/audio.bluetooth.default.so" ]; then
+         bltHal="bypass"
+      else
+         bltHal="legacy"
+      fi
       if [ -e "$1" ]; then
         rm -f "$1"
       fi
+      cat <<_EOT_ > "$1"
+PolicyFile="$policyFile"
+BluetoothHal="$bltHal"
+_EOT_
+      return 0
     fi
+    return 1
  }

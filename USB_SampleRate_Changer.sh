@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 1.3.2
+# Version: 2.0.0
 #     by zyhk
 
   MYDIR=${0%/*}
@@ -16,20 +16,24 @@
  # End
  
 # Help message
-  offloadMode="false"
+  policyMode="auto"
   resetMode="false"
   if [ $# -gt 0 ]; then
      case "$1" in
        "-o" | "--offload" )
-         offloadMode="true"
+         policyMode="offload"
          shift
          ;;
-       "-o2" | "--offload2" )
-         offloadMode="alternate"
+       "-l" | "--legacy" )
+         policyMode="legacy"
          shift
          ;;
        "-b" | "--bypass-offload" )
-         offloadMode="bypass"
+         policyMode="bypass"
+         shift
+         ;;
+       "-a" | "--auto" )
+         policyMode="auto"
          shift
          ;;
        "-r" | "--reset" )
@@ -37,7 +41,7 @@
          shift
          ;;
        "-h" | "--help" | -* )
-         echo "Usage: ${0##*/} [--reset][--offload][--bypass-offload] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
+         echo "Usage: ${0##*/} [--reset][--auto][--legacy][--offload][--bypass-offload] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
          echo "  Note: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock)" 1>&2
          echo "           if you specify greater than 96kHz or 384kHz (in case of offload)" 1>&2
          exit 0
@@ -48,10 +52,13 @@
 
   . "$MYDIR/functions3.sh"
 
-  genfile="/data/local/tmp/usb_conf_generated.xml"
+  genfile="/data/local/tmp/audio_conf_generated.xml"
  
 # Reset
   if "$resetMode"; then
+    if [ -e "$MYDIR/config.sh" ]; then
+      rm -f "$MYDIR/config.sh"
+    fi
     removeGenFile "$genfile"
     if [ "`getprop init.svc.audioserver`" = "running" ]; then
       reloadAudioServers "all"
@@ -117,9 +124,9 @@
       ;;
   esac
 
-  if [ ! "$offloadMode" = "true"  -a  $sRate -gt 96000 ]; then
+  if [ ! "$policyMode" = "offload"  -a  $sRate -gt 96000 ]; then
     echo "    Warning: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock)" 1>&2
-  elif [ "$offloadMode" = "true"  -a  $sRate -gt 384000 ]; then
+  elif [ "$policyMode" = "offload"  -a  $sRate -gt 384000 ]; then
     echo "    Warning: ${0##*/} requires to unlock the USB audio hardware offload driver's limitation (upto 384kHz lock)" 1>&2
   fi
 
@@ -141,23 +148,33 @@
   esac
 # End of argument normalization
 
-# Overlay a generated {usb} audio policy configuration file on "/vendor/etc/{usb_}audio_policy_configuration.xml"
-  case "$offloadMode" in
-    "true" )
-       template="$MYDIR/templates/usb_conf_offload_template.xml"
-       overlayTarget="/vendor/etc/audio_policy_configuration.xml"
-       ;;
-    "alternate" )
-       template="$MYDIR/templates/usb_conf_offload_template_2.xml"
-       overlayTarget="/vendor/etc/audio_policy_configuration.xml"
+# Overlay a generated audio policy configuration file on "/vendor/etc/audio_policy_configuration.xml" (e.g. typical)
+  if [ ! -r "$MYDIR/config.sh" ]; then
+    makeConfigFile "$MYDIR/config.sh"
+  fi
+  if [ -r "$MYDIR/config.sh" ]; then
+     . "$MYDIR/config.sh"
+   fi
+  if [ -n "$PolicyFile" ];then
+    overlayTarget="$PolicyFile"
+  else
+    overlayTarget="/vendor/etc/audio_policy_configuration.xml"
+  fi
+  if [ "$policyMode" = "auto"  -a  -n "$BluetoothHal" ];then
+    policyMode="$BluetoothHal"
+  fi
+  case "$policyMode" in
+    "offload" )
+       template="$MYDIR/templates/offload_template.xml"
        ;;
     "bypass" )
-       template="$MYDIR/templates/usb_conf_bypass_offload_template.xml"
-       overlayTarget="/vendor/etc/audio_policy_configuration.xml"
+       template="$MYDIR/templates/bypass_offload_template.xml"
         ;;
-    "false" )
-       template="$MYDIR/templates/usb_conf_template.xml"
-       overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
+    "legacy" )
+       template="$MYDIR/templates/legacy_template.xml"
+       ;;
+     * )
+       template="$MYDIR/templates/legacy_template.xml"
        ;;
   esac
 
@@ -181,20 +198,6 @@
         echo "overlaying target (\"$overlayTarget\") doesn't exist!" 1>&2 
         exit 1
       fi
-      if [ "$overlayTarget" = "/vendor/etc/audio_policy_configuration.xml"  -a  -r "/vendor/etc/audio/audio_policy_configuration.xml" ]; then
-        isMounted "/proc/self/mountinfo" "/vendor/etc/audio/audio_policy_configuration.xml" 0
-        if [ $? -eq 0 ]; then
-          umount "/vendor/etc/audio/audio_policy_configuration.xml" 1>"/dev/null" 2>&1
-        fi
-        mount -o bind "$genfile" "/vendor/etc/audio/audio_policy_configuration.xml"
-      fi
-      if [ "$overlayTarget" = "/vendor/etc/usb_audio_policy_configuration.xml"  -a  -r "/system/etc/usb_audio_policy_configuration.xml" ]; then
-         isMounted "/proc/self/mountinfo" "/system/etc/usb_audio_policy_configuration.xml" 0
-         if [ $? -eq 0 ]; then
-           umount "/system/etc/usb_audio_policy_configuration.xml" 1>"/dev/null" 2>&1
-         fi
-         mount -o bind "$genfile" "/system/etc/usb_audio_policy_configuration.xml"
-       fi
     else
       echo "audio policy XML file genaration failed!" 1>&2 
       exit 1
