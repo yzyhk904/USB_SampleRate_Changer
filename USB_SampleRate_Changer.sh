@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.0.0
+# Version: 2.0.1
 #     by zyhk
 
   MYDIR=${0%/*}
@@ -24,12 +24,24 @@
          policyMode="offload"
          shift
          ;;
+       "-b" | "--bypass-offload" )
+         policyMode="bypass"
+         shift
+         ;;
        "-l" | "--legacy" )
          policyMode="legacy"
          shift
          ;;
-       "-b" | "--bypass-offload" )
-         policyMode="bypass"
+       "-s" | "--safe" )
+         policyMode="safe"
+         shift
+         ;;
+       "-ss" | "--safest" )
+         policyMode="safest"
+         shift
+         ;;
+       "-u" | "--usb-only" )
+         policyMode="usb"
          shift
          ;;
        "-a" | "--auto" )
@@ -41,7 +53,7 @@
          shift
          ;;
        "-h" | "--help" | -* )
-         echo "Usage: ${0##*/} [--reset][--auto][--legacy][--offload][--bypass-offload] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
+         echo "Usage: ${0##*/} [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--safe][--safest] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
          echo "  Note: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock)" 1>&2
          echo "           if you specify greater than 96kHz or 384kHz (in case of offload)" 1>&2
          exit 0
@@ -173,8 +185,18 @@
     "legacy" )
        template="$MYDIR/templates/legacy_template.xml"
        ;;
+    "usb" )
+       template="$MYDIR/templates/usb_only_template.xml"
+       overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
+       ;;
+    "safe" )
+       template="$MYDIR/templates/safe_template.xml"
+       ;;
+    "safest" )
+       template="$MYDIR/templates/safest_template.xml"
+       ;;
      * )
-       template="$MYDIR/templates/legacy_template.xml"
+       template="$MYDIR/templates/safe_template.xml"
        ;;
   esac
 

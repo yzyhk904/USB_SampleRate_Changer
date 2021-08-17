@@ -146,12 +146,28 @@
         policyFile="/vendor/etc/audio_policy_configuration.xml"
       fi
       local bltHal
-      if [ "`getprop persist.bluetooth.bluetooth_audio_hal.disabled`" = "true" ];then
-         bltHal="legacy"
+      if [ "`getprop persist.bluetooth.bluetooth_audio_hal.disabled`" = "true" ]; then
+          case "`getprop ro.board.platform`" in
+             sdm* | msm* | sd* )
+         	bltHal="legacy"
+         	;;
+         	* )
+         	bltHal="safe"
+         	;;
+          esac       	
       elif [ -e "/vendor/lib64/hw/audio.bluetooth.default.so" ]; then
          bltHal="bypass"
+      elif [ "`getprop ro.bluetooth.a2dp_offload.supported`" = "true" ]; then
+         bltHal="offload"
       else
-         bltHal="legacy"
+          case "`getprop ro.board.platform`" in
+             mt* )
+         	bltHal="safe"
+         	;;
+         	* )
+         	bltHal="safest"
+         	;;
+          esac       	
       fi
       if [ -e "$1" ]; then
         rm -f "$1"
