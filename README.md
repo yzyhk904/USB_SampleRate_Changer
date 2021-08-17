@@ -6,15 +6,15 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
 
   if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth to which you want to change, respectively.
 
-* Options
-`--reset`(without arguments): resets its previous execution results.
-`--auto`: investigates device's environment and changes an audio policy configuration file automatically. (default behavior)
-`--usb-only`: changes a USB audio policy configuration file only.
-`--legacy`: changes an audio policy configuration file for a Bluetooth audio legacy HAL (`/system/{lib,lib64}/hw/audio.a2dp.default.so`).
-`--offload`: changes an audio policy configuration file for (USB & Bluetooth) hardware offloading. 
-`--bypass-offload`: changes an audio policy configuration file for bypassing (USB & Bluetooth) hardware offloading and using a non- hardware offload USB & Bluetooth audio drivers while a 3.5mm jack and an internal speaker use a hardware offloading driver.
-`--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL, but keeps considerably traditional settings for an internal speaker and others.
-`--safest`: changes an audio policy configuration file for a Bluetooth audio legacy HAL, but keeps most traditional settings for an internal speaker and others.
+  - Options
+    - `--reset`(without arguments): resets its previous execution results.
+    - `--auto`: investigates device's environment and changes an audio policy configuration file automatically. (default behavior)
+    - `--usb-only`: changes a USB audio policy configuration file only.
+    - `--legacy`: changes an audio policy configuration file for a Bluetooth audio legacy HAL (<em>/system/{lib,lib64}/hw/audio.a2dp.default.so</em>).
+    - `--offload`: changes an audio policy configuration file for (USB & Bluetooth) hardware offloading. 
+    - `--bypass-offload`: changes an audio policy configuration file for bypassing (USB & Bluetooth) hardware offloading and using a non- hardware offload USB & Bluetooth audio drivers while a 3.5mm jack and an internal speaker use a hardware offloading driver.
+    - `--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL, but keeps considerably traditional settings for an internal speaker and others.
+    - `--safest`: changes an audio policy configuration file for a Bluetooth audio legacy HAL, but keeps most traditional settings for an internal speaker and others.
 
 * Note: "USB_SampleRate_Changer.sh" requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock) if you want to specify greater than 96kHz or 384kHz (in case of USB hardware offloading, i.e. maybe hardware offload tunneling). See my companion magisk module ["usb-samplerate-unlocker"](https://github.com/yzyhk904/usb-samplerate-unlocker) for non- hardware offload drivers. Although you specify a high sample rate for this script execution, you cannot connect your device to a USB DAC with the sample rate unless the USB DAC supports the sample rate (the USB driver will limit the connecting sample rate downto its maximum sample rate).
 * Tips: you can see the sample rate connecting to a USB DAC during music replaying by a command `cat /proc/asound/card1/pcm0p/sub0/hw_params` (for non- USB hardware offload drivers). You can also see mixer ("AudioFlinger") info by a command `dumpsys media.audio_flinger`. There are corresponding scripts in "extras" folder.
@@ -43,5 +43,5 @@ I recommend to use Script Manager or like for easiness.
 
 # V2.0
 * Support "disable a2dp hardware-offload" in dev. settings and PHH treble GSI's "force disable a2dp hardware-offload"
-* Setting r_submix 44.1kHz 16bit mode
+* Setting an r_submix HAL to be 44.1kHz 16bit mode
 * Add "auto" mode for investigating device's environment and guessing best settings
