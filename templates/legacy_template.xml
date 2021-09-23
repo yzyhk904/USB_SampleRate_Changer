@@ -11,7 +11,7 @@
      limitations under the License.
 -->
 <audioPolicyConfiguration version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <globalConfiguration speaker_drc_enabled="false"/>
+    <globalConfiguration speaker_drc_enabled="%DRC_ENABLED%"/>
     <modules>
         <module name="primary" halVersion="2.0">
             <attachedDevices>

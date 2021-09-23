@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.0.1
+# Version: 2.1.0
 #     by zyhk
 
   MYDIR=${0%/*}
@@ -18,6 +18,7 @@
 # Help message
   policyMode="auto"
   resetMode="false"
+  DRC_enabled="false"
   if [ $# -gt 0 ]; then
      case "$1" in
        "-o" | "--offload" )
@@ -48,12 +49,16 @@
          policyMode="auto"
          shift
          ;;
+       "-d" | "--drc" )
+         DRC_enabled="true"
+         shift
+         ;;
        "-r" | "--reset" )
          resetMode="true"
          shift
          ;;
        "-h" | "--help" | -* )
-         echo "Usage: ${0##*/} [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--safe][--safest] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
+         echo "Usage: ${0##*/} [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--safe][--safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
          echo "  Note: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock)" 1>&2
          echo "           if you specify greater than 96kHz or 384kHz (in case of offload)" 1>&2
          exit 0
@@ -202,7 +207,7 @@
 
   if [ -r "$template" ]; then
     removeGenFile "$genfile"
-    sed -e "s/%SAMPLING_RATE%/$sRate/g" -e "s/%AUDIO_FORMAT%/$aFormat/g" "$template" >"$genfile"
+    sed -e "s/%DRC_ENABLED%/$DRC_enabled/" -e "s/%SAMPLING_RATE%/$sRate/" -e "s/%AUDIO_FORMAT%/$aFormat/" "$template" >"$genfile"
     if [ $? -eq 0 ]; then
       chmod 644 "$genfile"
       chcon u:object_r:vendor_configs_file:s0 "$genfile"

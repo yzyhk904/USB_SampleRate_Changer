@@ -41,6 +41,7 @@ dumpsys media.audio_flinger | sed -e '/^  Hal stream dump/,/^  Thread throttle/d
   /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_USB_DEVICE\)/ ||
   /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_WIRED_HEADSET\)/ ||
   /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_WIRED_HEADPHONE\)/ ||
+  /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_LINE\)/ ||
   /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_REMOTE_SUBMIX\)/ ||
   /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER\)/ ||
   /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES\)/ ||
