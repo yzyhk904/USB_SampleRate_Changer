@@ -19,7 +19,7 @@
   policyMode="auto"
   resetMode="false"
   DRC_enabled="false"
-  if [ $# -gt 0 ]; then
+  while [ $# -gt 0 ]; do
      case "$1" in
        "-o" | "--offload" )
          policyMode="offload"
@@ -63,8 +63,11 @@
          echo "           if you specify greater than 96kHz or 384kHz (in case of offload)" 1>&2
          exit 0
          ;;
+       * )
+         break
+         ;;
      esac
-  fi
+  done
 # End of help message
 
   . "$MYDIR/functions3.sh"
