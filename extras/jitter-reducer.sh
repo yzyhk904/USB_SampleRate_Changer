@@ -118,6 +118,16 @@ if [ $thermalFlag -gt 0 ]; then
     setprop ctl.stop vendor.mpdecision
     forceOnlineCPUs
   fi
+  # Stop the thermal server
+  if [ "`getprop init.svc.thermal`" = "running" ]; then
+    setprop ctl.stop thermal
+  fi
+  # For MediaTek CPU's
+  if [ -w "/proc/cpufreq/cpufreq_sched_disable" ]; then
+    echo '1' > "/proc/cpufreq/cpufreq_sched_disable"
+    forceOnlineCPUs
+  fi
+
 elif [ $thermalFlag -lt 0 ]; then
   # Start thermal core control
   if [ -w "/sys/module/msm_thermal/core_control/enabled" ]; then
@@ -130,6 +140,19 @@ elif [ $thermalFlag -lt 0 ]; then
   elif [ "`getprop init.svc.vendor.mpdecision`" = "stopped" ]; then
     setprop ctl.start vendor.mpdecision
     forceOnlineCPUs
+  fi
+  # Start the thermal server
+  if [ "`getprop init.svc.thermal`" = "stopped" ]; then
+    setprop ctl.start thermal
+  fi
+  # For MediaTek CPU's
+  if [ -w "/proc/cpufreq/cpufreq_sched_disable" ]; then
+    val="`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`"
+    if [ "$val" = "schedutil" ]; then
+      echo "EAS has been enabled, so skipping thermal MTK EAS+ enabling" 1>&2
+    else
+      echo '0' > "/proc/cpufreq/cpufreq_sched_disable"
+    fi
   fi
 fi
 
@@ -195,6 +218,8 @@ if [ $effectFlag -gt 0 ]; then
     if [ $? -eq 0 ]; then
       resetprop_phh ro.audio.ignore_effects true
       setprop ctl.restart audioserver
+    else
+      echo "ignoring \"--effect\" option (no resetprop commands found)" 1>&2
     fi
   fi
 elif [ $effectFlag -lt 0 ]; then
@@ -207,6 +232,8 @@ elif [ $effectFlag -lt 0 ]; then
     if [ $? -eq 0 ]; then
       resetprop_phh --delete ro.audio.ignore_effects
       setprop ctl.restart audioserver
+    else
+      echo "ignoring \"++effect\" option (no resetprop commands found)" 1>&2
     fi
   fi
 fi
@@ -222,14 +249,27 @@ if [ $statusFlag -gt 0 ]; then
     else
       echo "  Thermal core control: running"
     fi
+  elif [ -n "`getprop init.svc.thermal`" ]; then
+    echo "  Thermal server: `getprop init.svc.thermal`"
   else
-    echo "  Thermal core control: N/A"
+    echo "  Thermal control: N/A"
   fi
 
   if [ -n "`getprop init.svc.mpdecision`" ]; then
       echo "  Thermal MPDecision: `getprop init.svc.mpdecision`"
   elif [ -n "`getprop init.svc.vendor.mpdecision`" ]; then
       echo "  Thermal MPDecision: `getprop init.svc.vendor.mpdecision`"
+  fi
+
+  # For MediaTek CPU's
+  if [ -r "/proc/cpufreq/cpufreq_sched_disable" ]; then
+    set `cat /proc/cpufreq/cpufreq_sched_disable`
+    val=$3
+    if [ "$val" -eq '1' ]; then
+      echo "  Thermal MTK EAS+: stopped"
+    else
+      echo "  Thermal MTK EAS+: running"
+    fi
   fi
 
   val="`getprop init.svc.qcamerasvr`"
@@ -256,8 +296,8 @@ if [ $statusFlag -gt 0 ]; then
 
   val="`getprop ro.audio.ignore_effects`"
   if [ -n "$val"  -a  "$val" = "true" ]; then
-    echo "  Effect config.: disabled"
+    echo "  Effects config.: disabled"
   else
-    echo "  Effect config.: enabled"
+    echo "  Effects config.: enabled"
   fi
 fi
