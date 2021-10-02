@@ -3,8 +3,9 @@
 myName="${0##*/}"
 
 function usage() {
-      echo "Usage: $myName [--selinux|++selinux] [--thermal|++thermal] [--camera|++camera] [--io|++io] [--all|++all] [--effect|++effect] [--status] [--help]" 1>&2
-      echo "  Note: \"--all\" & \"++all\" options don't affect \"--effect\" & \"++effect\" options." 1>&2
+      echo "Usage: $myName [--selinux|++selinux] [--thermal|++thermal] [--camera|++camera] [--io|++io] [--vm|++vm] [--all|++all] [--effect|++effect] [--status] [--help]" 1>&2
+      echo "  Note: \"--all\" is an alias of all \"--\" prefixed options except \"--effect\", \"--status\" and \"--help\"," 1>&2
+      echo "           conversely \"++all\" is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
 }
 
 function forceOnlineCPUs() {
@@ -20,8 +21,10 @@ selinuxFlag=0
 thermalFlag=0
 cameraFlag=0
 ioFlag=0
+vmFlag=0
 effectFlag=0
 statusFlag=0
+
 if [ $# -eq 0 ];then
       usage
       exit 0
@@ -33,6 +36,7 @@ else
 	      thermalFlag=1
 	      cameraFlag=1
 	      ioFlag=1
+	      vmFlag=1
 	      shift
 	      ;;
 	    "+a" | "++all" )
@@ -40,6 +44,7 @@ else
 	      thermalFlag=-1
 	      cameraFlag=-1
 	      ioFlag=-1
+	      vmFlag=-1
 	      shift
 	      ;;
 	    "-se" | "--selinux" )
@@ -72,6 +77,14 @@ else
 	      ;;
 	    "+i" | "++io" )
 	      ioFlag=-1
+	      shift
+	      ;;
+	    "-v" | "--vm" )
+	      vmFlag=1
+	      shift
+	      ;;
+	    "+v" | "++vm" )
+	      vmFlag=-1
 	      shift
 	      ;;
 	    "-e" | "--effect" )
@@ -208,6 +221,26 @@ elif [ $ioFlag -lt 0 ]; then
   done
 fi
 
+if [ $vmFlag -gt 0 ]; then
+  echo '0' >"/proc/sys/vm/swappiness"
+  echo '50' >"/proc/sys/vm/dirty_ratio"
+  echo '25' >"/proc/sys/vm/dirty_background_ratio"
+  echo '60000' >"/proc/sys/vm/dirty_expire_centisecs"
+  echo '11100' >"/proc/sys/vm/dirty_writeback_centisecs"
+  echo '1' >"/proc/sys/vm/laptop_mode"
+elif [ $vmFlag -lt 0 ]; then
+  if [ -e "/dev/block/zram0" ]; then
+    echo '100' >"/proc/sys/vm/swappiness"
+  else
+    echo '60' >"/proc/sys/vm/swappiness"
+  fi
+  echo '20' >"/proc/sys/vm/dirty_ratio"
+  echo '5' >"/proc/sys/vm/dirty_background_ratio"
+  echo '200' >"/proc/sys/vm/dirty_expire_centisecs"
+  echo '500' >"/proc/sys/vm/dirty_writeback_centisecs"
+  echo '0' >"/proc/sys/vm/laptop_mode"
+fi
+
 if [ $effectFlag -gt 0 ]; then
   type resetprop 1>/dev/null 2>&1
   if [ $? -eq 0 ]; then
@@ -294,10 +327,37 @@ if [ $statusFlag -gt 0 ]; then
     fi
   done
 
+  val=`cat /proc/sys/vm/swappiness`
+  if [ -n "$val" ]; then
+    echo "  VM swappiness: $val"
+  fi
+  val=`cat /proc/sys/vm/dirty_ratio`
+  if [ -n "$val" ]; then
+    echo "  VM dirty ratio: $val"
+  fi
+  val=`cat /proc/sys/vm/dirty_background_ratio`
+  if [ -n "$val" ]; then
+    echo "  VM dirty background ratio: $val"
+  fi
+  val=`cat /proc/sys/vm/dirty_expire_centisecs`
+  if [ -n "$val" ]; then
+    echo "  VM dirty expire centisecs: $val"
+  fi
+  val=`cat /proc/sys/vm/dirty_writeback_centisecs`
+  if [ -n "$val" ]; then
+    echo "  VM dirty writeback centisecs: $val"
+  fi
+  val=`cat /proc/sys/vm/laptop_mode`
+  if [ "$val" = "1" ]; then
+    echo "  VM laptop mode: on"
+  else
+    echo "  VM laptop mode: off"
+  fi
+
   val="`getprop ro.audio.ignore_effects`"
   if [ -n "$val"  -a  "$val" = "true" ]; then
-    echo "  Effects config.: disabled"
+    echo "  Effects framework: disabled"
   else
-    echo "  Effects config.: enabled"
+    echo "  Effects framework: enabled"
   fi
 fi
