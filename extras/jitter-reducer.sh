@@ -140,6 +140,10 @@ if [ $thermalFlag -gt 0 ]; then
     echo '1' > "/proc/cpufreq/cpufreq_sched_disable"
     forceOnlineCPUs
   fi
+  # Old Qcomm GPU
+  if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
+    echo 'performance' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+  fi
 
 elif [ $thermalFlag -lt 0 ]; then
   # Start thermal core control
@@ -166,6 +170,10 @@ elif [ $thermalFlag -lt 0 ]; then
     else
       echo '0' > "/proc/cpufreq/cpufreq_sched_disable"
     fi
+  fi
+  # Old Qcomm GPU
+  if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
+    echo 'ondemand' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
   fi
 fi
 
@@ -208,15 +216,23 @@ fi
 if [ $ioFlag -gt 0 ]; then
   for i in sda mmcblk0 mmcblk1; do
     if [ -d "/sys/block/$i/queue" ]; then
+      echo 'noop' >"/sys/block/$i/queue/scheduler"
       echo '8192' >"/sys/block/$i/queue/read_ahead_kb"
+      echo '0' >"/sys/block/$i/queue/iostats"
       echo '2' >"/sys/block/$i/queue/rq_affinity"
+      echo '2' >"/sys/block/$i/queue/nomerges"
+      echo '9400' >"/sys/block/$i/queue/nr_requests"
     fi
   done
 elif [ $ioFlag -lt 0 ]; then
   for i in sda mmcblk0 mmcblk1; do
     if [ -d "/sys/block/$i/queue" ]; then
+      echo 'cfq' >"/sys/block/$i/queue/scheduler"
       echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+      echo '1' >"/sys/block/$i/queue/iostats"
       echo '1' >"/sys/block/$i/queue/rq_affinity"
+      echo '0' >"/sys/block/$i/queue/nomerges"
+      echo '128' >"/sys/block/$i/queue/nr_requests"
     fi
   done
 fi
@@ -305,6 +321,11 @@ if [ $statusFlag -gt 0 ]; then
     fi
   fi
 
+  # Old Qcomm GPU
+  if [ -r "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
+    echo "  Thermal old GPU governor: `cat /sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor`"
+  fi
+
   val="`getprop init.svc.qcamerasvr`"
   if [ -n  "$val" ]; then
     echo "  Qcom camera server: $val"
@@ -320,10 +341,18 @@ if [ $statusFlag -gt 0 ]; then
 
   for i in sda mmcblk0 mmcblk1; do
     if [ -d "/sys/block/$i/queue" ]; then
+      val=`cat /sys/block/$i/queue/scheduler`
+      echo "  I/O ($i) scheduler: $val"
       val=`cat /sys/block/$i/queue/read_ahead_kb`
-      echo "  I/O Scheduler ($i) read ahead size: $val KB"
+      echo "  I/O ($i) read ahead size: $val KB"
+      val=`cat /sys/block/$i/queue/iostats`
+      echo "  I/O ($i) iostat: $val"
       val=`cat /sys/block/$i/queue/rq_affinity`
-      echo "  I/O Scheduler ($i) request affinity: $val"
+      echo "  I/O ($i) rq affinity: $val"
+      val=`cat /sys/block/$i/queue/nomerges`
+      echo "  I/O ($i) nomerges: $val"
+      val=`cat /sys/block/$i/queue/nr_requests`
+      echo "  I/O ($i) nr requests: $val"
     fi
   done
 
