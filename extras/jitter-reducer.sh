@@ -3,22 +3,14 @@
 myName="${0##*/}"
 
 function usage() {
-      echo "Usage: $myName [--selinux|++selinux] [--thermal|++thermal] [--camera|++camera] [--io|++io] [--vm|++vm] [--all|++all] [--effect|++effect] [--status] [--help]" 1>&2
+      echo "Usage: $myName [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io|++io][--vm|++vm][--all|++all][--effect|++effect][--status][--help]" 1>&2
       echo "  Note: \"--all\" is an alias of all \"--\" prefixed options except \"--effect\", \"--status\" and \"--help\"," 1>&2
       echo "           conversely \"++all\" is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
 }
 
-function forceOnlineCPUs() {
-    for i in `seq 0 9`; do
-        if [ -e "/sys/devices/system/cpu/cpu$i/online" ]; then
-            chmod 644 "/sys/devices/system/cpu/cpu$i/online"
-            echo '1' >"/sys/devices/system/cpu/cpu$i/online"
-        fi
-    done
-}
-
 selinuxFlag=0
 thermalFlag=0
+governorFlag=0
 cameraFlag=0
 ioFlag=0
 vmFlag=0
@@ -34,6 +26,7 @@ else
 	    "-a" | "--all" )
 	      selinuxFlag=1
 	      thermalFlag=1
+	      governorFlag=1
 	      cameraFlag=1
 	      ioFlag=1
 	      vmFlag=1
@@ -42,6 +35,7 @@ else
 	    "+a" | "++all" )
 	      selinuxFlag=-1
 	      thermalFlag=-1
+	      governorFlag=-1
 	      cameraFlag=-1
 	      ioFlag=-1
 	      vmFlag=-1
@@ -61,6 +55,14 @@ else
 	      ;;
 	    "+t" | "++thermal" )
 	      thermalFlag=-1
+	      shift
+	      ;;
+	    "-g" | "--governor" )
+	      governorFlag=1
+	      shift
+	      ;;
+	    "+g" | "++governor" )
+	      governorFlag=-1
 	      shift
 	      ;;
 	    "-c" | "--camera" )
@@ -112,6 +114,36 @@ else
   done
 fi
 
+function forceOnlineCPUs() {
+    for i in `seq 0 9`; do
+        if [ -e "/sys/devices/system/cpu/cpu$i/online" ]; then
+            chmod 644 "/sys/devices/system/cpu/cpu$i/online"
+            echo '1' >"/sys/devices/system/cpu/cpu$i/online"
+        fi
+    done
+}
+
+function searchDefaultCpuGovernor() {
+  # Search default CPU governor
+  local gov=""
+  for i in `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors`; do
+    if [ "$i" = "schedutil" ]; then
+      gov="schedutil"
+      break;
+    elif [ ! "$gov" = "schedplus" ]; then
+      if [ "$i" = "schedplus" ]; then
+        gov="$i"
+      elif [ ! "$gov" = "interactive" ]; then
+        gov="$i"
+      fi
+    fi
+  done
+  if [ -z "$gov" ]; then
+    gov="performance"
+  fi
+  echo "$gov"
+}
+
 if [ $selinuxFlag -gt 0 ]; then
   setenforce 0
 elif [ $selinuxFlag -lt 0 ]; then
@@ -140,10 +172,6 @@ if [ $thermalFlag -gt 0 ]; then
     echo '1' > "/proc/cpufreq/cpufreq_sched_disable"
     forceOnlineCPUs
   fi
-  # Old Qcomm GPU
-  if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
-    echo 'performance' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
-  fi
 
 elif [ $thermalFlag -lt 0 ]; then
   # Start thermal core control
@@ -164,16 +192,51 @@ elif [ $thermalFlag -lt 0 ]; then
   fi
   # For MediaTek CPU's
   if [ -w "/proc/cpufreq/cpufreq_sched_disable" ]; then
-    val="`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`"
+    val="`searchDefaultCpuGovernor`"
     if [ "$val" = "schedutil" ]; then
-      echo "EAS has been enabled, so skipping thermal MTK EAS+ enabling" 1>&2
+      echo "  Notice: EAS has been enabled, so skipping thermal MTK EAS+ enabling" 1>&2
     else
       echo '0' > "/proc/cpufreq/cpufreq_sched_disable"
     fi
   fi
-  # Old Qcomm GPU
+
+fi
+
+if [ $governorFlag -gt 0 ]; then
+  # CPU governor
+  # prevent CPU offline stuck by forcing online between double  governor writing 
+  for i in `seq 0 9`; do
+    if [ -e "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor" ]; then
+      chmod 644 "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+      echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+      chmod 644 "/sys/devices/system/cpu/cpu$i/online"
+      echo '1' >"/sys/devices/system/cpu/cpu$i/online"
+      echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+    fi
+  done
+  # Qcomm GPU's
+  if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
+    echo 'performance' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+  elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
+    echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+  fi
+elif [ $governorFlag -lt 0 ]; then
+  gov="`searchDefaultCpuGovernor`"
+  # prevent CPU offline stuck by forcing online between double  governor writing 
+  for i in `seq 0 9`; do
+    if [ -e "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor" ]; then
+      chmod 644 "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+      echo "$gov" >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+      chmod 644 "/sys/devices/system/cpu/cpu$i/online"
+      echo '1' >"/sys/devices/system/cpu/cpu$i/online"
+      echo "$gov" >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+    fi
+  done
+  # Qcomm default GPU governor
   if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
     echo 'ondemand' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+  elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
+    echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
   fi
 fi
 
@@ -321,9 +384,15 @@ if [ $statusFlag -gt 0 ]; then
     fi
   fi
 
-  # Old Qcomm GPU
+  #CPU Governor
+  if [ -r "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor" ]; then
+      echo "  Governor CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`"
+  fi
+  # Qcomm GPU
   if [ -r "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
-    echo "  Thermal old GPU governor: `cat /sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor`"
+    echo "  Governor GPU: `cat /sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor`"
+  elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
+    echo "  Governor GPU: `cat /sys/class/kgsl/kgsl-3d0/devfreq/governor`"
   fi
 
   val="`getprop init.svc.qcamerasvr`"
@@ -342,17 +411,18 @@ if [ $statusFlag -gt 0 ]; then
   for i in sda mmcblk0 mmcblk1; do
     if [ -d "/sys/block/$i/queue" ]; then
       val=`cat /sys/block/$i/queue/scheduler`
-      echo "  I/O ($i) scheduler: $val"
+      echo "  I/O scheduler: $val"
       val=`cat /sys/block/$i/queue/read_ahead_kb`
-      echo "  I/O ($i) read ahead size: $val KB"
+      echo "  I/O read ahead size: $val KB"
       val=`cat /sys/block/$i/queue/iostats`
-      echo "  I/O ($i) iostat: $val"
+      echo "  I/O iostat: $val"
       val=`cat /sys/block/$i/queue/rq_affinity`
-      echo "  I/O ($i) rq affinity: $val"
+      echo "  I/O rq affinity: $val"
       val=`cat /sys/block/$i/queue/nomerges`
-      echo "  I/O ($i) nomerges: $val"
+      echo "  I/O nomerges: $val"
       val=`cat /sys/block/$i/queue/nr_requests`
-      echo "  I/O ($i) nr requests: $val"
+      echo "  I/O nr requests: $val"
+      break
     fi
   done
 
