@@ -284,7 +284,7 @@ if [ $ioFlag -gt 0 ]; then
       echo '0' >"/sys/block/$i/queue/iostats"
       echo '2' >"/sys/block/$i/queue/rq_affinity"
       echo '2' >"/sys/block/$i/queue/nomerges"
-      echo '11920' >"/sys/block/$i/queue/nr_requests"
+      echo '14210' >"/sys/block/$i/queue/nr_requests"
     fi
   done
 elif [ $ioFlag -lt 0 ]; then
