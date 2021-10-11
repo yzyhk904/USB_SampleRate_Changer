@@ -22,7 +22,7 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
 * Tips 2: "jitter-reducer.sh" in "extras" folder is a simplified tool of ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitters relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory and audio effects framework.
 * Tips 3: Please disable battery optimizations for following app's manually through the settings UI of Android OS (to lower less than 10Hz jitter making reverb like distortions). music (streaming) player apps, their licensing apps (if exist), equalizer apps (if exist), "bluetooth" (system app), "Android Services Library" (system app), "Android Shared Library" (system app), "Android System" (system app), "crDroid System" (system app; if exist), "LineageOS System" (system app; if exist), launcher app, "Google Play Store" (system app), "Google Play Developer Services" (system app), "Magisk", "PhhTrebleApp"(system app; if exist), keyboard app, kernel adiutor (if exist), etc.
 
-I recommend to use Script Manager or like for easiness.
+I recommend to use sManager (Script Manager) or like for easiness.
 
 ## DISCLAIMER
 
