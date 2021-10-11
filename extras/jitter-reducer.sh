@@ -1,9 +1,11 @@
 #!/system/bin/sh
 
+NR_REQUESTS_DEFAULT=30000
+
 myName="${0##*/}"
 
 function usage() {
-      echo "Usage: $myName [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io|++io][--vm|++vm][--all|++all][--effect|++effect][--status][--help]" 1>&2
+      echo "Usage: $myName [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [nr_requests]|++io][--vm|++vm][--all|++all][--effect|++effect][--status][--help]" 1>&2
       echo "  Note: \"--all\" is an alias of all \"--\" prefixed options except \"--effect\", \"--status\" and \"--help\"," 1>&2
       echo "           conversely \"++all\" is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
 }
@@ -16,6 +18,8 @@ ioFlag=0
 vmFlag=0
 effectFlag=0
 statusFlag=0
+
+nr_requests="$NR_REQUESTS_DEFAULT"
 
 if [ $# -eq 0 ];then
       usage
@@ -76,6 +80,25 @@ else
 	    "-i" | "--io" )
 	      ioFlag=1
 	      shift
+	      if [ $# -gt 0 ]; then
+	        if [ "$1" = "light" ]; then
+	          nr_requests=14210
+	          shift
+	        elif [ "$1" = "medium" ]; then
+	          nr_requests="$NR_REQUESTS_DEFAULT"
+	          shift
+	        elif [ "$1" = "boost" ]; then
+	          nr_requests=60000
+	          shift
+	        elif expr "$1" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
+	          if [ "$1" -lt 32  -o  "$1" -gt 64000 ]; then
+	            echo "Warning: unsupported \"nr requests\" ignored (nr_requests=$1; 32<=nr_requests<=64000)!" 1>&2
+	          else
+	            nr_requests="$1"
+	          fi
+	          shift
+	        fi
+	      fi
 	      ;;
 	    "+i" | "++io" )
 	      ioFlag=-1
@@ -284,7 +307,7 @@ if [ $ioFlag -gt 0 ]; then
       echo '0' >"/sys/block/$i/queue/iostats"
       echo '2' >"/sys/block/$i/queue/rq_affinity"
       echo '2' >"/sys/block/$i/queue/nomerges"
-      echo '14210' >"/sys/block/$i/queue/nr_requests"
+      echo "$nr_requests" >"/sys/block/$i/queue/nr_requests"
     fi
   done
 elif [ $ioFlag -lt 0 ]; then
