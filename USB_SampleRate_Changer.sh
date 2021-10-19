@@ -60,8 +60,8 @@ while [ $# -gt 0 ]; do
             ;;
         "-h" | "--help" | -* )
             echo "Usage: ${0##*/} [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--safe][--safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
-            echo "  Note: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock)" 1>&2
-            echo "           if you specify greater than 96kHz or 384kHz (in case of offload)" 1>&2
+            echo -n "\nNote: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock)" 1>&2
+            echo     " if you specify greater than 96kHz or 384kHz (in case of offload)." 1>&2
             exit 0
             ;;
         * )
