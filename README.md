@@ -18,9 +18,25 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
     - `--drc`: enables DRC (Dynamic Range Control or simply compression) for the purpose of comparison to usual DRC-less audio quality (not effective for --usb-only mode).
 
 * Note: "USB_SampleRate_Changer.sh" requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock) if you want to specify greater than 96kHz or 384kHz (in case of USB hardware offloading, i.e. maybe hardware offload tunneling). See my companion magisk module ["usb-samplerate-unlocker"](https://github.com/yzyhk904/usb-samplerate-unlocker) for non- hardware offload drivers. Although you specify a high sample rate for this script execution, you cannot connect your device to a USB DAC with the sample rate unless the USB DAC supports the sample rate (the USB driver will limit the connecting sample rate downto its maximum sample rate).
-* Tips 1: You can see the sample rate connecting to a USB DAC during music replaying by a command `cat /proc/asound/card1/pcm0p/sub0/hw_params` (for non- USB hardware offload drivers). You can also see mixer ("AudioFlinger") info by a command `dumpsys media.audio_flinger`. There are corresponding convenient scripts in "extras" folder.
-* Tips 2: "jitter-reducer.sh" in "extras" folder is a simplified tool of ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitters relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory and audio effects framework.
-* Tips 3: Please disable battery optimizations for following app's manually through the settings UI of Android OS (to lower less than 10Hz jitter making reverb like distortions). music (streaming) player apps, their licensing apps (if exist), equalizer apps (if exist), "bluetooth" (system app), "Android Services Library" (system app), "Android Shared Library" (system app), "Android System" (system app), "crDroid System" (system app; if exist), "LineageOS System" (system app; if exist), launcher app, "Google Play Store" (system app), "Google Play Developer Services" (system app), "Magisk", "PhhTrebleApp"(system app; if exist), keyboard app, kernel adiutor (if exist), etc.
+
+* Tips 1: You can see the sample rate connecting to a USB DAC during music replaying by a command `cat /proc/asound/card1/pcm0p/sub0/hw_params` (for non- USB hardware offload drivers). You can also see mixer ("AudioFlinger") info by a command `dumpsys media.audio_flinger`. There are corresponding convenient scripts ("alsa-hw-params.sh" and "dumpsys-filtered.sh") in "extras" folder.
+
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/alsa-hw-params.sh`
+    - outputs information of the ALSA audio driver for USB DAC's, 3.5mm Jack and internal speakers.
+
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/dumpsys-filtered.sh [--all][--help]`
+     - outputs active peripheral's information from `dumpsys media.audio_flinger`. With `--all` option, this script outputs all perpheral's information from the command.
+     
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/getConfig.sh [--all][--help]`
+    - outputs breif information of the active audio policy configuration. With `--all` option, this script outputs all the information of the configuration.
+
+* Tips 2: "jitter-reducer.sh" in "extras" folder is a simplified tool of ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitters relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory, wifi suspension and audio effects framework.
+
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [nr_requests]|++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]`
+    - Note 1.: each "--" prefixed option except "--status" and "--help" options is an enabler for its corresponding jitter reducer, conversely each "++" prefixed option is an disabler for its corresponding jitter reducer. "--all" option is an alias of all "--" prefixed options except "--effect", "--status" and "--help" options, and also  "++all" option is an alias of all "++" prefixed options except "++effect".
+    - Note 2.: "--wifi" option is persistent even after reboot, but other options are not.
+
+* Tips 3: Please disable battery optimizations for following app's manually through the settings UI of Android OS (to lower less than 10Hz jitter making reverb like distortions). music (streaming) player apps, their licensing apps (if exist), equalizer apps (if exist), "bluetooth" (system app), "Android Services Library" (system app), "Android Shared Library" (system app), "Android System" (system app), "crDroid System" (system app; if exists), "LineageOS System" (system app; if exists), launcher app, "Google Play Store" (system app), "Google Play Developer Services" (system app), "Magisk", "PhhTrebleApp"(system app; if exists), keyboard app, kernel adiutors (if exist), etc.
 
 I recommend to use sManager (Script Manager) or like for easiness.
 
@@ -45,12 +61,16 @@ I recommend to use sManager (Script Manager) or like for easiness.
 * Selinux enforcing mode bug fixed. Now this script can be used under both selinux enforcing and permissive modes
 
 # V2.0
-* Support "disable a2dp hardware-offload" in dev. settings and PHH treble GSI's "force disable a2dp hardware-offload"
-* Setting an r_submix HAL to be 44.1kHz 16bit mode
-* Add "auto" mode for investigating device's environment and guessing best settings
+* Supported "disable a2dp hardware-offload" in dev. settings and PHH treble GSI's "force disable a2dp hardware-offload"
+* Set an r_submix HAL to be 44.1kHz 16bit mode
+* Added "auto" mode for investigating device's environment and guessing best settings
 
 # V2.1
 * ``--drc`` option added for the porpus of comparison to usual DRC-less audio quality
 
 # V2.2
 * extras/jitter-reducer.sh (a simplified version of my ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod)) added
+
+# V2.3
+* Enhanced extras/jitter-reducer.sh by adding a wifi jitter reducer which is especially effective for music streaming services (both online and offline), Pixel's and other high performance devices
+* Cleaned up source codes
