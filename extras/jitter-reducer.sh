@@ -10,7 +10,7 @@ function usage() {
       echo -n "\nNote 1: each \"--\" prefixed option except \"--status\" and \"--help\" options is an enabler for its corresponding jitter reducer," 1>&2
       echo -n " conversely each \"++\" prefixed option is an disabler for its corresponding jitter reducer." 1>&2
       echo -n " \"--all\" option is an alias of all \"--\" prefixed options except \"--effect\", \"--status\" and \"--help\" options," 1>&2
-      echo     " and also  \"++all\" option is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
+      echo     " and also \"++all\" option is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
       echo -n "\nNote 2: \"nr_requests\" specifys a kernel tunable of I/O devices which is a number between 32 and 64000. It has three presets" 1>&2
       echo     " \"light\" (for warmer tone?), \"medium\" (default) and \"boost\" (for clearer tone?)."
       echo     "\nNote 3: \"--wifi\" option is persistent even after reboot, but other options are not." 1>&2
