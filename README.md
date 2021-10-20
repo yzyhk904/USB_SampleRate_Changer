@@ -4,7 +4,7 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
 
 * Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--safe][-safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]`,
 
-  if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth to which you want to change, respectively.
+  if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth to which you want to change, respectively. Their default values are `44k` (sample rate: 44.1 kHz) and `32` (bit depth: 32 bits).
 
   - Options
     - `--reset`(without arguments): resets its previous execution results.
@@ -16,6 +16,8 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
     - `--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL, but keeps considerably traditional settings for an internal speaker and others.
     - `--safest`: changes an audio policy configuration file for a Bluetooth audio legacy HAL, but keeps most traditional settings for an internal speaker and others.
     - `--drc`: enables DRC (Dynamic Range Control or simply compression) for the purpose of comparison to usual DRC-less audio quality (not effective for --usb-only mode).
+
+  - For typical example, `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh` automatically investigates your device and determines the audio policy configuration type ("(including USB & Bluetooth) offload", "bypass-offload (offload except USB & Bluetooth)", "legacy (bypass-offload using a legacy Bluetooth module)", "safe (for non-offloading vevices)" and "safest (for old devices)". And this sets the sample rate and bit depth of your device to be 44.1 kHz and 32 bits. If you want to set another sample rate and bit depth, please specify specific values.
 
 * Note: "USB_SampleRate_Changer.sh" requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock) if you want to specify greater than 96kHz or 384kHz (in case of USB hardware offloading, i.e. maybe hardware offload tunneling). See my companion magisk module ["usb-samplerate-unlocker"](https://github.com/yzyhk904/usb-samplerate-unlocker) for non- hardware offload drivers. Although you specify a high sample rate for this script execution, you cannot connect your device to a USB DAC with the sample rate unless the USB DAC supports the sample rate (the USB driver will limit the connecting sample rate downto its maximum sample rate).
 
@@ -35,8 +37,10 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [nr_requests]|++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]`
 
     - each "--" prefixed option except "--status" and "--help" options is an enabler for its corresponding jitter reducer, conversely each "++" prefixed option is an disabler for its corresponding jitter reducer. "--all" option is an alias of all "--" prefixed options except "--effect", "--status" and "--help" options, and also  "++all" option is an alias of all "++" prefixed options except "++effect".
-    - "nr_requests" specifys a kernel tunable of I/O devices which is a number between 32 and 64000. It has three presets "light" (for warmer tone?), "medium" (default) and "boost" (for clearer tone?).
+    - "nr_requests" specifys a kernel tunable of I/O devices which is a number between 32 and 64000 inclusive. It has three presets "light" (for warmer tone?), "medium" (default) and "boost" (for clearer tone?).
     - please remember that "--wifi" option is persistent even after reboot, but other options are not.
+
+  - For most "hifi" example,  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh --all --effect --status` enables all jitter reducers including effect framework one and output the jitter related statuses. For Bluetooth earphones, you may need to add `--io light` option.  For DLNA transmitting, you may need to add `--io boost` option.
 
 * Tips 3: Please disable battery optimizations for following app's manually through the settings UI of Android OS (to lower less than 10Hz jitter making reverb like distortions). music (streaming) player apps, their licensing apps (if exist), equalizer apps (if exist), "bluetooth" (system app), "Android Services Library" (system app), "Android Shared Library" (system app), "Android System" (system app), "crDroid System" (system app; if exists), "LineageOS System" (system app; if exists), launcher app, "Google Play Store" (system app), "Google Play Developer Services" (system app), "Magisk", "PhhTrebleApp"(system app; if exists), keyboard app, kernel adiutors (if exist), etc.
 
