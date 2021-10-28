@@ -4,23 +4,46 @@
 MYDIR=${0%/*}
 
 # Forcing to reload audioservers
-function reloadAudioServers()  {
-    setprop ctl.restart audioserver
-    local stat=$?
+function reloadAudioServers() 
+{
+    # wait for system boot completion and audiosever boot up
+    local i
+    for i in `seq 1 3` ; do
+      if [ "`getprop sys.boot_completed`" = "1"  -a  "`getprop init.svc.audioserver`" = "running" ]; then
+        break
+      fi
+      sleep 1
+    done
+
+    if [ "`getprop init.svc.audioserver`" = "running" ]; then
     
-    if [ $# -gt 0  -a  "$1" = "all" ]; then
-        audioHal="$(getprop |sed -nE 's/.*init\.svc\.(.*audio-hal[^]]*).*/\1/p')"
-        setprop ctl.restart "$audioHal" 1>"/dev/null" 2>&1
-        setprop ctl.restart vendor.audio-hal-2-0 1>"/dev/null" 2>&1
-        setprop ctl.restart audio-hal-2-0 1>"/dev/null" 2>&1
+        setprop ctl.restart audioserver
+        if [ $? -gt 0 ]; then
+            echo "audioserver reload failed!" 1>&2
+            return 1
+        fi
+        
+        if [ $# -gt 0  -a  "$1" = "all" ]; then
+            local audioHal
+            audioHal="$(getprop |sed -nE 's/.*init\.svc\.(.*audio-hal[^]]*).*/\1/p')"
+            setprop ctl.restart "$audioHal" 1>"/dev/null" 2>&1
+            setprop ctl.restart vendor.audio-hal-2-0 1>"/dev/null" 2>&1
+            setprop ctl.restart audio-hal-2-0 1>"/dev/null" 2>&1
+        fi
+        return 0
+        
+    else
+        
+        echo "audioserver is not running!" 1>&2 
+        return 1
+        
     fi
-    
-    return $stat
 }
 
 # Find mount points paired with arg2 ("/data/...") in arg1 (typycally "/proc/self/mountinfo"). 
 #   arg3 1: show a key with its paired mount point, 0: moun point only.
-function findMounts() {
+function findMounts()
+{
     if [ $# -ne 3 ]; then
         return 1
     elif [ ! -r "$1"  -o  `expr "$2" : /data` -ne 5 ]; then
@@ -58,7 +81,8 @@ function findMounts() {
 #   arg3 "IncludeMagisk" (including Magisk mount points) or "ExcludeMagisk" (exclude Magisk mount points)
 #   arg4 "ShowKey" (print a key with its specified mount point) or "NoShowKey" (don't print the key)
 #   If found, then return 0 else return 1
-function isMounted() {
+function isMounted()
+{
     if [ $# -ne 4 ]; then
         return 1
     elif [ ! -r "$1" ]; then
@@ -91,7 +115,8 @@ function isMounted() {
 }
 
 # Remove somewheres bind mounted with arg1
-function removeMountPoints() {
+function removeMountPoints()
+{
     if [ $# -eq 1 ]; then
     
         local mDirs="`findMounts \"/proc/self/mountinfo\" \"$1\" 0`"
@@ -118,7 +143,8 @@ function removeMountPoints() {
 }
  
 # Remove arg1 file probaby bind mounted somewheres
-function removeGenFile() {
+function removeGenFile()
+{
     if [ $# -eq 1 ]; then
         removeMountPoints "$1"
         if [ -e "$1" ]; then
@@ -132,7 +158,8 @@ function removeGenFile() {
 }
 
 # Get the active audio policy configuration fille from the audioserever
-function getActivePolicyFile() {
+function getActivePolicyFile()
+{
     dumpsys media.audio_policy | awk ' 
         /^ Config source: / {
             print $3
@@ -140,7 +167,8 @@ function getActivePolicyFile() {
 }
   
 # Make a configuration file for this script
-function makeConfigFile() {
+function makeConfigFile()
+{
     if [ $# -eq 1 ]; then
     
         local policyFile="`getActivePolicyFile`"

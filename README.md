@@ -4,7 +4,7 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
 
 * Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--safe][-safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]`,
 
-  if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth to which you want to change, respectively. Their default values are `44k` (sample rate: 44.1 kHz) and `32` (bit depth: 32 bits).
+if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth to which you want to change, respectively. Their default values are `44k` (sample rate: 44.1 kHz) and `32` (bit depth: 32 bits).
 
   - Options
     - `--reset`(without arguments): resets its previous execution results.
@@ -34,13 +34,13 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
 
 * Tips 2: "jitter-reducer.sh" in "extras" folder is a simplified tool of ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitters relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory, wifi suspension and audio effects framework.
 
-  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [nr_requests]|++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]`
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [scheduler [light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]`
 
     - each "--" prefixed option except "--status" and "--help" options is an enabler for its corresponding jitter reducer, conversely each "++" prefixed option is an disabler for its corresponding jitter reducer. "--all" option is an alias of all "--" prefixed options except "--effect", "--status" and "--help" options, and also  "++all" option is an alias of all "++" prefixed options except "++effect".
-    - "nr_requests" specifys a kernel tunable of I/O devices which is a number between 32 and 64000 inclusive. It has three presets "light" (for warmer tone?), "medium" (default) and "boost" (for clearer tone?).
+    - "scheduler" specifys an I/O scheduler for I/O block devices (typically "deadline", "cfq" or "noop", but you may specify "*" for automatical best selection), and has optional three modes "light" (for warmer tone), "medium" (default) and "boost" (for clearer tone).
     - please remember that "--wifi" option is persistent even after reboot, but other options are not.
 
-  - For most "hifi" example,  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh --all --effect --status` enables all jitter reducers including effect framework one and outputs the jitter related statuses. For Bluetooth earphones, you may need to add `--io light` option.  For DLNA transmitting, you may need to add `--io boost` option.
+  - For most "hifi" example,  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh --all --effect --status` enables all jitter reducers including effect framework one and outputs the jitter related statuses. For Bluetooth earphones, you may need to add `--io "*" light` option.  For DLNA transmitting, you may need to add `--io "*" boost` option.
 
 * Tips 3: Please disable battery optimizations for following app's manually through the settings UI of Android OS (to lower less than 10Hz jitter making reverb like distortions). music (streaming) player apps, their licensing apps (if exist), equalizer apps (if exist), "bluetooth" (system app), "Android Services Library" (system app), "Android Shared Library" (system app), "Android System" (system app), "crDroid System" (system app; if exists), "LineageOS System" (system app; if exists), launcher app, "Google Play Store" (system app), "Google Play Developer Services" (system app), "Magisk", "PhhTrebleApp"(system app; if exists), keyboard app, kernel adiutors (if exist), etc.
 
@@ -80,3 +80,6 @@ I recommend to use sManager (Script Manager) or like for easiness.
 # V2.3
 * Enhanced extras/jitter-reducer.sh by adding a wifi jitter reducer which is especially effective for music streaming services (both online and offline), Pixel's and other high performance devices
 * Cleaned up source codes
+
+# V2.4
+* Enhanced extras/jitter-reducer.sh by replacing the I/O jitter reducer with that of the hifi maximizer which uses "deadline" and "cfq" I/O schedulers and their optimized tunable values

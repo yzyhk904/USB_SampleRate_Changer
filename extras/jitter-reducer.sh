@@ -1,18 +1,27 @@
 #!/system/bin/sh
 
-NR_REQUESTS_DEFAULT=30000
-
-myName="${0##*/}"
 MYDIR="${0%/*}"
 
-function usage() {
-      echo "Usage: $myName [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [nr_requests]|++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]" 1>&2
+# Check whether this script has been marked "disable", or not
+if [ ! -d "$MYDIR" ]; then
+    echo "cannot get the current directory!" 1>&2 ; 
+    exit 1
+elif [ -e "$MYDIR/disable" ] ; then
+    echo "this script is now disabled!" 1>&2 ; 
+    exit 0
+fi
+# End
+
+function usage()
+{
+      echo "Usage: ${0%/*} [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [scheduler [light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]" 1>&2
       echo -n "\nNote 1: each \"--\" prefixed option except \"--status\" and \"--help\" options is an enabler for its corresponding jitter reducer," 1>&2
       echo -n " conversely each \"++\" prefixed option is an disabler for its corresponding jitter reducer." 1>&2
       echo -n " \"--all\" option is an alias of all \"--\" prefixed options except \"--effect\", \"--status\" and \"--help\" options," 1>&2
-      echo     " and also \"++all\" option is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
-      echo -n "\nNote 2: \"nr_requests\" specifys a kernel tunable of I/O devices which is a number between 32 and 64000. It has three presets" 1>&2
-      echo     " \"light\" (for warmer tone?), \"medium\" (default) and \"boost\" (for clearer tone?)."
+      echo      " and also \"++all\" option is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
+      echo -n "\nNote 2: \"scheduler\" specifys an I/O scheduler for I/O block devices " 1>&2
+      echo -n "(typically \"deadline\", \"cfq\" or \"noop\", but you may specify \"*\" for automatical best selection), " 1>&2
+      echo      "and has optional three modes \"light\" (for warmer tone), \"medium\" (default) and \"boost\" (for clearer tone)." 1>&2
       echo     "\nNote 3: \"--wifi\" option is persistent even after reboot, but other options are not." 1>&2
 }
 
@@ -21,12 +30,12 @@ thermalFlag=0
 governorFlag=0
 cameraFlag=0
 ioFlag=0
+ioScheduler=""
+toneMode="medium"
 vmFlag=0
 wifiFlag=0
 effectFlag=0
 printStatus=0
-
-nr_requests="$NR_REQUESTS_DEFAULT"
 
 if [ $# -eq 0 ];then
     usage
@@ -93,27 +102,32 @@ else
                 shift
                 
                 if [ $# -gt 0 ]; then
-                    # Presets: "light", "medium", "boost"; then numbers
+                
+                    case "$1" in
+                        -* )
+                            ;;
+                        * )
+                            ioScheduler="$1"
+                            shift
+                            ;;
+                     esac
+                    
+                    # Tone: "light", "medium", "boost"
                     if [ "$1" = "light" ]; then
-                        nr_requests=14210
+                        toneMode="light" 
                         shift
                     elif [ "$1" = "medium" ]; then
-                        nr_requests="$NR_REQUESTS_DEFAULT"
+                        toneMode="medium" 
                         shift
                     elif [ "$1" = "boost" ]; then
-                        nr_requests=60000
+                        toneMode="boost"
                         shift
-                    elif expr "$1" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
-                    
-                        if [ "$1" -lt 32  -o  "$1" -gt 64000 ]; then
-                            echo "Warning: unsupported \"nr requests\" ignored (nr_requests=$1; 32<=nr_requests<=64000)!" 1>&2
-                        else
-                            nr_requests="$1"
-                        fi
-                        
-                        shift
-                        
+                    elif expr "$1" : '[^-].*' >"/dev/null" 2>&1; then
+                        echo "wrong I/O scheduler parameter (\"$1\"). valid parameters: light medium boost" 1>&2
+                        usage
+                        exit 1
                     fi
+                    
                 fi
                 
                 ;;
@@ -153,8 +167,8 @@ else
                 usage
                 exit 0
                 ;;
-            -* | * )
-                echo "wrong argument ($1)" 1>&2
+            * )
+                echo "wrong option (\"$1\")" 1>&2
                 usage
                 exit 1
                 ;;
@@ -170,7 +184,7 @@ reduceSelinuxJitter $selinuxFlag $printStatus
 reduceThermalJitter $thermalFlag $printStatus
 reduceGovernorJitter $governorFlag $printStatus
 reduceCameraJitter $cameraFlag $printStatus
-reduceIoJitter $ioFlag $nr_requests $printStatus
+reduceIoJitter "$ioFlag" "$ioScheduler" "$toneMode" "$printStatus"
 reduceVmJitter $vmFlag $printStatus
 reduceWifiJitter $wifiFlag "NoRestart" $printStatus
 reduceEffectJitter $effectFlag $printStatus

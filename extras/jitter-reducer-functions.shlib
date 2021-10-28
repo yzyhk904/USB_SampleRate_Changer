@@ -1,6 +1,7 @@
 #!/system/bin/sh
 
-function forceOnlineCPUs() {
+function forceOnlineCPUs()
+{
     local i
     for i in `seq 0 9`; do
         if [ -e "/sys/devices/system/cpu/cpu$i/online" ]; then
@@ -10,7 +11,8 @@ function forceOnlineCPUs() {
     done
 }
 
-function searchDefaultCpuGovernor() {
+function searchDefaultCpuGovernor()
+{
     # Search default CPU governor
     local gov=""
     local i
@@ -32,7 +34,8 @@ function searchDefaultCpuGovernor() {
     echo "$gov"
 }
 
-function reduceSelinuxJitter() {
+function reduceSelinuxJitter()
+{
     if [ $# -eq 2 ]; then
         local flag="$1"
         local printStatus="$2"
@@ -51,7 +54,8 @@ function reduceSelinuxJitter() {
     fi
 }
 
-function reduceThermalJitter() {
+function reduceThermalJitter()
+{
     if [ $# -eq 2 ]; then
         local flag="$1"
         local printStatus="$2"
@@ -149,7 +153,8 @@ function reduceThermalJitter() {
     fi
 }
 
-function reduceGovernorJitter() {
+function reduceGovernorJitter()
+{
     if [ $# -eq 2 ]; then
         local flag="$1"
         local printStatus="$2"
@@ -216,7 +221,8 @@ function reduceGovernorJitter() {
     fi
 }
 
-function reduceCameraJitter() {
+function reduceCameraJitter()
+{
     if [ $# -eq 2 ]; then
         local flag="$1"
         local printStatus="$2"
@@ -284,23 +290,337 @@ function reduceCameraJitter() {
     fi
 }
 
-function reduceIoJitter() {
+# choose the best I/O scheduler for very Hifi audio outputs, and output it into the standard output
+function chooseBestIOScheduler()
+{
+    if [ $# -eq 1  -a  -r "$1" ]; then
+        local x scheds ret_val=""
+  
+        scheds="`tr -d '[]' <\"$1\"`"
+        for x in $scheds; do
+            case "$x" in
+                "deadline" ) ret_val="deadline"; break ;;
+                "cfq" ) ret_val="cfq" ;;
+                "noop" ) if [ "$ret_val" != "cfq" ]; then ret_val="noop"; fi ;;
+                * ) ;;
+            esac
+        done
+        echo "$ret_val"
+        return 0
+    else
+        return 1
+    fi
+}
+
+function selectedScheduler()
+{
+    if [ $# -eq 1  -a  -r "$1" ]; then
+        local sched="`cat \"$1\"`"
+        if [ -n "$sched" ]; then
+            local val
+            val=`expr "$sched" : '[^[]*\[\([^]]*\)\]'`
+            echo "$val"
+            return 0
+        else
+            return 1
+        fi
+        
+    else
+        return 1
+    fi
+}
+
+function validScheduler()
+{
+    if [ $# -eq 2  -a  -r "$1" ]; then
+        local lst
+        local sched="$2"
+        local i
+        lst="`tr -d '[]' <\"$1\"`"
+        for i in $lst; do
+            if [ "$i" = "$sched" ]; then
+                return 0
+            fi
+        done
+        return 1
+    else
+        return 1
+    fi
+}
+
+function nth()
+{
+    if [ $# -eq 2  -a  -n "$1" ]; then
+    
+        if [ -n "$2"  -a  "$2" -gt 0 ]; then
+        
+            local v
+            local i=1
+            
+            for v in $1; do
+                if [ "$2" -eq "$i" ]; then
+                    echo "$v"
+                    return 0
+                else
+                    i="`expr $i + 1`"
+                fi
+            done
+            return 1
+            
+        else
+        
+            retrun 1
+            
+        fi
+        
+    else
+    
+        return 1
+        
+    fi
+}
+
+function adjustForSoC()
+{
+    if [ $# -eq 1  -a  -n "$1"  -a  "$1" -ge 0 ]; then
+        
+        case "`getprop ro.board.platform`" in
+            sdm* | msm* | sd* | exynos* )
+                echo "`expr  '(' $1 / 10 ')' '*' 10 + '(' '(' '(' $1 % 10 ')'  + 1 ')' / 3 ')' '*' 3`"
+                ;;
+            mt6* )
+                echo "`expr '(' '(' $1 + 1 ')' / 4 ')' '*' 4`"
+                ;;
+            * )
+                echo "$1"
+                ;;
+        esac
+        return 0
+        
+    else
+        
+        return 1
+        
+    fi
+}
+
+function adjustSchedulerParameter()
+{
     if [ $# -eq 3 ]; then
+        
+        if [ "$1" = "deadline"  -a  -n "$2"  -a  -n "$3" ]; then
+            case "$2" in
+                "read_expire" )
+                    echo "`adjustForSoC \"$3\"`"
+                    ;;
+                "write_expire" )
+                    echo "`adjustForSoC \"$3\"`"
+                    ;;
+                * )
+                    echo "$3"
+                    ;;
+            esac
+        else
+            echo "$3"
+        fi
+        return 0
+        
+    else
+        
+        return 1
+        
+    fi
+}
+
+function adjustNrRequestsForSoC()
+{
+    if [ $# -eq 1  -a  -n "$1"  -a  "$1" -ge 0 ]; then
+        
+        case "`getprop ro.board.platform`" in
+            sdm* | msm* | sd* | exynos* )
+                echo "`expr  $1 + '(' '(' $1 '*' 54 + 32250 ')' / 64500 ')' '*' 10`"
+                ;;
+            * )
+                echo "$1"
+                ;;
+        esac
+        return 0
+        
+    else
+        
+        return 1
+        
+    fi
+}
+
+function getSchedulerParams()
+{
+    if [ $# -eq 1 ]; then
+        case "$1" in
+            "deadline" )
+                echo "fifo_batch front_merges read_expire write_expire writes_starved"
+                ;;
+            "cfq" )
+                echo "back_seek_penalty fifo_expire_async fifo_expire_sync group_idle low_latency quantum slice_async slice_async_rq \
+                    slice_idle slice_sync target_latency"
+                ;;
+            "noop" | * )
+                echo ""
+                ;;
+        esac
+        return 0
+    else
+        return 1
+    fi
+}
+
+function getSchedulerValues()
+{
+    if [ $# -eq 2 ]; then
+        case "$1" in
+            "deadline" )
+                #   fifo_batch front_merges read_expire write_expire writes_starved
+                case "$2" in
+                    "light" )
+                        echo "33 0 8 476 0"
+                        ;;
+                    "boost" )
+                        echo "35 0 16 480 0"
+                        ;;
+                    "medium" | * )
+                        echo "35 0 12 480 0"
+                        ;;
+                esac
+                ;;
+                
+            "cfq" )
+                #   back_seek_penalty fifo_expire_async fifo_expire_sync group_idle low_latency quantum slice_async slice_async_rq
+                #       slice_idle slice_sync target_latency
+                case "$2" in
+                    "light" )
+                        echo "1 3 3 0 1 1 3 22 0 3 3"
+                        ;;
+                    "boost" )
+                        echo "1 3 3 0 1 1 3 24 0 3 3"
+                        ;;
+                    "medium" | * )
+                        echo "1 3 3 0 1 1 3 23 0 3 3"
+                        ;;
+                esac
+                ;;
+                
+            "noop" | * )
+                echo ""
+                ;;
+                
+        esac
+        return 0
+    else
+        return 1
+    fi
+}
+
+function getSchedulerNrRequests()
+{
+    if [ $# -eq 2 ]; then
+        case "$1" in
+            "deadline" )
+                case "$2" in
+                    "light" )
+                        echo "35150"
+                        ;;
+                    "boost" )
+                        echo "64500"
+                        ;;
+                    "medium" | * )
+                        echo "60000"
+                        ;;
+                esac
+                ;;
+                
+            "cfq" )
+                case "$2" in
+                    "light" )
+                        echo "14210"
+                        ;;
+                    "boost" )
+                        echo "60000"
+                        ;;
+                    "medium" | * )
+                        echo "30000"
+                        ;;
+                esac
+                ;;
+                
+            "noop" | * )
+                case "$2" in
+                    "light" )
+                        echo "14210"
+                        ;;
+                    "boost" )
+                        echo "60000"
+                        ;;
+                    "medium" | * )
+                        echo "30000"
+                        ;;
+                esac
+               ;;
+                
+        esac
+        return 0
+    else
+        return 1
+    fi
+}
+
+function reduceIoJitter() 
+{
+    if [ $# -eq 4 ]; then
         local flag="$1"
-        local nr_requests="$2"
-        local printStatus="$3"
+        local ioScheduler="$2"
+        local toneMode="$3"
+        local printStatus="$4"
 
         if [ $flag -gt 0 ]; then
         
-            local i
+            local sched params vals nr_requests
+            local i p v j
             for i in sda mmcblk0 mmcblk1; do
                 if [ -d "/sys/block/$i/queue" ]; then
-                    echo 'noop' >"/sys/block/$i/queue/scheduler"
-                    echo '8192' >"/sys/block/$i/queue/read_ahead_kb"
-                    echo '0' >"/sys/block/$i/queue/iostats"
-                    echo '2' >"/sys/block/$i/queue/rq_affinity"
-                    echo '2' >"/sys/block/$i/queue/nomerges"
-                    echo "$nr_requests" >"/sys/block/$i/queue/nr_requests"
+                    if [ -z "$ioScheduler"  -o  "$ioScheduler" = "*" ]; then
+                        sched="`chooseBestIOScheduler \"/sys/block/$i/queue/scheduler\"`"
+                    else
+                        sched="$ioScheduler"
+                    fi
+                    if validScheduler "/sys/block/$i/queue/scheduler" "$sched"; then
+                        
+                        params="`getSchedulerParams \"$sched\"`"
+                        vals="`getSchedulerValues \"$sched\" \"$toneMode\"`"
+                        nr_requests="`getSchedulerNrRequests \"$sched\" \"$toneMode\"`"
+                        nr_requests="`adjustNrRequestsForSoC \"$nr_requests\"`"
+                        echo "$sched" >"/sys/block/$i/queue/scheduler"
+                        echo '8192' >"/sys/block/$i/queue/read_ahead_kb"
+                        echo '0' >"/sys/block/$i/queue/iostats"
+                        echo '2' >"/sys/block/$i/queue/rq_affinity"
+                        echo '2' >"/sys/block/$i/queue/nomerges"
+                        echo "$nr_requests" >"/sys/block/$i/queue/nr_requests"
+                        j=1
+                        for p in $params; do
+                            v="`nth \"$vals\" \"$j\"`"
+                            v="`adjustSchedulerParameter \"$sched\" \"$p\" \"$v\"`"
+                            if [ -w "/sys/block/$i/queue/iosched/$p"  -a  -n "$v"  -a  "$v" -ge 0 ]; then
+                                echo "$v" >"/sys/block/$i/queue/iosched/$p"
+                            fi
+                            j="`expr $j + 1`"
+                        done
+                        
+                    else
+                        
+                        local sched_lst="`tr -d '[]'  <\"/sys/block/$i/queue/scheduler\"`"
+                        echo "Warning: ignoring wrong I/O scheduler (\"$sched\") settings for block device \"/dev/$i\"." 1>&2
+                        echo "  available I/O schedulers: $sched_lst" 1>&2
+                        
+                    fi
                 fi
             done
             
@@ -308,7 +628,10 @@ function reduceIoJitter() {
         
             for i in sda mmcblk0 mmcblk1; do
                 if [ -d "/sys/block/$i/queue" ]; then
+                    echo 'noop' >"/sys/block/$i/queue/scheduler"
+                    sleep 0.05
                     echo 'cfq' >"/sys/block/$i/queue/scheduler"
+                    sleep 0.05
                     echo '128' >"/sys/block/$i/queue/read_ahead_kb"
                     echo '1' >"/sys/block/$i/queue/iostats"
                     echo '1' >"/sys/block/$i/queue/rq_affinity"
@@ -320,21 +643,29 @@ function reduceIoJitter() {
         fi
         
         if [ $printStatus -gt 0 ]; then
-            local i
-            local val
+            local i j val lst
             for i in sda mmcblk0 mmcblk1; do
                 if [ -d "/sys/block/$i/queue" ]; then
-                    val=`cat /sys/block/$i/queue/scheduler`
+                    val="`selectedScheduler \"/sys/block/$i/queue/scheduler\"`"
                     echo "  I/O scheduler: $val"
-                    val=`cat /sys/block/$i/queue/read_ahead_kb`
+                    lst="`ls \"/sys/block/$i/queue/iosched/\"*`" 2>"/dev/null"
+                    if [ -n "$lst" ]; then
+                        echo "    {"
+                        for j in $lst; do
+                            val="`cat \"$j\"`"
+                            echo "      ${j##*/}: $val"
+                        done
+                        echo "    }"
+                    fi
+                    val="`cat \"/sys/block/$i/queue/read_ahead_kb\"`"
                     echo "  I/O read ahead size: $val KB"
-                    val=`cat /sys/block/$i/queue/iostats`
+                    val="`cat \"/sys/block/$i/queue/iostats\"`"
                     echo "  I/O iostat: $val"
-                    val=`cat /sys/block/$i/queue/rq_affinity`
+                    val="`cat \"/sys/block/$i/queue/rq_affinity\"`"
                     echo "  I/O rq affinity: $val"
-                    val=`cat /sys/block/$i/queue/nomerges`
+                    val="`cat \"/sys/block/$i/queue/nomerges\"`"
                     echo "  I/O nomerges: $val"
-                    val=`cat /sys/block/$i/queue/nr_requests`
+                    val="`cat \"/sys/block/$i/queue/nr_requests\"`"
                     echo "  I/O nr requests: $val"
                     break
                 fi
@@ -346,7 +677,8 @@ function reduceIoJitter() {
     fi
 }
 
-function reduceVmJitter() {
+function reduceVmJitter()
+{
     if [ $# -eq 2 ]; then
         local flag="$1"
         local printStatus="$2"
@@ -376,27 +708,29 @@ function reduceVmJitter() {
         fi
         
         if [ $printStatus -gt 0 ]; then
-            local val=`cat /proc/sys/vm/swappiness`
+            # I don't know the reason, but "read val <'/proc/sys/vm/swappiness'", etc. cannot get its whole value (only first one character)
+            local val
+            val="`cat /proc/sys/vm/swappiness`"
             if [ -n "$val" ]; then
                 echo "  VM swappiness: $val"
             fi
-            val=`cat /proc/sys/vm/dirty_ratio`
+            val="`cat /proc/sys/vm/dirty_ratio`"
             if [ -n "$val" ]; then
                 echo "  VM dirty ratio: $val"
             fi
-            val=`cat /proc/sys/vm/dirty_background_ratio`
+            val="`cat /proc/sys/vm/dirty_background_ratio`"
             if [ -n "$val" ]; then
                 echo "  VM dirty background ratio: $val"
             fi
-            val=`cat /proc/sys/vm/dirty_expire_centisecs`
+            val="`cat /proc/sys/vm/dirty_expire_centisecs`"
             if [ -n "$val" ]; then
                 echo "  VM dirty expire centisecs: $val"
             fi
-            val=`cat /proc/sys/vm/dirty_writeback_centisecs`
+            val="`cat /proc/sys/vm/dirty_writeback_centisecs`"
             if [ -n "$val" ]; then
                 echo "  VM dirty writeback centisecs: $val"
             fi
-            val=`cat /proc/sys/vm/laptop_mode`
+            val="`cat /proc/sys/vm/laptop_mode`"
             if [ "$val" = "1" ]; then
                 echo "  VM laptop mode: on"
             else
@@ -410,7 +744,33 @@ function reduceVmJitter() {
     fi
 }
 
-function reduceEffectJitter() {
+function reloadAudioserver()
+{
+    # wait for system boot completion and audiosever boot up
+    local i
+    for i in `seq 1 3` ; do
+      if [ "`getprop sys.boot_completed`" = "1"  -a  "`getprop init.svc.audioserver`" = "running" ]; then
+        break
+      fi
+      sleep 0.9
+    done
+
+    if [ "`getprop init.svc.audioserver`" = "running" ]; then
+        setprop ctl.restart audioserver
+        if [ $? -gt 0 ]; then
+            echo "audioserver reload failed!" 1>&2
+            return 1
+        else
+            return 0
+        fi
+    else
+        echo "audioserver is not running!" 1>&2 
+        return 1
+    fi
+}
+
+function reduceEffectJitter()
+{
     if [ $# -eq 2 ]; then
         local flag="$1"
         local printStatus="$2"
@@ -420,12 +780,12 @@ function reduceEffectJitter() {
             type resetprop 1>/dev/null 2>&1
             if [ $? -eq 0 ]; then
                 resetprop ro.audio.ignore_effects true
-                setprop ctl.restart audioserver
+                reloadAudioserver
             else
                 type resetprop_phh 1>/dev/null 2>&1
                 if [ $? -eq 0 ]; then
                     resetprop_phh ro.audio.ignore_effects true
-                    setprop ctl.restart audioserver
+                    reloadAudioserver
                 else
                     return 2
                  fi
@@ -436,12 +796,12 @@ function reduceEffectJitter() {
             type resetprop 1>/dev/null 2>&1
             if [ $? -eq 0 ]; then
                 resetprop --delete ro.audio.ignore_effects
-                setprop ctl.restart audioserver
+                reloadAudioserver
             else
                 type resetprop_phh 1>/dev/null 2>&1
                 if [ $? -eq 0 ]; then
                     resetprop_phh --delete ro.audio.ignore_effects
-                    setprop ctl.restart audioserver
+                    reloadAudioserver
                 else
                     return 2
                 fi
@@ -465,7 +825,8 @@ function reduceEffectJitter() {
     fi
 }
 
-function restartWifi() {
+function restartWifi()
+{
     local val="`settings get global wifi_on`"
     
     if [ -n "$val"  -a  "$val" != "0" ]; then
@@ -474,7 +835,8 @@ function restartWifi() {
     fi
 }
 
-function reduceWifiJitter () {
+function reduceWifiJitter ()
+{
     if [ $# -eq 3 ]; then
         local flag="$1"
         local restartFlag="$2"

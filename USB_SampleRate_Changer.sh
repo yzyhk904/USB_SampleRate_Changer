@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.3.0
+# Version: 2.4.0
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -81,9 +81,7 @@ if "$resetMode"; then
         rm -f "$MYDIR/.config"
     fi
     removeGenFile "$genfile"
-    if [ "`getprop init.svc.audioserver`" = "running" ]; then
-      reloadAudioServers "all"
-    fi
+    reloadAudioServers "all"
     exit 0
 fi
 # Reset End
@@ -262,21 +260,8 @@ else
 fi
 # End of overlay system files
 
+
 # Reload audio policy configuration files.  
-if [ "`getprop init.svc.audioserver`" = "running" ]; then
+reloadAudioServers
 
-    reloadAudioServers
-    if [ $? -gt 0 ]; then
-        echo "audioserver reload failed!" 1>&2
-        exit 1
-    else
-        exit 0
-    fi
-    
-else
-
-    echo "audioserver is not running!" 1>&2 
-    exit 1
-    
-fi
 # End of reload
