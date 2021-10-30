@@ -34,7 +34,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
 
 * Tips 2: "jitter-reducer.sh" in "extras" folder is a simplified tool of ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitters relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory, wifi suspension and audio effects framework.
 
-  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [scheduler [light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]`
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [scheduler [light | m-light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]`
 
     - each "--" prefixed option except "--status" and "--help" options is an enabler for its corresponding jitter reducer, conversely each "++" prefixed option is an disabler for its corresponding jitter reducer. "--all" option is an alias of all "--" prefixed options except "--effect", "--status" and "--help" options, and also  "++all" option is an alias of all "++" prefixed options except "++effect".
     - "scheduler" specifys an I/O scheduler for I/O block devices (typically "deadline", "cfq" or "noop", but you may specify "*" for automatical best selection), and has optional four modes "light" (for warmer tone), "m-light" (for slightly warmer tone), "medium" (default) and "boost" (for clearer tone).
