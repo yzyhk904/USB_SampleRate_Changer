@@ -484,6 +484,9 @@ function getSchedulerValues()
                     "light" )
                         echo "33 0 8 476 0"
                         ;;
+                    "m-light" )
+                        echo "32 0 12 480 0"
+                        ;;
                     "boost" )
                         echo "35 0 16 480 0"
                         ;;
@@ -499,6 +502,9 @@ function getSchedulerValues()
                 case "$2" in
                     "light" )
                         echo "1 3 3 0 1 1 3 22 0 3 3"
+                        ;;
+                    "m-light" )
+                        echo "1 3 3 0 1 1 3 23 0 3 3"
                         ;;
                     "boost" )
                         echo "1 3 3 0 1 1 3 24 0 3 3"
@@ -529,6 +535,9 @@ function getSchedulerNrRequests()
                     "light" )
                         echo "35150"
                         ;;
+                    "m-light" )
+                        echo "35050"
+                        ;;
                     "boost" )
                         echo "64500"
                         ;;
@@ -543,6 +552,9 @@ function getSchedulerNrRequests()
                     "light" )
                         echo "14210"
                         ;;
+                    "m-light" )
+                        echo "13920"
+                        ;;
                     "boost" )
                         echo "60000"
                         ;;
@@ -555,6 +567,9 @@ function getSchedulerNrRequests()
             "noop" | * )
                 case "$2" in
                     "light" )
+                        echo "13920"
+                        ;;
+                    "m-light" )
                         echo "14210"
                         ;;
                     "boost" )

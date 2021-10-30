@@ -1,4 +1,7 @@
 #!/system/bin/sh
+#
+# Version: 2.0.1
+#     by zyhk
 
 MYDIR="${0%/*}"
 
@@ -14,14 +17,15 @@ fi
 
 function usage()
 {
-      echo "Usage: ${0%/*} [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [scheduler [light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]" 1>&2
+      echo "Usage: ${0%/*} [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [scheduler [light | m-light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]" 1>&2
       echo -n "\nNote 1: each \"--\" prefixed option except \"--status\" and \"--help\" options is an enabler for its corresponding jitter reducer," 1>&2
       echo -n " conversely each \"++\" prefixed option is an disabler for its corresponding jitter reducer." 1>&2
       echo -n " \"--all\" option is an alias of all \"--\" prefixed options except \"--effect\", \"--status\" and \"--help\" options," 1>&2
       echo      " and also \"++all\" option is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
       echo -n "\nNote 2: \"scheduler\" specifys an I/O scheduler for I/O block devices " 1>&2
       echo -n "(typically \"deadline\", \"cfq\" or \"noop\", but you may specify \"*\" for automatical best selection), " 1>&2
-      echo      "and has optional three modes \"light\" (for warmer tone), \"medium\" (default) and \"boost\" (for clearer tone)." 1>&2
+      echo -n "and has optional four modes \"light\" (for warmer tone), \"m-light\" (for slightly warmer tone)," 1>&2
+      echo     " \"medium\" (default) and \"boost\" (for clearer tone)." 1>&2
       echo     "\nNote 3: \"--wifi\" option is persistent even after reboot, but other options are not." 1>&2
 }
 
@@ -116,6 +120,9 @@ else
                     if [ "$1" = "light" ]; then
                         toneMode="light" 
                         shift
+                    elif [ "$1" = "m-light" ]; then
+                        toneMode="m-light" 
+                        shift
                     elif [ "$1" = "medium" ]; then
                         toneMode="medium" 
                         shift
@@ -123,7 +130,7 @@ else
                         toneMode="boost"
                         shift
                     elif expr "$1" : '[^-].*' >"/dev/null" 2>&1; then
-                        echo "wrong I/O scheduler parameter (\"$1\"). valid parameters: light medium boost" 1>&2
+                        echo "wrong I/O scheduler parameter (\"$1\"). valid parameters: light m-light medium boost" 1>&2
                         usage
                         exit 1
                     fi
