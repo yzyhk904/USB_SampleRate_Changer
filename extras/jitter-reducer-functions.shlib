@@ -432,27 +432,6 @@ function adjustSchedulerParameter()
     fi
 }
 
-function adjustNrRequestsForSoC()
-{
-    if [ $# -eq 1  -a  -n "$1"  -a  "$1" -ge 0 ]; then
-        
-        case "`getprop ro.board.platform`" in
-            sdm* | msm* | sd* | exynos* )
-                echo "`expr  $1 + '(' '(' $1 '*' 54 + 32250 ')' / 64500 ')' '*' 10`"
-                ;;
-            * )
-                echo "$1"
-                ;;
-        esac
-        return 0
-        
-    else
-        
-        return 1
-        
-    fi
-}
-
 function getSchedulerParams()
 {
     if [ $# -eq 1 ]; then
@@ -488,10 +467,24 @@ function getSchedulerValues()
                         echo "32 0 12 480 0"
                         ;;
                     "boost" )
-                        echo "35 0 16 480 0"
+                        case "`getprop ro.board.platform`" in
+                            sdm8* )
+                                echo "35 0 16 480 0"
+                                ;;
+                            * )
+                                echo "36 0 16 480 0"
+                                ;;
+                        esac
                         ;;
                     "medium" | * )
-                        echo "35 0 12 480 0"
+                        case "`getprop ro.board.platform`" in
+                            sdm8* )
+                                echo "36 0 12 480 0"
+                                ;;
+                            * )
+                                echo "37 0 12 480 0"
+                                ;;
+                        esac
                         ;;
                 esac
                 ;;
@@ -507,10 +500,10 @@ function getSchedulerValues()
                         echo "1 3 3 0 1 1 3 23 0 3 3"
                         ;;
                     "boost" )
-                        echo "1 3 3 0 1 1 3 24 0 3 3"
+                        echo "1 3 3 0 1 1 3 25 0 3 3"
                         ;;
                     "medium" | * )
-                        echo "1 3 3 0 1 1 3 23 0 3 3"
+                        echo "1 3 3 0 1 1 3 24 0 3 3"
                         ;;
                 esac
                 ;;
@@ -533,16 +526,47 @@ function getSchedulerNrRequests()
             "deadline" )
                 case "$2" in
                     "light" )
-                        echo "35150"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "35590"
+                                ;;
+                            * )
+                                echo "35290"
+                                ;;
+                        esac
                         ;;
                     "m-light" )
-                        echo "35050"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "38610"
+                                ;;
+                            * )
+                                echo "38290"
+                                ;;
+                        esac
                         ;;
                     "boost" )
-                        echo "64500"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "73110"
+                                ;;
+                            * )
+                                echo "72500"
+                                ;;
+                        esac
                         ;;
                     "medium" | * )
-                        echo "60000"
+                        case "`getprop ro.board.platform`" in
+                            sdm8* )
+                                echo "67050"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "66050"
+                                ;;
+                            * )
+                                echo "65500"
+                                ;;
+                        esac
                         ;;
                 esac
                 ;;
@@ -550,16 +574,44 @@ function getSchedulerNrRequests()
             "cfq" )
                 case "$2" in
                     "light" )
-                        echo "14210"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "14000"
+                                ;;
+                            * )
+                                echo "13920"
+                                ;;
+                        esac
                         ;;
                     "m-light" )
-                        echo "13920"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "14320"
+                                ;;
+                            * )
+                                echo "14210"
+                                ;;
+                        esac
                         ;;
                     "boost" )
-                        echo "60000"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "60550"
+                                ;;
+                            * )
+                                echo "60000"
+                                ;;
+                        esac
                         ;;
                     "medium" | * )
-                        echo "30000"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "30280"
+                                ;;
+                            * )
+                                echo "30000"
+                                ;;
+                        esac
                         ;;
                 esac
                 ;;
@@ -567,16 +619,44 @@ function getSchedulerNrRequests()
             "noop" | * )
                 case "$2" in
                     "light" )
-                        echo "13920"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "14000"
+                                ;;
+                            * )
+                                echo "13920"
+                                ;;
+                        esac
                         ;;
                     "m-light" )
-                        echo "14210"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "14320"
+                                ;;
+                            * )
+                                echo "14210"
+                                ;;
+                        esac
                         ;;
                     "boost" )
-                        echo "60000"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "60550"
+                                ;;
+                            * )
+                                echo "60000"
+                                ;;
+                        esac
                         ;;
                     "medium" | * )
-                        echo "30000"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "30280"
+                                ;;
+                            * )
+                                echo "30000"
+                                ;;
+                        esac
                         ;;
                 esac
                ;;
@@ -612,7 +692,6 @@ function reduceIoJitter()
                         params="`getSchedulerParams \"$sched\"`"
                         vals="`getSchedulerValues \"$sched\" \"$toneMode\"`"
                         nr_requests="`getSchedulerNrRequests \"$sched\" \"$toneMode\"`"
-                        nr_requests="`adjustNrRequestsForSoC \"$nr_requests\"`"
                         echo "$sched" >"/sys/block/$i/queue/scheduler"
                         echo '8192' >"/sys/block/$i/queue/read_ahead_kb"
                         echo '0' >"/sys/block/$i/queue/iostats"
