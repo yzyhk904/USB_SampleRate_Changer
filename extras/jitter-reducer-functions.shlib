@@ -153,6 +153,99 @@ function reduceThermalJitter()
     fi
 }
 
+function getQcomGpuFreq()
+{
+    local isMax="0"
+    
+    if [ $# -eq 1  -a  "$1" = "max" ]; then
+        isMax="1"
+    fi
+    
+    if [ -r "/sys/class/kgsl/kgsl-3d0/gpu_available_frequencies"  -a  -r "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
+        local tab x y freq=""
+        
+        read tab <"/sys/class/kgsl/kgsl-3d0/gpu_available_frequencies"
+        if [ -z "$tab" ]; then
+            return 1
+        fi
+        set $tab 1>"/dev/null" 2>&1
+        
+        if [ "$isMax" -eq 1 ]; then
+            freq="$1"
+        elif [ -r "/sys/class/kgsl/kgsl-3d0/default_pwrlevel" ]; then
+            read x <"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+            read y <"/sys/class/kgsl/kgsl-3d0/default_pwrlevel"
+            if [ "$y" -lt "$x" ]; then
+                x="$y"
+            fi
+            if [ "$x" -lt $# ]; then
+                shift $x
+            fi
+            freq="$1"
+        else
+            # no estimation possible, so check the current real GPU clock
+            read freq <"/sys/class/kgsl/kgsl-3d0/gpuclk"
+        fi
+        
+        if [ -n "$freq" ]; then
+            echo "$freq"
+            return 0
+        else
+            return 1
+        fi
+        
+    else
+        return 1
+    fi
+}
+
+function getMtkGpuFreqKhz()
+{
+    local isMax="0"
+    
+    if [ $# -eq 1  -a  "$1" = "max" ]; then
+        isMax="1"
+    fi
+    
+    if [ -r "/proc/gpufreq/gpufreq_opp_dump" ]; then
+        local x1 x2 x3 x4 x5 freq="" IFS=" ,"
+        
+        if [ "$isMax" -eq 1 ]; then
+            read x1 x2 x3 x4 x5 <"/proc/gpufreq/gpufreq_opp_dump"
+            freq="$x4"
+        else
+            while read x1 x2 x3 x4 x5; do
+                freq="$x4"
+            done <"/proc/gpufreq/gpufreq_opp_dump"
+        fi
+        
+        if [ -n "$freq" ]; then
+            echo "$freq"
+            return 0
+        else
+            return 1
+        fi
+        
+    else
+        return 1
+    fi
+}
+
+function isMtkGpuFreqFixed()
+{
+    if [ -r "/proc/gpufreq/gpufreq_opp_freq" ]; then
+        local x1 x2 x3 x4 x5
+        read x1 x2 x3 x4 x5 <"/proc/gpufreq/gpufreq_opp_freq"
+        if [ "$x5" = "enabled" ]; then
+            return 0
+        else
+            return 1
+        fi
+    else
+        return 1
+    fi
+}
+
 function reduceGovernorJitter()
 {
     if [ $# -eq 2 ]; then
@@ -173,11 +266,27 @@ function reduceGovernorJitter()
                     echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
                 fi
             done
-            # Qcomm GPU's
+            # GPU's
             if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
+                # For old Qcomm GPU's
                 echo 'performance' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+                if [ -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
+                    # Set the min power level to be maximum
+                    echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                fi
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
+                # For Qcomm GPU's
                 echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                if [ -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
+                    # Set the min power level to be maximum
+                    echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                fi
+            elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
+                # Maximum fixed frequency setting for MediaTek GPU's
+                local freq="`getMtkGpuFreqKhz \"max\"`"
+                if [ -n "$freq" ]; then
+                    echo "$freq" >"/proc/gpufreq/gpufreq_opp_freq"
+                fi
             fi
             
         elif [ $flag -lt 0 ]; then
@@ -194,11 +303,34 @@ function reduceGovernorJitter()
                     echo "$gov" >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
                 fi
             done
-            # Qcomm default GPU governor
+
             if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
+                # Default GPU governor for old Qcomm GPU's
                 echo 'ondemand' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+                if [ -r "/sys/class/kgsl/kgsl-3d0/num_pwrlevels"  -a  -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
+                    # Set the min power level to be minimum
+                    local x="4"
+                    read x <"/sys/class/kgsl/kgsl-3d0/num_pwrlevels"
+                    x="`expr $x - 1`"
+                    if [ -n "$x" ]; then
+                        echo "$x" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    fi
+                fi
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
+                # Default GPU governor for Qcomm GPU's
                 echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                if [ -r "/sys/class/kgsl/kgsl-3d0/num_pwrlevels"  -a  -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
+                    # Set the min power level to be minimum
+                    local x="6"
+                    read x <"/sys/class/kgsl/kgsl-3d0/num_pwrlevels"
+                    x="`expr $x - 1`"
+                    if [ -n "$x" ]; then
+                        echo "$x" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    fi
+                fi
+            elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
+                # Variable frequency setting for MediaTek GPU's
+                echo '0' >"/proc/gpufreq/gpufreq_opp_freq"
             fi
             
         fi
@@ -208,11 +340,45 @@ function reduceGovernorJitter()
             if [ -r "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor" ]; then
                 echo "  Governor CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`"
             fi
-            # Qcomm GPU Governor
+            
             if [ -r "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
-                echo "  Governor GPU: `cat /sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor`"
+                # For old Qcomm GPU Governor
+                local freq gov
+                read gov <"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+                if [ "$gov" = "performance" ]; then
+                    freq="`getQcomGpuFreq \"max\"`"
+                    freq="`expr $freq / 1000000`MHz"
+                    echo "  Governor GPU: performance (fixed: $freq)"
+                else
+                    freq="`getQcomGpuFreq \"typical\"`"
+                    freq="`expr $freq / 1000000`Mhz"
+                    echo "  Governor GPU: $gov (typical: $freq)"
+                fi
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
-                echo "  Governor GPU: `cat /sys/class/kgsl/kgsl-3d0/devfreq/governor`"
+                # For Qcomm GPU Governor
+                local freq gov
+                read gov <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                if [ "$gov" = "performance" ]; then
+                    freq="`getQcomGpuFreq \"max\"`"
+                    freq="`expr $freq / 1000000`MHz"
+                    echo "  Governor GPU: performance (fixed: $freq)"
+                else
+                    freq="`getQcomGpuFreq \"typical\"`"
+                    freq="`expr $freq / 1000000`MHz"
+                    echo "  Governor GPU: $gov (typical: $freq)"
+                fi
+            elif [ -r "/proc/gpufreq/gpufreq_opp_freq" ]; then
+                # For getting MediaTek GPU settings
+                local freq
+                if isMtkGpuFreqFixed; then
+                    freq="`getMtkGpuFreqKhz \"max\"`"
+                    freq="`expr $freq / 1000`MHz"
+                    echo "  Governor GPU: max freq (fixed: $freq)"
+                else
+                    freq="`getMtkGpuFreqKhz \"typical\"`"
+                    freq="`expr $freq / 1000`MHz"
+                    echo "  Governor GPU: variable freq (typical: $freq)"
+                fi
             fi
         fi
         
@@ -461,18 +627,32 @@ function getSchedulerValues()
                 #   fifo_batch front_merges read_expire write_expire writes_starved
                 case "$2" in
                     "light" )
-                        echo "33 0 8 476 0"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "33 0 8 476 0"
+                                ;;
+                            * )
+                                echo "33 0 8 476 0"
+                                ;;
+                        esac
                         ;;
                     "m-light" )
-                        echo "32 0 12 480 0"
+                        case "`getprop ro.board.platform`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "34 0 12 480 0"
+                                ;;
+                            * )
+                                echo "37 0 12 480 0"
+                                ;;
+                        esac
                         ;;
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "35 0 16 480 0"
+                                echo "37 0 16 480 0"
                                 ;;
                             * )
-                                echo "36 0 16 480 0"
+                                echo "37 0 16 480 0"
                                 ;;
                         esac
                         ;;
@@ -494,7 +674,7 @@ function getSchedulerValues()
                 #       slice_idle slice_sync target_latency
                 case "$2" in
                     "light" )
-                        echo "1 3 3 0 1 1 3 22 0 3 3"
+                        echo "1 3 3 0 1 1 3 23 0 3 3"
                         ;;
                     "m-light" )
                         echo "1 3 3 0 1 1 3 23 0 3 3"
@@ -528,43 +708,40 @@ function getSchedulerNrRequests()
                     "light" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "35590"
+                                echo "35656"
                                 ;;
                             * )
-                                echo "35290"
+                                echo "35375"
                                 ;;
                         esac
                         ;;
                     "m-light" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "38610"
+                                echo "39240"
                                 ;;
                             * )
-                                echo "38290"
+                                echo "39163"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "73110"
+                                echo "76000"
                                 ;;
                             * )
-                                echo "72500"
+                                echo "76000"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getprop ro.board.platform`" in
-                            sdm8* )
-                                echo "67050"
-                                ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "66050"
+                                echo "67555"
                                 ;;
                             * )
-                                echo "65500"
+                                echo "68330"
                                 ;;
                         esac
                         ;;
@@ -579,7 +756,7 @@ function getSchedulerNrRequests()
                                 echo "14000"
                                 ;;
                             * )
-                                echo "13920"
+                                echo "13835"
                                 ;;
                         esac
                         ;;
@@ -624,7 +801,7 @@ function getSchedulerNrRequests()
                                 echo "14000"
                                 ;;
                             * )
-                                echo "13920"
+                                echo "13835"
                                 ;;
                         esac
                         ;;
