@@ -32,7 +32,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/getConfig.sh [--all][--help]`
     - outputs breif information of the active audio policy configuration. With `--all` option, this script outputs all the information of the configuration.
 
-* Tips 2: "jitter-reducer.sh" in "extras" folder is an interactive tool derived from ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitters relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory, wifi suspension and audio effects framework.
+* Tips 2: "jitter-reducer.sh" in "extras" folder is an interactive tool derived from ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitter distortions in all digital audio outputs relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory, wifi suspension and audio effects framework. (Jitter distortions reduction is the very key to ultimate hifi audio quality)
 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [scheduler [light | m-light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]`
 
