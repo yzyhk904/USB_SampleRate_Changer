@@ -707,41 +707,53 @@ function getSchedulerNrRequests()
                 case "$2" in
                     "light" )
                         case "`getprop ro.board.platform`" in
+                            sdm8* )
+                                echo "36203"
+                                ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "35656"
+                                echo "36220"
                                 ;;
                             * )
-                                echo "35375"
+                                echo "36365"
                                 ;;
                         esac
                         ;;
                     "m-light" )
                         case "`getprop ro.board.platform`" in
+                            sdm8* )
+                                echo "39225"
+                                ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "39240"
+                                echo "39063"
                                 ;;
                             * )
-                                echo "39163"
+                                echo "39573"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getprop ro.board.platform`" in
+                            sdm8* )
+                                echo "77600"
+                                ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "76000"
+                                echo "77130"
                                 ;;
                             * )
-                                echo "76000"
+                                echo "77500"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getprop ro.board.platform`" in
+                            sdm8* )
+                                echo "69550"
+                                ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "67555"
+                                echo "69110"
                                 ;;
                             * )
-                                echo "68330"
+                                echo "69600"
                                 ;;
                         esac
                         ;;
@@ -753,40 +765,40 @@ function getSchedulerNrRequests()
                     "light" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "14000"
+                                echo "14476"
                                 ;;
                             * )
-                                echo "13835"
+                                echo "13875"
                                 ;;
                         esac
                         ;;
                     "m-light" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "14320"
+                                echo "14540"
                                 ;;
                             * )
-                                echo "14210"
+                                echo "14392"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "60550"
+                                echo "62375"
                                 ;;
                             * )
-                                echo "60000"
+                                echo "60630"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "30280"
+                                echo "31170"
                                 ;;
                             * )
-                                echo "30000"
+                                echo "30545"
                                 ;;
                         esac
                         ;;
@@ -798,40 +810,40 @@ function getSchedulerNrRequests()
                     "light" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "14000"
+                                echo "14615"
                                 ;;
                             * )
-                                echo "13835"
+                                echo "14133"
                                 ;;
                         esac
                         ;;
                     "m-light" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "14320"
+                                echo "20650"
                                 ;;
                             * )
-                                echo "14210"
+                                echo "20326"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "60550"
+                                echo "61675"
                                 ;;
                             * )
-                                echo "60000"
+                                echo "60915"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "30280"
+                                echo "30630"
                                 ;;
                             * )
-                                echo "30000"
+                                echo "30555"
                                 ;;
                         esac
                         ;;
@@ -870,7 +882,7 @@ function reduceIoJitter()
                         vals="`getSchedulerValues \"$sched\" \"$toneMode\"`"
                         nr_requests="`getSchedulerNrRequests \"$sched\" \"$toneMode\"`"
                         echo "$sched" >"/sys/block/$i/queue/scheduler"
-                        echo '8192' >"/sys/block/$i/queue/read_ahead_kb"
+                        echo '10240' >"/sys/block/$i/queue/read_ahead_kb"
                         echo '0' >"/sys/block/$i/queue/iostats"
                         echo '2' >"/sys/block/$i/queue/rq_affinity"
                         echo '2' >"/sys/block/$i/queue/nomerges"
@@ -957,11 +969,20 @@ function reduceVmJitter()
         if [ $flag -gt 0 ]; then
         
             echo '0' >"/proc/sys/vm/swappiness"
+            if [ -w "/proc/sys/vm/direct_swappiness" ]; then
+                echo '0' >"/proc/sys/vm/direct_swappiness"
+            fi
             echo '50' >"/proc/sys/vm/dirty_ratio"
             echo '25' >"/proc/sys/vm/dirty_background_ratio"
-            echo '60000' >"/proc/sys/vm/dirty_expire_centisecs"
-            echo '11100' >"/proc/sys/vm/dirty_writeback_centisecs"
+            echo '600000' >"/proc/sys/vm/dirty_expire_centisecs"
+            echo '111000' >"/proc/sys/vm/dirty_writeback_centisecs"
             echo '1' >"/proc/sys/vm/laptop_mode"
+            if [ -w "/proc/sys/vm/swap_ratio" ]; then
+                echo '0' >"/proc/sys/vm/swap_ratio"
+            fi
+            if [ -w "/proc/sys/vm/swap_ratio_enable" ]; then
+                echo '1' >"/proc/sys/vm/swap_ratio_enable"
+            fi
             
         elif [ $flag -lt 0 ]; then
         
@@ -970,11 +991,20 @@ function reduceVmJitter()
             else
                 echo '60' >"/proc/sys/vm/swappiness"
             fi
+            if [ -w "/proc/sys/vm/direct_swappiness" ]; then
+                echo '60' >"/proc/sys/vm/direct_swappiness"
+            fi
             echo '20' >"/proc/sys/vm/dirty_ratio"
             echo '5' >"/proc/sys/vm/dirty_background_ratio"
             echo '200' >"/proc/sys/vm/dirty_expire_centisecs"
             echo '500' >"/proc/sys/vm/dirty_writeback_centisecs"
             echo '0' >"/proc/sys/vm/laptop_mode"
+            if [ -w "/proc/sys/vm/swap_ratio" ]; then
+                echo '100' >"/proc/sys/vm/swap_ratio"
+            fi
+            if [ -w "/proc/sys/vm/swap_ratio_enable" ]; then
+                echo '0' >"/proc/sys/vm/swap_ratio_enable"
+            fi
             
         fi
         
@@ -984,6 +1014,12 @@ function reduceVmJitter()
             val="`cat /proc/sys/vm/swappiness`"
             if [ -n "$val" ]; then
                 echo "  VM swappiness: $val"
+            fi
+            if [ -r "/proc/sys/vm/direct_swappiness" ]; then
+                val="`cat /proc/sys/vm/direct_swappiness`"
+                if [ -n "$val" ]; then
+                    echo "  VM direct_swappiness: $val"
+                fi
             fi
             val="`cat /proc/sys/vm/dirty_ratio`"
             if [ -n "$val" ]; then
@@ -1006,6 +1042,18 @@ function reduceVmJitter()
                 echo "  VM laptop mode: on"
             else
                 echo "  VM laptop mode: off"
+            fi
+            if [ -r "/proc/sys/vm/swap_ratio" ]; then
+                val="`cat /proc/sys/vm/swap_ratio`"
+                if [ -n "$val" ]; then
+                    echo "  VM swap_ratio: $val"
+                fi
+            fi
+            if [ -r "/proc/sys/vm/swap_ratio_enable" ]; then
+                val="`cat /proc/sys/vm/swap_ratio_enable`"
+                if [ -n "$val" ]; then
+                    echo "  VM swap_ratio_enable: $val"
+                fi
             fi
             # End of print status
         fi
