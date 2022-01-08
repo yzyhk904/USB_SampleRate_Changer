@@ -28,9 +28,12 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/dumpsys-filtered.sh [--all][--help]`
      - outputs active peripheral's information from `dumpsys media.audio_flinger`. With `--all` option, this script outputs all perpheral's information from the command.
-     
+
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/getConfig.sh [--all][--help]`
     - outputs breif information of the active audio policy configuration. With `--all` option, this script outputs all the information of the configuration.
+
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/change_resampling_quality.sh [--help] [--reset] [stop_band_dB [half_filter_length]]`
+    - change the resampling quality of AudioFlinger (the OS mixer). With "--reset" option, this script clears previous settings. "stop_band_dB" and "half_filter_length" specify stopband attenuation in dB and the number of data needed before the current point (optional), respectively. AOSP default values are 98dB and 32, but this script's default values are 140dB and 320 (a mastering quality level).
 
 * Tips 2: "jitter-reducer.sh" in "extras" folder is an interactive tool derived from ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitter distortions in all digital audio outputs relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory, wifi suspension and audio effects framework. (Jitter distortions reduction is the very key to ultimate hifi audio quality)
 
@@ -40,7 +43,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - "scheduler" specifys an I/O scheduler for I/O block devices (typically "deadline", "cfq" or "noop", but you may specify "*" for automatical best selection), and has optional four modes "light" (for warmer tone), "m-light" (for slightly warmer tone), "medium" (default) and "boost" (for clearer tone).
     - please remember that "--wifi" option is persistent even after reboot, but other options are not.
 
-  - For most "hifi" example,  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh --all --effect --status` enables all jitter reducers including effects framework one and outputs the jitter related statuses. For Bluetooth earphones, you may need to add `--io "*" light` or `--io "*" m-light` option.  For DLNA transmitting, you may need to add `--io "*" boost` option. (If you use "AirMusic" to transmit audio data, I recommend to set around 4199 msec additional delay to reduce jitter distortion on the AirMusic panel to display target device(s).)
+  - For most "hifi" example,  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh --all --effect --status` enables all jitter reducers including effects framework one and outputs the jitter related statuses. For Bluetooth earphones, you may need to add `--io "*" boost` or `--io "*" m-light` option.  For DLNA transmitting, you may need to add `--io "*" boost` option. (If you use "AirMusic" to transmit audio data, I recommend to set around 4199 msec additional delay to reduce jitter distortion on the AirMusic panel to display target device(s).)
 
 * Tips 3: Please disable "Adaptive battery" of adaptive preferences in the battery section and battery optimizations for following app's manually through the settings UI of Android OS (to lower less than 10Hz jitter making reverb like distortion). music (streaming) player apps, their licensing apps (if exist), equalizer apps (if exist), "bluetooth" (system app), "Android Services Library" (system app), "Android Shared Library" (system app), "Android System" (system app), "System UI" (system app), "Active Edge Service" (system app; if exists), "Android Device Security Module" (system app; if exists), "crDroid System" (system app; if exists), "LineageOS System" (system app; if exists), launcher app, "Google Play Store" (system app), "Google Play Developer Services" (system app), "Styles & wallpaper" or the like (system app), {Lineage, crDroid, Arrow, etc.} themes app (system app; if exists), Navigation Bar app (system app; if exists), "AOSP panel" (system app; if exists), "OmniJaws" (system app; if exists), "OmniStyle" (system app; if exists), "Magisk", "PhhTrebleApp"(system app; if exists), keyboard app, kernel adiutors (if exist), etc. And also Disable "Digital Wellbeing" (system app; if it exists) itself or its battery optimizations (this is very harmfull for audio like camera servers).
 

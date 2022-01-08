@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.4.4
+# Version: 2.4.5
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -24,6 +24,10 @@ while [ $# -gt 0 ]; do
      case "$1" in
         "-o" | "--offload" )
             policyMode="offload"
+            shift
+            ;;
+        "-oh" | "--offload-hifi-playback" )
+            policyMode="offload-hifi-playback"
             shift
             ;;
         "-b" | "--bypass-offload" )
@@ -143,13 +147,13 @@ case "$sRate" in
         ;;
 esac
 
-if [ ! "$policyMode" = "offload"  -a  $sRate -gt 96000 ]; then
+if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" \)  -a  $sRate -gt 96000 ]; then
     isMounted "/proc/self/mountinfo" "/vendor/lib64/libalsautils.so" "IncludeMagisk" "NoShowKey" \
         || isMounted "/proc/self/mountinfo" "/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey"
     if [ $? -ne 0 ]; then
         echo "    Warning: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
     fi
-elif [ "$policyMode" = "offload"  -a  $sRate -gt 384000 ]; then
+elif [ \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" \)  -a  $sRate -gt 384000 ]; then
     echo "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of hardware offload driver's limitation (upto 384kHz lock)" 1>&2
 fi
 
@@ -193,6 +197,9 @@ fi
 case "$policyMode" in
     "offload" )
         template="$MYDIR/templates/offload_template.xml"
+        ;;
+    "offload-hifi-playback" )
+        template="$MYDIR/templates/offload_hifi_playback_template.xml"
         ;;
     "bypass" )
         template="$MYDIR/templates/bypass_offload_template.xml"

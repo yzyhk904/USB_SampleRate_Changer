@@ -680,7 +680,7 @@ function getSchedulerValues()
                         echo "1 3 3 0 1 1 3 23 0 3 3"
                         ;;
                     "boost" )
-                        echo "1 3 3 0 1 1 3 25 0 3 3"
+                        echo "1 3 3 0 1 1 3 26 0 3 3"
                         ;;
                     "medium" | * )
                         echo "1 3 3 0 1 1 3 24 0 3 3"
@@ -785,10 +785,10 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "62375"
+                                echo "76000"
                                 ;;
                             * )
-                                echo "60630"
+                                echo "76500"
                                 ;;
                         esac
                         ;;

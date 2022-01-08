@@ -1,11 +1,9 @@
 #!/system/bin/sh
 
-# AOSP standard values:    StopBandAttenation  HalfFilterLength CutOffPercent (to Nyquist freq.)
-#   HIGH_QUALITY:             98dB                         32                    100
-#      (default)
-#   MEDIUM_QUALITY:         84dB                         16                    100
-#      (default under a heavy load)
-#   LOW_QUALITY:              80dB                           8                    100
+# AOSP standard values:         StopBandAttenuation   HalfFilterLength   CutOffPercent (ratio to Nyquist freq.)
+#   HIGH_QUALITY (default):     98dB                          32                       100
+#   MEDIUM_QUALITY:              84dB                          16                       100
+#   LOW_QUALITY:                   80dB                            8                       100
 #
 
 stopBand=140
@@ -105,8 +103,8 @@ fi
 if [ $# -eq 2 ]; then
      if expr "$2" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
         
-        if [ $2 -lt 8  -o  $2 -gt 320 ]; then
-            echo "unsupported half filter length ($2; valid: 8~320)!" 1>&2 
+        if [ $2 -lt 8  -o  $2 -gt 480 ]; then
+            echo "unsupported half filter length ($2; valid: 8~480)!" 1>&2 
             usage
             exit 1
         else
@@ -115,7 +113,7 @@ if [ $# -eq 2 ]; then
         
     else
         
-        echo "unsupported half filter length ($2; valid: 8~320)!" 1>&2 
+        echo "unsupported half filter length ($2; valid: 8~480)!" 1>&2 
         usage
         exit 1
         
