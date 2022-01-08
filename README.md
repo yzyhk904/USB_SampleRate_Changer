@@ -33,7 +33,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - outputs breif information of the active audio policy configuration. With `--all` option, this script outputs all the information of the configuration.
 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/change_resampling_quality.sh [--help] [--reset] [stop_band_dB [half_filter_length]]`
-    - change the resampling quality of AudioFlinger (the OS mixer). With "--reset" option, this script clears previous settings. "stop_band_dB" and "half_filter_length" specify stopband attenuation in dB and the number of data needed before the current point (optional), respectively. AOSP default values are 98dB and 32, but this script's default values are 140dB and 320 (a mastering quality level).
+    - changes the resampling quality of AudioFlinger (the OS mixer). With "--reset" option, this script clears previous settings. "stop_band_dB" and "half_filter_length" specify stopband attenuation in dB and the number of data needed before the current point (optional), respectively. AOSP default values are 98dB and 32, but this script's default values are 140dB and 320 (a mastering quality level).
 
 * Tips 2: "jitter-reducer.sh" in "extras" folder is an interactive tool derived from ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitter distortions in all digital audio outputs relating to SELinux mode, thermal controls, CPU&GPU governors, camera server, I/O scheduling, virtual memory, wifi suspension and audio effects framework. (Jitter distortions reduction is the very key to ultimate hifi audio quality)
 
