@@ -1,9 +1,10 @@
 #!/system/bin/sh
 
 # AOSP standard values:         StopBandAttenuation   HalfFilterLength   CutOffPercent (ratio to Nyquist freq.)
-#   HIGH_QUALITY (default):     98dB                          32                       100
-#   MEDIUM_QUALITY:              84dB                          16                       100
-#   LOW_QUALITY:                   80dB                            8                       100
+#   DYN_HIGH_QUALITY:            98dB                          32                       100
+#   default:                                 90dB                          32                       100
+#   DYN_MEDIUM_QUALITY:        84dB                          16                       100
+#   DYN_LOW_QUALITY:             80dB                            8                       100
 #
 
 stopBand=140
@@ -14,7 +15,7 @@ resetMode=0
 
 function usage()
 {
-    echo "Usage: ${0##*/} [--help] [--reset] [stop_band_dB [half_filter_length]]" 1>&2
+    echo "Usage: ${0##*/} [--help] [--reset] [stop_band_dB [half_filter_length [cut_off_percent]]]" 1>&2
 }
 
 function which_resetprop_command()
@@ -85,7 +86,7 @@ if [ $# -gt 0 ];then
                     elif [ $stopBand -le 98 ]; then
                         filterLength=32
                     else
-                        filterLength="`expr 40 + \( $1 - 98 \) / 8 \* 8`"
+                        filterLength="`expr 32 + \( $1 - 98 \) / 8 \* 8 \* 6`"
                     fi
                 fi
                 
@@ -100,7 +101,7 @@ if [ $# -gt 0 ];then
     esac
 fi
 
-if [ $# -eq 2 ]; then
+if [ $resetMode -eq 0  -a  $# -eq 2 ]; then
      if expr "$2" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
         
         if [ $2 -lt 8  -o  $2 -gt 480 ]; then
@@ -114,6 +115,26 @@ if [ $# -eq 2 ]; then
     else
         
         echo "unsupported half filter length ($2; valid: 8~480)!" 1>&2 
+        usage
+        exit 1
+        
+    fi
+fi
+
+if [ $resetMode -eq 0  -a  $# -eq 3 ]; then
+     if expr "$3" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
+        
+        if [ $3 -lt 0  -o  $3 -gt 100 ]; then
+            echo "unsupported cut off percent ($3; valid: 0~100)!" 1>&2 
+            usage
+            exit 1
+        else
+            cutOffPercent=$3
+        fi
+        
+    else
+        
+        echo "unsupported cut off percent ($3; valid: 0~100)!" 1>&2 
         usage
         exit 1
         
