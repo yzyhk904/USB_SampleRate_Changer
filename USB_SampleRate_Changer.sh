@@ -149,7 +149,9 @@ esac
 
 if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" \)  -a  $sRate -gt 96000 ]; then
     isMounted "/proc/self/mountinfo" "/vendor/lib64/libalsautils.so" "IncludeMagisk" "NoShowKey" \
-        || isMounted "/proc/self/mountinfo" "/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey"
+        || isMounted "/proc/self/mountinfo" "/system/vendor/lib64/libalsautils.so" "IncludeMagisk" "NoShowKey" \
+        || isMounted "/proc/self/mountinfo" "/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey" \
+        || isMounted "/proc/self/mountinfo" "/system/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey"
     if [ $? -ne 0 ]; then
         echo "    Warning: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
     fi

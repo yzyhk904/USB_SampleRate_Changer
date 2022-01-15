@@ -1,10 +1,11 @@
 #!/system/bin/sh
 
 # AOSP standard values:         StopBandAttenuation   HalfFilterLength   CutOffPercent (ratio to Nyquist freq.)
-#   DYN_HIGH_QUALITY:            98dB                          32                       100
-#   default:                                 90dB                          32                       100
+#   DYN_HIGH_QUALITY:             98dB                          32                       100
+#   AOSP default:                         90dB                          32                       100
 #   DYN_MEDIUM_QUALITY:        84dB                          16                       100
 #   DYN_LOW_QUALITY:             80dB                            8                       100
+#   This script's default:              140dB                        320                        91
 #
 
 stopBand=140
@@ -15,7 +16,7 @@ resetMode=0
 
 function usage()
 {
-    echo "Usage: ${0##*/} [--help] [--reset] [stop_band_dB [half_filter_length [cut_off_percent]]]" 1>&2
+    echo "Usage: ${0##*/} [--help] [--status] [--reset] [stop_band_dB [half_filter_length [cut_off_percent]]]" 1>&2
 }
 
 function which_resetprop_command()
@@ -59,10 +60,43 @@ function reloadAudioserver()
     fi
 }
 
+function PrintStatus()
+{
+    if [ $# -eq 3 ]; then
+        echo "AudioFlinger's Resampling Configuration Status" 1>&2
+        if [ -n "$1" ]; then
+            echo "  Stop Band (dB): $1" 1>&2
+        fi
+        if [ -n "$2" ]; then
+            echo "  Half Filter Length: $2" 1>&2
+        fi
+        if [ -n "$3" ]; then
+            echo "  Cut Off (%): $3" 1>&2
+        fi
+    fi
+}
+
+function AudioFlingerStatus()
+{
+    local val1 val2 val3
+    val1="`getprop ro.audio.resampler.psd.stopband`"
+    if [ -n "$val1" ]; then
+        val2="`getprop ro.audio.resampler.psd.halflength`"
+        val3="`getprop ro.audio.resampler.psd.cutoff_percent`"
+        PrintStatus "$val1" "$val2" "$val3"
+    else
+        PrintStatus 90 32 100
+    fi
+}
+
 if [ $# -gt 0 ];then
     case "$1" in
         "-h" | "--help" )
             usage
+            exit 0
+            ;;
+        "-s" | "--status" )
+            AudioFlingerStatus
             exit 0
             ;;
         "-r" | "--reset" )

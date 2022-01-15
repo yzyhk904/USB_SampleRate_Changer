@@ -193,7 +193,11 @@ reduceGovernorJitter $governorFlag $printStatus
 reduceCameraJitter $cameraFlag $printStatus
 reduceIoJitter "$ioFlag" "$ioScheduler" "$toneMode" "$printStatus"
 reduceVmJitter $vmFlag $printStatus
-reduceWifiJitter $wifiFlag "NoRestart" $printStatus
+if [ "`getprop ro.system.build.version.release`" -ge "12" ]; then
+    reduceWifiJitter $wifiFlag "Restart" $printStatus
+else
+    reduceWifiJitter $wifiFlag "NoRestart" $printStatus
+fi
 reduceEffectJitter $effectFlag $printStatus
 
 if [ $? -eq 2 ]; then
