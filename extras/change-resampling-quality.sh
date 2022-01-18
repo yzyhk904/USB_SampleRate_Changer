@@ -135,7 +135,7 @@ if [ $# -gt 0 ];then
     esac
 fi
 
-if [ $resetMode -eq 0  -a  $# -eq 2 ]; then
+if [ $resetMode -eq 0  -a  $# -ge 2 ]; then
      if expr "$2" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
         
         if [ $2 -lt 8  -o  $2 -gt 480 ]; then
