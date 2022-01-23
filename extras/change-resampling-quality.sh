@@ -1,22 +1,23 @@
 #!/system/bin/sh
 
-# AOSP standard values:         StopBandAttenuation   HalfFilterLength   CutOffPercent (ratio to Nyquist freq.)
-#   DYN_HIGH_QUALITY:             98dB                          32                       100
-#   AOSP default:                         90dB                          32                       100
-#   DYN_MEDIUM_QUALITY:        84dB                          16                       100
-#   DYN_LOW_QUALITY:             80dB                            8                       100
-#   This script's default:              140dB                        320                        91
+# AOSP standard values:         Stop_Band_Attenuation   Half_Filter_Length   Cut_Off_Percent (% of Nyquist freq.)
+#   DYN_HIGH_QUALITY(7):          98dB                            32                         100
+#   AOSP default:                          90dB                            32                          100
+#   DYN_MEDIUM_QUALITY(6):     84dB                            16                          100
+#   DYN_LOW_QUALITY(5):          80dB                              8                          100
+#   This script's default:               160dB                          480                            91
 #
 
-stopBand=140
-filterLength=320
+stopBand=160
+filterLength=480
 cutOffPercent=91
 
-resetMode=0
+resetFlag=0
+bypassFlag=0
 
 function usage()
 {
-    echo "Usage: ${0##*/} [--help] [--status] [--reset] [stop_band_dB [half_filter_length [cut_off_percent]]]" 1>&2
+    echo "Usage: ${0##*/} [--help] [--status] [--reset] [--bypass] [stop_band_dB [half_filter_length [cut_off_percent]]]" 1>&2
 }
 
 function which_resetprop_command()
@@ -62,84 +63,98 @@ function reloadAudioserver()
 
 function PrintStatus()
 {
-    if [ $# -eq 3 ]; then
-        echo "AudioFlinger's Resampling Configuration Status" 1>&2
+    if [ $# -eq 4 ]; then
+        echo "AudioFlinger's current resampling configuration" 1>&2
         if [ -n "$1" ]; then
-            echo "  Stop Band (dB): $1" 1>&2
+            echo "  Effective Freq. (kHz) >= : $1" 1>&2
         fi
         if [ -n "$2" ]; then
-            echo "  Half Filter Length: $2" 1>&2
+            echo "  Stop Band (dB): $2" 1>&2
         fi
         if [ -n "$3" ]; then
-            echo "  Cut Off (%): $3" 1>&2
+            echo "  Half Filter Length: $3" 1>&2
+        fi
+        if [ -n "$4" ]; then
+            echo "  Cut Off (% Nyquist freq.): $4" 1>&2
         fi
     fi
 }
 
 function AudioFlingerStatus()
 {
-    local val1 val2 val3
-    val1="`getprop ro.audio.resampler.psd.stopband`"
+    local val1 val2 val3 val4
+    val1="`getprop ro.audio.resampler.psd.enable_at_samplerate`"
     if [ -n "$val1" ]; then
-        val2="`getprop ro.audio.resampler.psd.halflength`"
-        val3="`getprop ro.audio.resampler.psd.cutoff_percent`"
-        PrintStatus "$val1" "$val2" "$val3"
+        val1=`echo "scale=1; $val1 / 1000.0" | bc`
+        val2="`getprop ro.audio.resampler.psd.stopband`"
+        val3="`getprop ro.audio.resampler.psd.halflength`"
+        val4="`getprop ro.audio.resampler.psd.cutoff_percent`"
+        PrintStatus "$val1" "$val2" "$val3" "$val4"
     else
-        PrintStatus 90 32 100
+        PrintStatus 48.0 90 32 100
     fi
 }
 
-if [ $# -gt 0 ];then
+while [ $# -gt 0 ]; do
     case "$1" in
-        "-h" | "--help" )
-            usage
-            exit 0
-            ;;
         "-s" | "--status" )
             AudioFlingerStatus
             exit 0
             ;;
         "-r" | "--reset" )
-            resetMode=1
+            resetFlag=1
+            shift
+            ;;
+        "-b" | "--bypass" )
+            bypassFlag=1
+            shift
+            ;;
+        "-h" | "--help" | -* )
+            usage
+            exit 0
             ;;
         * )
-             if expr "$1" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
-                
-                if [ $1 -lt 20  -o  $1 -gt 160 ]; then
-                    echo "unsupported stop band dB ($1; valid: 20~160)!" 1>&2 
-                    usage
-                    exit 1
-                else
-                    stopBand="$1"
-                    if [ $stopBand -le 60 ]; then
-                        filterLength=8
-                    elif [ $stopBand -le 84 ]; then
-                        filterLength=16
-                    elif [ $stopBand -le 90 ]; then
-                        filterLength=24
-                    elif [ $stopBand -le 98 ]; then
-                        filterLength=32
-                    else
-                        filterLength="`expr 32 + \( $1 - 98 \) / 8 \* 8 \* 6`"
-                    fi
-                fi
-                
-            else
-                
-                echo "unsupported stop band dB ($1; valid: 20~160)!" 1>&2 
-                usage
-                exit 1
-                
-            fi
+            break
             ;;
     esac
+done
+
+if [ $# -ge 1 ]; then
+     if expr "$1" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
+        
+        if [ $1 -lt 20  -o  $1 -gt 194 ]; then
+            echo "unsupported stop band dB ($1; valid: 20~194)!" 1>&2 
+            usage
+            exit 1
+        else
+            stopBand="$1"
+            if [ $stopBand -le 60 ]; then
+                filterLength=72
+            elif [ $stopBand -le 84 ]; then
+                filterLength=112
+            elif [ $stopBand -le 90 ]; then
+                filterLength=152
+            elif [ $stopBand -le 98 ]; then
+                filterLength=192
+            else
+                filterLength="`expr 192 + \( $1 - 98 \) / 8 \* 8 \* 4`"
+            fi
+        fi
+        
+    else
+        
+        echo "unsupported stop band dB ($1; valid: 20~194)!" 1>&2 
+        usage
+        exit 1
+        
+    fi
 fi
 
-if [ $resetMode -eq 0  -a  $# -ge 2 ]; then
+if [ $# -ge 2 ]; then
      if expr "$2" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
         
-        if [ $2 -lt 8  -o  $2 -gt 480 ]; then
-            echo "unsupported half filter length ($2; valid: 8~480)!" 1>&2 
+        if [ $2 -lt 8  -o  $2 -gt 640 ]; then
+            echo "unsupported half filter length ($2; valid: 8~640)!" 1>&2 
             usage
             exit 1
         else
@@ -148,14 +163,14 @@ if [ $resetMode -eq 0  -a  $# -ge 2 ]; then
         
     else
         
-        echo "unsupported half filter length ($2; valid: 8~480)!" 1>&2 
+        echo "unsupported half filter length ($2; valid: 8~640)!" 1>&2 
         usage
         exit 1
         
     fi
 fi
 
-if [ $resetMode -eq 0  -a  $# -eq 3 ]; then
+if [ $# -ge 3 ]; then
      if expr "$3" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
         
         if [ $3 -lt 0  -o  $3 -gt 100 ]; then
@@ -177,7 +192,7 @@ fi
 
 resetprop_command="`which_resetprop_command`"
 if [ -n "$resetprop_command" ]; then
-    if [ $resetMode -gt 0 ]; then
+    if [ $resetFlag -gt 0 ]; then
         "$resetprop_command" --delete af.resampler.quality 1>"/dev/null" 2>&1
         "$resetprop_command" --delete ro.audio.resampler.psd.enable_at_samplerate 1>"/dev/null" 2>&1
         "$resetprop_command" --delete ro.audio.resampler.psd.stopband 1>"/dev/null" 2>&1
@@ -185,7 +200,11 @@ if [ -n "$resetprop_command" ]; then
         "$resetprop_command" --delete ro.audio.resampler.psd.cutoff_percent 1>/dev/null 2>&1
     else
         "$resetprop_command" af.resampler.quality 7
-        "$resetprop_command" ro.audio.resampler.psd.enable_at_samplerate 44100 1>"/dev/null" 2>&1
+        if [ $bypassFlag -gt 0 ]; then
+            "$resetprop_command" ro.audio.resampler.psd.enable_at_samplerate 48000 1>"/dev/null" 2>&1
+        else
+            "$resetprop_command" ro.audio.resampler.psd.enable_at_samplerate 44100 1>"/dev/null" 2>&1
+        fi
         "$resetprop_command" ro.audio.resampler.psd.stopband "$stopBand" 1>"/dev/null" 2>&1
         "$resetprop_command" ro.audio.resampler.psd.halflength "$filterLength" 1>"/dev/null" 2>&1
         "$resetprop_command" ro.audio.resampler.psd.cutoff_percent "$cutOffPercent" 1>"/dev/null" 2>&1
@@ -195,4 +214,6 @@ else
     echo "cannot change resampling quality (no resetprop commands found)" 1>&2
     exit 1
 fi
+
+AudioFlingerStatus
 exit 0
