@@ -649,7 +649,7 @@ function getSchedulerValues()
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "38 0 16 480 0"
+                                echo "38 0 16 484 0"
                                 ;;
                             * )
                                 echo "39 0 16 480 0"
