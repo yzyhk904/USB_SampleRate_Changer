@@ -629,7 +629,7 @@ function getSchedulerValues()
                     "light" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "34 0 12 480 0"
+                                echo "37 0 12 480 0"
                                 ;;
                             * )
                                 echo "37 0 12 480 0"
@@ -639,30 +639,30 @@ function getSchedulerValues()
                     "m-light" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "36 0 12 480 0"
+                                echo "37 0 16 480 0"
                                 ;;
                             * )
-                                echo "37 0 12 480 0"
+                                echo "37 0 16 480 0"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "38 0 16 484 0"
+                                echo "41 0 16 484 0"
                                 ;;
                             * )
-                                echo "39 0 16 480 0"
+                                echo "41 0 16 484 0"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "37 0 16 480 0"
+                                echo "38 0 16 484 0"
                                 ;;
                             * )
-                                echo "37 0 16 480 0"
+                                echo "39 0 16 480 0"
                                 ;;
                         esac
                         ;;
@@ -708,7 +708,7 @@ function getSchedulerNrRequests()
                     "light" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "39225"
+                                echo "40042"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "39063"
@@ -721,17 +721,30 @@ function getSchedulerNrRequests()
                     "m-light" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "69550"
+                                echo "77600"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "69110"
+                                echo "77130"
                                 ;;
                             * )
-                                echo "69600"
+                                echo "77500"
                                 ;;
                         esac
                         ;;
                     "boost" )
+                        case "`getprop ro.board.platform`" in
+                            sdm8* )
+                                echo "79200"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "79200"
+                                ;;
+                            * )
+                                echo "79200"
+                                ;;
+                        esac
+                        ;;
+                    "medium" | * )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
                                 echo "79120"
@@ -741,19 +754,6 @@ function getSchedulerNrRequests()
                                 ;;
                             * )
                                 echo "78550"
-                                ;;
-                        esac
-                        ;;
-                    "medium" | * )
-                        case "`getprop ro.board.platform`" in
-                            sdm8* )
-                                echo "77600"
-                                ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "77130"
-                                ;;
-                            * )
-                                echo "77500"
                                 ;;
                         esac
                         ;;
