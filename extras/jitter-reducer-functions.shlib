@@ -734,13 +734,13 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "79200"
+                                echo "79516"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "79200"
+                                echo "79516"
                                 ;;
                             * )
-                                echo "79200"
+                                echo "79516"
                                 ;;
                         esac
                         ;;
