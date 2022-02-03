@@ -4,7 +4,7 @@ Under Magisk environment (<strong>"root name space mount mode" must be changed t
 <br/>
 Additionally, this script disables DRC (Dynamic Range Control, i.e. compression) if DRC has been enabled in a stock firmware, e.g. smart phones and tablets having an SDM numbered SoC internally. <br/>
 <br/>
-Finally, AudioFlinger (the OS mixer) always apply resampling even to 1:1 ratio pass-through (e.g. 44.1kHz to 44.1kHz resampling, perhaps with Kaiser-Bessel derived windowed digital low pass filtering), so you need to be carefull for resampling parameters even when resampling is not needed (see the description of "extras/change-resampling-quality.sh" below).
+Finally, AudioFlinger (the OS mixer) always apply resampling even to 1:1 ratio pass-through (e.g. 44.1kHz to 44.1kHz resampling, perhaps with Kaiser windowed digital low pass filtering), so you need to be carefull for resampling parameters even when resampling is not needed (see the description of "extras/change-resampling-quality.sh" below).
 
 * Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--safe][-safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]`,
 
