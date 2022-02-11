@@ -734,10 +734,13 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "79516"
+                                echo "79750"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "79516"
+                                ;;
+                            mt67* )
+                                echo "79600"
                                 ;;
                             * )
                                 echo "79516"
@@ -884,6 +887,7 @@ function reduceIoJitter()
                         echo "$sched" >"/sys/block/$i/queue/scheduler"
                         echo '10240' >"/sys/block/$i/queue/read_ahead_kb"
                         echo '0' >"/sys/block/$i/queue/iostats"
+                        echo '0' >"/sys/block/$i/queue/add_random"
                         echo '2' >"/sys/block/$i/queue/rq_affinity"
                         echo '2' >"/sys/block/$i/queue/nomerges"
                         echo "$nr_requests" >"/sys/block/$i/queue/nr_requests"
@@ -917,6 +921,7 @@ function reduceIoJitter()
                     sleep 0.05
                     echo '128' >"/sys/block/$i/queue/read_ahead_kb"
                     echo '1' >"/sys/block/$i/queue/iostats"
+                    echo '0' >"/sys/block/$i/queue/add_random"
                     echo '1' >"/sys/block/$i/queue/rq_affinity"
                     echo '0' >"/sys/block/$i/queue/nomerges"
                     echo '128' >"/sys/block/$i/queue/nr_requests"

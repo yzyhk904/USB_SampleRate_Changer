@@ -38,6 +38,7 @@ ioScheduler=""
 toneMode="medium"
 vmFlag=0
 wifiFlag=0
+wifiNoRestart=0
 effectFlag=0
 printStatus=0
 
@@ -152,10 +153,17 @@ else
                 ;;
             "-w" | "--wifi" )
                 wifiFlag=1
+                wifiNoRestart=0
+                shift
+                ;;
+            "-wn" | "--wifi-no-restart" )
+                wifiFlag=1
+                wifiNoRestart=1
                 shift
                 ;;
             "+w" | "++wifi" )
                 wifiFlag=-1
+                wifiNoRestart=0
                 shift
                 ;;
             "-e" | "--effect" )
@@ -193,10 +201,10 @@ reduceGovernorJitter $governorFlag $printStatus
 reduceCameraJitter $cameraFlag $printStatus
 reduceIoJitter "$ioFlag" "$ioScheduler" "$toneMode" "$printStatus"
 reduceVmJitter $vmFlag $printStatus
-if [ "`getprop ro.system.build.version.release`" -ge "12" ]; then
-    reduceWifiJitter $wifiFlag "Restart" $printStatus
-else
+if [ $wifiNoRestart -gt 0 ]; then
     reduceWifiJitter $wifiFlag "NoRestart" $printStatus
+else
+    reduceWifiJitter $wifiFlag "Restart" $printStatus
 fi
 reduceEffectJitter $effectFlag $printStatus
 
