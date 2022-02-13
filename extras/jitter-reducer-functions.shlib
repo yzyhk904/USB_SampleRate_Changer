@@ -740,7 +740,7 @@ function getSchedulerNrRequests()
                                 echo "79516"
                                 ;;
                             mt67* )
-                                echo "79600"
+                                echo "79601"
                                 ;;
                             * )
                                 echo "79516"
