@@ -649,10 +649,13 @@ function getSchedulerValues()
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "41 0 16 484 0"
+                                echo "42 0 16 484 0"
+                                ;;
+                            mt677? | mt68* )
+                                echo "42 0 16 484 0"
                                 ;;
                             * )
-                                echo "41 0 16 484 0"
+                                echo "42 0 16 484 0"
                                 ;;
                         esac
                         ;;
@@ -734,16 +737,19 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "79750"
+                                echo "79987"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "79516"
+                                echo "79887"
                                 ;;
-                            mt67* )
-                                echo "79601"
+                            mt68* )
+                                echo "79795"
+                                ;;
+                            mt67[67]? )
+                                echo "79785"
                                 ;;
                             * )
-                                echo "79516"
+                                echo "79785"
                                 ;;
                         esac
                         ;;
