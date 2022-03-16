@@ -14,10 +14,11 @@ cutOffPercent=91
 
 resetFlag=0
 bypassFlag=0
+cheatFlag=0
 
 function usage()
 {
-    echo "Usage: ${0##*/} [--help] [--status] [--reset] [--bypass] [stop_band_dB [half_filter_length [cut_off_percent]]]" 1>&2
+    echo "Usage: ${0##*/} [--help] [--status] [--reset] [--bypass] [--cheat] [stop_band_dB [half_filter_length [cut_off_percent]]]" 1>&2
 }
 
 function which_resetprop_command()
@@ -63,19 +64,23 @@ function reloadAudioserver()
 
 function PrintStatus()
 {
-    if [ $# -eq 4 ]; then
+    if [ $# -eq 5 ]; then
         echo "AudioFlinger's current resampling configuration" 1>&2
-        if [ -n "$1" ]; then
-            echo "  Effective Freq. (kHz) >= : $1" 1>&2
-        fi
         if [ -n "$2" ]; then
-            echo "  Stop Band (dB): $2" 1>&2
+            echo "  Effective Freq. (kHz) >= : $2" 1>&2
         fi
         if [ -n "$3" ]; then
-            echo "  Half Filter Length: $3" 1>&2
+            echo "  Stop Band (dB): $3" 1>&2
         fi
         if [ -n "$4" ]; then
-            echo "  Cut Off (% Nyquist freq.): $4" 1>&2
+            echo "  Half Filter Length: $4" 1>&2
+        fi
+        if [ -n "$5" ]; then
+            if [ "$1" = "cheat" ]; then
+                echo "  Cheat (% Nyquist freq.): $5" 1>&2
+            else
+                echo "  Cut Off (% Nyquist freq.): $5" 1>&2
+            fi
         fi
     fi
 }
@@ -88,10 +93,15 @@ function AudioFlingerStatus()
         val1=`echo "scale=1; $val1 / 1000.0" | bc`
         val2="`getprop ro.audio.resampler.psd.stopband`"
         val3="`getprop ro.audio.resampler.psd.halflength`"
-        val4="`getprop ro.audio.resampler.psd.cutoff_percent`"
-        PrintStatus "$val1" "$val2" "$val3" "$val4"
+        val4="`getprop ro.audio.resampler.psd.tbwcheat`"
+        if [ -n "$val4" -a "$val4" -gt 0 ]; then
+            PrintStatus "cheat" "$val1" "$val2" "$val3" "$val4"
+        else
+            val4="`getprop ro.audio.resampler.psd.cutoff_percent`"
+            PrintStatus "cut-off" "$val1" "$val2" "$val3" "$val4"
+        fi
     else
-        PrintStatus 48.0 90 32 100
+        PrintStatus "cut-off" 48.0 90 32 100
     fi
 }
 
@@ -107,6 +117,11 @@ while [ $# -gt 0 ]; do
             ;;
         "-b" | "--bypass" )
             bypassFlag=1
+            shift
+            ;;
+        "-c" | "--cheat" )
+            cheatFlag=1
+            cutOffPercent=100
             shift
             ;;
         "-h" | "--help" | -* )
@@ -172,8 +187,16 @@ fi
 
 if [ $# -ge 3 ]; then
      if expr "$3" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
-        
-        if [ $3 -lt 0  -o  $3 -gt 100 ]; then
+
+        if [ $cheatFlag -gt 0 ]; then        
+            if [ $3 -lt 0  -o  $3 -gt 200 ]; then
+                echo "unsupported cheat percent ($3; valid: 0~200)!" 1>&2 
+                usage
+                exit 1
+            else
+                cutOffPercent=$3
+            fi
+        elif [ $3 -lt 0  -o  $3 -gt 100 ]; then
             echo "unsupported cut off percent ($3; valid: 0~100)!" 1>&2 
             usage
             exit 1
@@ -198,8 +221,9 @@ if [ -n "$resetprop_command" ]; then
         "$resetprop_command" --delete ro.audio.resampler.psd.stopband 1>"/dev/null" 2>&1
         "$resetprop_command" --delete ro.audio.resampler.psd.halflength 1>/dev/null 2>&1
         "$resetprop_command" --delete ro.audio.resampler.psd.cutoff_percent 1>/dev/null 2>&1
+        "$resetprop_command" --delete ro.audio.resampler.psd.tbwcheat 1>/dev/null 2>&1
     else
-        "$resetprop_command" af.resampler.quality 7
+        "$resetprop_command" af.resampler.quality 7 1>"/dev/null" 2>&1
         if [ $bypassFlag -gt 0 ]; then
             "$resetprop_command" ro.audio.resampler.psd.enable_at_samplerate 48000 1>"/dev/null" 2>&1
         else
@@ -207,7 +231,13 @@ if [ -n "$resetprop_command" ]; then
         fi
         "$resetprop_command" ro.audio.resampler.psd.stopband "$stopBand" 1>"/dev/null" 2>&1
         "$resetprop_command" ro.audio.resampler.psd.halflength "$filterLength" 1>"/dev/null" 2>&1
-        "$resetprop_command" ro.audio.resampler.psd.cutoff_percent "$cutOffPercent" 1>"/dev/null" 2>&1
+        if [ $cheatFlag -gt 0 ]; then
+            "$resetprop_command" ro.audio.resampler.psd.tbwcheat "$cutOffPercent" 1>"/dev/null" 2>&1
+            "$resetprop_command" --delete ro.audio.resampler.psd.cutoff_percent 1>/dev/null 2>&1
+        else
+            "$resetprop_command" ro.audio.resampler.psd.cutoff_percent "$cutOffPercent" 1>"/dev/null" 2>&1
+            "$resetprop_command" --delete ro.audio.resampler.psd.tbwcheat 1>/dev/null 2>&1
+        fi
     fi
     reloadAudioserver
 else

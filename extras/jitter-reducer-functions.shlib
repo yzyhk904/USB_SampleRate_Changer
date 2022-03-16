@@ -689,10 +689,10 @@ function getSchedulerValues()
                         echo "1 3 3 0 1 1 3 23 0 3 3"
                         ;;
                     "boost" )
-                        echo "1 3 3 0 1 1 3 26 0 3 3"
+                        echo "1 3 3 0 1 1 3 28 0 3 3"
                         ;;
                     "medium" | * )
-                        echo "1 3 3 0 1 1 3 24 0 3 3"
+                        echo "1 3 3 0 1 1 3 26 0 3 3"
                         ;;
                 esac
                 ;;
@@ -743,19 +743,19 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm8* )
-                                echo "81000"
+                                echo "81004"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "80900"
+                                echo "80904"
                                 ;;
                             mt68* )
-                                echo "81360"
+                                echo "81375"
                                 ;;
                             mt67[67]? )
-                                echo "81260"
+                                echo "81394"
                                 ;;
                             * )
-                                echo "81260"
+                                echo "81394"
                                 ;;
                         esac
                         ;;
@@ -806,10 +806,10 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getprop ro.board.platform`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "76000"
+                                echo "81600"
                                 ;;
                             * )
-                                echo "76500"
+                                echo "82200"
                                 ;;
                         esac
                         ;;
@@ -1111,6 +1111,22 @@ function reloadAudioserver()
     fi
 }
 
+function which_resetprop_command()
+{
+    type resetprop 1>"/dev/null" 2>&1
+    if [ $? -eq 0 ]; then
+        echo "resetprop"
+    else
+        type resetprop_phh 1>"/dev/null" 2>&1
+        if [ $? -eq 0 ]; then
+            echo "resetprop_phh"
+        else
+            return 1
+        fi
+    fi
+    return 0
+}
+
 function reduceEffectJitter()
 {
     if [ $# -eq 2 ]; then
@@ -1118,37 +1134,21 @@ function reduceEffectJitter()
         local printStatus="$2"
 
         if [ $flag -gt 0 ]; then
-        
-            type resetprop 1>/dev/null 2>&1
-            if [ $? -eq 0 ]; then
-                resetprop ro.audio.ignore_effects true
+            resetprop_command="`which_resetprop_command`"
+            if [ -n "$resetprop_command" ]; then
+                "$resetprop_command" ro.audio.ignore_effects true
                 reloadAudioserver
             else
-                type resetprop_phh 1>/dev/null 2>&1
-                if [ $? -eq 0 ]; then
-                    resetprop_phh ro.audio.ignore_effects true
-                    reloadAudioserver
-                else
-                    return 2
-                 fi
+                return 2
             fi
-            
         elif [ $flag -lt 0 ]; then
-        
-            type resetprop 1>/dev/null 2>&1
-            if [ $? -eq 0 ]; then
-                resetprop --delete ro.audio.ignore_effects
+            resetprop_command="`which_resetprop_command`"
+            if [ -n "$resetprop_command" ]; then
+                "$resetprop_command" --delete ro.audio.ignore_effects true
                 reloadAudioserver
             else
-                type resetprop_phh 1>/dev/null 2>&1
-                if [ $? -eq 0 ]; then
-                    resetprop_phh --delete ro.audio.ignore_effects
-                    reloadAudioserver
-                else
-                    return 2
-                fi
+                return 2
             fi
-            
         fi
         
         if [ $printStatus -gt 0 ]; then
