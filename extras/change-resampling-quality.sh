@@ -57,7 +57,7 @@ function reloadAudioserver()
             return 0
         fi
     else
-        echo "audioserver is not running!" 1>&2 
+        echo "audioserver is not running!" 1>&2
         return 1
     fi
 }
@@ -137,8 +137,8 @@ done
 if [ $# -ge 1 ]; then
      if expr "$1" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
         
-        if [ $1 -lt 20  -o  $1 -gt 194 ]; then
-            echo "unsupported stop band dB ($1; valid: 20~194)!" 1>&2 
+        if [ $1 -lt 20  -o  $1 -gt 242 ]; then
+            echo "unsupported stop band dB ($1; valid: 20~242)!" 1>&2
             usage
             exit 1
         else
@@ -158,7 +158,7 @@ if [ $# -ge 1 ]; then
         
     else
         
-        echo "unsupported stop band dB ($1; valid: 20~194)!" 1>&2 
+        echo "unsupported stop band dB ($1; valid: 20~242)!" 1>&2
         usage
         exit 1
         
@@ -169,7 +169,7 @@ if [ $# -ge 2 ]; then
      if expr "$2" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
         
         if [ $2 -lt 8  -o  $2 -gt 640 ]; then
-            echo "unsupported half filter length ($2; valid: 8~640)!" 1>&2 
+            echo "unsupported half filter length ($2; valid: 8~640)!" 1>&2
             usage
             exit 1
         else
@@ -178,7 +178,7 @@ if [ $# -ge 2 ]; then
         
     else
         
-        echo "unsupported half filter length ($2; valid: 8~640)!" 1>&2 
+        echo "unsupported half filter length ($2; valid: 8~640)!" 1>&2
         usage
         exit 1
         
@@ -189,15 +189,15 @@ if [ $# -ge 3 ]; then
      if expr "$3" : "[1-9][0-9]*$" 1>"/dev/null" 2>&1; then
 
         if [ $cheatFlag -gt 0 ]; then        
-            if [ $3 -lt 0  -o  $3 -gt 200 ]; then
-                echo "unsupported cheat percent ($3; valid: 0~200)!" 1>&2 
+            if [ $3 -le 0  -o  $3 -gt 200 ]; then
+                echo "unsupported cheat percent ($3; valid: 1~200)!" 1>&2
                 usage
                 exit 1
             else
                 cutOffPercent=$3
             fi
         elif [ $3 -lt 0  -o  $3 -gt 100 ]; then
-            echo "unsupported cut off percent ($3; valid: 0~100)!" 1>&2 
+            echo "unsupported cut off percent ($3; valid: 0~100)!" 1>&2
             usage
             exit 1
         else
@@ -206,7 +206,11 @@ if [ $# -ge 3 ]; then
         
     else
         
-        echo "unsupported cut off percent ($3; valid: 0~100)!" 1>&2 
+        if [ $cheatFlag -gt 0 ]; then        
+            echo "unsupported cheat percent ($3; valid: 1~200)!" 1>&2
+        else
+            echo "unsupported cut off percent ($3; valid: 0~100)!" 1>&2
+        fi
         usage
         exit 1
         
