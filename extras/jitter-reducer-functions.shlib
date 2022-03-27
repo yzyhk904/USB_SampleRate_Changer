@@ -1144,7 +1144,7 @@ function reduceEffectJitter()
         elif [ $flag -lt 0 ]; then
             resetprop_command="`which_resetprop_command`"
             if [ -n "$resetprop_command" ]; then
-                "$resetprop_command" --delete ro.audio.ignore_effects true
+                "$resetprop_command" --delete ro.audio.ignore_effects
                 reloadAudioserver
             else
                 return 2
