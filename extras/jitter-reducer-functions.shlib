@@ -69,7 +69,7 @@ function reduceThermalJitter()
             if [ -w "/sys/module/msm_thermal/core_control/enabled" ]; then
                 echo '0' > "/sys/module/msm_thermal/core_control/enabled"
             fi
-            if [ -r "/sys/devices/system/cpu/core_ctl_isolated" ]; then
+            if [ -r "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
                 local i st en
                 IFS="-" read st en <"/sys/devices/system/cpu/present"
                 if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
@@ -114,7 +114,7 @@ function reduceThermalJitter()
              if [ -w "/sys/module/msm_thermal/core_control/enabled" ]; then
                 echo '1' > "/sys/module/msm_thermal/core_control/enabled"
             fi
-            if [ -r "/sys/devices/system/cpu/core_ctl_isolated" ]; then
+            if [ -r "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
                 local st en
                 IFS="-" read st en <"/sys/devices/system/cpu/present"
                 if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
@@ -179,13 +179,13 @@ function reduceThermalJitter()
             # Qualcomm Core control
             if [ -w "/sys/module/msm_thermal/core_control/enabled" ]; then
                 if [ "`cat /sys/module/msm_thermal/core_control/enabled`" -eq 0 ]; then
-                    echo "  Thermal core control: disabled"
+                    echo "  Thermal msm_thermal: disabled"
                 else
-                    echo "  Thermal core control: enabled"
+                    echo "  Thermal msm_thermal: enabled"
                 fi
                 found=1
             fi
-            if [ -r "/sys/devices/system/cpu/core_ctl_isolated" ]; then
+            if [ -r "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
                 local i st en ctl_enabled=0
                 IFS="-" read st en <"/sys/devices/system/cpu/present"
                 if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
@@ -197,9 +197,9 @@ function reduceThermalJitter()
                         read ctl_enabled <"/sys/devices/system/cpu/cpu0/core_ctl/enable"
                     fi
                     if [ "$ctl_enabled" -gt 0 ]; then
-                        echo "  Thermal core control: enabled"
+                        echo "  Thermal core_ctl: enabled"
                     else
-                        echo "  Thermal core control: disabled"
+                        echo "  Thermal core_ctl: disabled"
                     fi
                     found=1
                 fi
@@ -436,6 +436,9 @@ function reduceGovernorJitter()
                     fi
                 fi
                 # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel
+                echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                # For a certain Kernel, because it is not effective only once
+                sleep 0.1
                 echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Variable frequency setting for MediaTek GPU's
@@ -791,7 +794,7 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[6789]* | sdm9* )
-                                echo "44 0 20 496 0"
+                                echo "48 0 16 488 0"
                                 ;;
                             sdm8* )
                                 echo "44 0 20 497 0"
@@ -888,7 +891,7 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[6789]* | sdm9* )
-                                echo "81248"
+                                echo "79434"
                                 ;;
                             sdm8* )
                                 echo "81248"
