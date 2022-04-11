@@ -73,11 +73,37 @@ function reduceThermalJitter()
                 local i st en
                 IFS="-" read st en <"/sys/devices/system/cpu/present"
                 if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
-                    for i in `seq $st $en`; do
-                        if [ -w "/sys/devices/system/cpu/cpu$i/core_ctl/enable" ]; then
-                            echo '0'  > "/sys/devices/system/cpu/cpu$i/core_ctl/enable"
+                    if [ -w "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
+                        # SD850 or higher type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
+                        echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/min_cpus"
+                        echo '0'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
+                        if [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                            echo '3'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
+                            echo '0'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
                         fi
-                    done
+                        if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        fi
+                    elif [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                        # SD840 or lower type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                        echo '4'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
+                        echo '0'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                        if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        fi
+                    elif [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                        # unknown type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                        echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                    fi
                 fi
             fi
             # Stop the MPDecision (CPU hotplug)
@@ -91,10 +117,14 @@ function reduceThermalJitter()
             # Stop the thermal server
             if [ "`getprop init.svc.thermal`" = "running" ]; then
                 setprop ctl.stop thermal
+            elif [ "`getprop init.svc.vendor.thermal`" = "running" ]; then
+                setprop ctl.stop vendor.thermal
             fi
             # Stop the mi_thermald server
             if [ "`getprop init.svc.mi_thermald`" = "running" ]; then
                 setprop ctl.stop mi_thermald
+            elif [ "`getprop init.svc.vendor.mi_thermald`" = "running" ]; then
+                setprop ctl.stop vendor.mi_thermald
             fi
             # Stop the thermal-engine server
             if [ "`getprop init.svc.thermal-engine`" = "running" ]; then
@@ -121,21 +151,28 @@ function reduceThermalJitter()
                     if [ -w "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
                         # SD850 or higher type core control
                         echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
+                        echo '0'  > "/sys/devices/system/cpu/cpu7/core_ctl/min_cpus"
                         if [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
                             echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                            echo '2'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
                         fi
                         if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
                             echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
                         fi
                     elif [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
                         # SD840 or lower type core control
                         echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                        echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
                         if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
                             echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
                         fi
                     elif [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
                         # unknown type core control
                         echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
                     fi
                 fi
             fi
@@ -150,10 +187,14 @@ function reduceThermalJitter()
             # Start the thermal server
             if [ "`getprop init.svc.thermal`" = "stopped" ]; then
                 setprop ctl.start thermal
+            elif [ "`getprop init.svc.vendor.thermal`" = "stopped" ]; then
+                setprop ctl.start vendor.thermal
             fi
             # Start the mi_thermald server
             if [ "`getprop init.svc.mi_thermald`" = "stopped" ]; then
                 setprop ctl.start mi_thermald
+            elif [ "`getprop init.svc.vendor.mi_thermald`" = "stopped" ]; then
+                setprop ctl.start vendor.mi_thermald
             fi
             # Start the thermal-engine server
             if [ "`getprop init.svc.thermal-engine`" = "stopped" ]; then
@@ -207,9 +248,15 @@ function reduceThermalJitter()
             if [ -n "`getprop init.svc.thermal`" ]; then
                 echo "  Thermal server: `getprop init.svc.thermal`"
                 found=1
+            elif [ -n "`getprop init.svc.vendor.thermal`" ]; then
+                echo "  Thermal server: `getprop init.svc.vendor.thermal`"
+                found=1
             fi
             if [ -n "`getprop init.svc.mi_thermald`" ]; then
                 echo "  Thermal mi_thermald: `getprop init.svc.mi_thermald`"
+                found=1
+            elif [ -n "`getprop init.svc.vendor.mi_thermald`" ]; then
+                echo "  Thermal mi_thermald: `getprop init.svc.vendor.mi_thermald`"
                 found=1
             fi
             if [ -n "`getprop init.svc.thermal-engine`" ]; then
@@ -675,7 +722,11 @@ function getSocModelName()
                                 echo "sdm870"
                                 ;;
                             * )
-                                echo "sdm845"
+                                 if [ -r "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
+                                    echo "sdm855"
+                                 else
+                                    echo "sdm845"
+                                 fi
                                 ;;
                         esac
                         return 0
@@ -774,7 +825,7 @@ function getSchedulerValues()
                     "light" )
                         case "`getSocModelName`" in
                             sdm8* )
-                                echo "37 0 16 480 0"
+                                echo "38 0 16 484 0"
                                 ;;
                             * )
                                 echo "37 0 16 480 0"
@@ -784,7 +835,7 @@ function getSchedulerValues()
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm8* )
-                                echo "38 0 16 484 0"
+                                echo "42 0 16 488 0"
                                 ;;
                             * )
                                 echo "39 0 16 480 0"
@@ -793,14 +844,14 @@ function getSchedulerValues()
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sdm8[6789]* | sdm9* )
-                                echo "48 0 16 488 0"
+                            sdm8[5-9]* | sdm9* )
+                                echo "47 0 24 500 0"
                                 ;;
                             sdm8* )
-                                echo "44 0 20 497 0"
+                                echo "47 0 24 500 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "43 0 20 497 0"
+                                echo "45 0 27 500 0"
                                 ;;
                             mt677? | mt68* )
                                 echo "44 0 20 488 0"
@@ -812,14 +863,17 @@ function getSchedulerValues()
                         ;;
                     "medium" | *)
                         case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "45 0 20 488 0"
+                                ;;
                             sdm8* )
-                                echo "42 0 16 484 0"
+                                echo "45 0 20 497 0"
                                 ;;
                             mt677? | mt68* )
                                 echo "42 0 16 484 0"
                                 ;;
                             * )
-                                echo "42 0 16 484 0"
+                                echo "43 0 20 497 0"
                                 ;;
                         esac
                         ;;
@@ -865,10 +919,10 @@ function getSchedulerNrRequests()
                     "light" )
                         case "`getSocModelName`" in
                             sdm8* )
-                                echo "77600"
+                                echo "79120"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "77130"
+                                echo "78150"
                                 ;;
                             * )
                                 echo "77500"
@@ -878,10 +932,10 @@ function getSchedulerNrRequests()
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm8* )
-                                echo "79120"
+                                echo "80000"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "78150"
+                                echo "79887"
                                 ;;
                             * )
                                 echo "78550"
@@ -890,14 +944,14 @@ function getSchedulerNrRequests()
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sdm8[6789]* | sdm9* )
-                                echo "79434"
+                            sdm8[5-9]* | sdm9* )
+                                echo "83470"
                                 ;;
                             sdm8* )
-                                echo "81248"
+                                echo "81800"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "80904"
+                                echo "81660"
                                 ;;
                             mt68* )
                                 echo "81375"
@@ -912,11 +966,14 @@ function getSchedulerNrRequests()
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "83101"
+                                ;;
                             sdm8* )
-                                echo "79987"
+                                echo "81425"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "79887"
+                                echo "80904"
                                 ;;
                             mt68* )
                                 echo "79795"
@@ -1054,7 +1111,7 @@ function reduceIoJitter()
                         vals="`getSchedulerValues \"$sched\" \"$toneMode\"`"
                         nr_requests="`getSchedulerNrRequests \"$sched\" \"$toneMode\"`"
                         echo "$sched" >"/sys/block/$i/queue/scheduler"
-                        echo '10240' >"/sys/block/$i/queue/read_ahead_kb"
+                        echo '12000' >"/sys/block/$i/queue/read_ahead_kb"
                         echo '0' >"/sys/block/$i/queue/iostats"
                         echo '0' >"/sys/block/$i/queue/add_random"
                         echo '2' >"/sys/block/$i/queue/rq_affinity"
@@ -1088,7 +1145,14 @@ function reduceIoJitter()
                     sleep 0.05
                     echo 'cfq' >"/sys/block/$i/queue/scheduler"
                     sleep 0.05
-                    echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+                    case "`getSocModelName`" in
+                        sdm8[5-9]* | sdm9* )
+                            echo '512' >"/sys/block/$i/queue/read_ahead_kb"
+                            ;;
+                        * )
+                            echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+                            ;;
+                    esac
                     echo '1' >"/sys/block/$i/queue/iostats"
                     echo '0' >"/sys/block/$i/queue/add_random"
                     echo '1' >"/sys/block/$i/queue/rq_affinity"
@@ -1146,10 +1210,10 @@ function reduceVmJitter()
             if [ -w "/proc/sys/vm/direct_swappiness" ]; then
                 echo '0' >"/proc/sys/vm/direct_swappiness"
             fi
-            echo '50' >"/proc/sys/vm/dirty_ratio"
-            echo '25' >"/proc/sys/vm/dirty_background_ratio"
-            echo '600000' >"/proc/sys/vm/dirty_expire_centisecs"
-            echo '111000' >"/proc/sys/vm/dirty_writeback_centisecs"
+            echo '80' >"/proc/sys/vm/dirty_ratio"
+            echo '60' >"/proc/sys/vm/dirty_background_ratio"
+            echo '1201001' >"/proc/sys/vm/dirty_expire_centisecs"
+            echo '221001' >"/proc/sys/vm/dirty_writeback_centisecs"
             echo '1' >"/proc/sys/vm/laptop_mode"
             if [ -w "/proc/sys/vm/swap_ratio" ]; then
                 echo '0' >"/proc/sys/vm/swap_ratio"
