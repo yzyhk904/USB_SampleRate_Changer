@@ -1,11 +1,13 @@
 #!/system/bin/sh
 
-# AOSP standard values:         Stop_Band_Attenuation   Half_Filter_Length   Cut_Off_Percent (% of Nyquist freq.)
-#   DYN_HIGH_QUALITY(7):          98dB                            32                         100
-#   AOSP default:                          90dB                            32                          100
-#   DYN_MEDIUM_QUALITY(6):     84dB                            16                          100
-#   DYN_LOW_QUALITY(5):          80dB                              8                          100
-#   This script's default:               160dB                          480                            91
+# AOSP standard values+others:          Stop_Band_Attenuation   Half_Filter_Length   Cut_Off_Percent (% of Nyquist freq.)
+#   DYN_HIGH_QUALITY(7):                               98dB                            32                         100
+#   AOSP default:                                               90dB                            32                          100
+#   DYN_MEDIUM_QUALITY(6):                          84dB                            16                          100
+#   DYN_LOW_QUALITY(5):                               80dB                              8                          100
+#   This script's default:                                    160dB                          480                            91
+#   Recommended for Android 12:                     167dB                          368                          106 (options: --bypass --cheat)
+#   Recommended for 1:1 ratio pass through:     194dB                          480                          100
 #
 
 stopBand=160
@@ -65,7 +67,7 @@ function reloadAudioserver()
 function PrintStatus()
 {
     if [ $# -eq 5 ]; then
-        echo "AudioFlinger's current resampling configuration" 1>&2
+        echo "AudioFlinger's current resampling configuration:" 1>&2
         if [ -n "$2" ]; then
             echo "  Effective Freq. (kHz) >= : $2" 1>&2
         fi

@@ -205,8 +205,8 @@ function reduceThermalJitter()
             # For MediaTek CPU's
             if [ -w "/proc/cpufreq/cpufreq_sched_disable" ]; then
                 val="`searchDefaultCpuGovernor`"
-                if [ "$val" = "schedutil" ]; then
-                    echo "    Notice: EAS has been enabled, so skipping thermal MTK EAS+ enabling" 1>&2
+                if [ "$val" = "schedutil"  -a  "`getprop ro.vendor.build.version.release`" -lt "11" ]; then
+                    echo "    Notice: EAS hasn't been enabled, so skipping thermal MTK EAS+ enabling" 1>&2
                 else
                     echo '0' > "/proc/cpufreq/cpufreq_sched_disable"
                 fi
@@ -292,6 +292,33 @@ function reduceThermalJitter()
                 echo "  Thermal control: N/A"
             fi
         # End of status print section
+        fi
+        
+    else
+        return 1
+    fi
+}
+
+function reduceDozeJitter()
+{
+    if [ $# -eq 2 ]; then
+        local flag="$1"
+        local printStatus="$2"
+
+        if [ $flag -gt 0 ]; then
+            # Disable Doze of the device
+            dumpsys deviceidle disable all 1>"/dev/null" 2>&1
+        elif [ $flag -lt 0 ]; then
+            # Enable Doze of the device
+            dumpsys deviceidle enable all 1>"/dev/null" 2>&1
+        fi
+        
+        if [ $printStatus -gt 0 ]; then
+            if [ "`dumpsys deviceidle enabled all`" -gt 0 ]; then
+                echo "  Doze battery saver: enabled"
+            else
+                echo "  Doze battery saver: disabled"
+            fi
         fi
         
     else
@@ -843,7 +870,7 @@ function getSchedulerValues()
                             sdm8* )
                                 echo "42 0 16 488 0"
                                 ;;
-                            mt677? | mt68* )
+                            mt67[6-9]? | mt68* )
                                 echo "42 0 16 484 0"
                                 ;;
                             * )
@@ -854,19 +881,22 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "48 0 24 500 0"
+                                echo "49 0 24 500 0"
                                 ;;
                             sdm8* )
-                                echo "48 0 24 500 0"
+                                echo "49 0 24 500 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "48 0 24 500 0"
+                                echo "49 0 24 500 0"
                                 ;;
-                            mt677? | mt68* )
-                                echo "49 0 24 496 0"
+                            mt68* )
+                                echo "52 0 28 500 0"
+                                ;;
+                            mt67[6-9]? )
+                                echo "48 0 24 496 0"
                                 ;;
                             * )
-                                echo "49 0 24 496 0"
+                                echo "48 0 24 496 0"
                                 ;;
                         esac
                         ;;
@@ -881,7 +911,7 @@ function getSchedulerValues()
                             sdm* | msm* | sd* | exynos* )
                                 echo "45 0 20 497 0"
                                 ;;
-                            mt677? | mt68* )
+                            mt67[6-9]? | mt68* )
                                 echo "44 0 20 488 0"
                                 ;;
                             * )
@@ -903,7 +933,7 @@ function getSchedulerValues()
                         echo "1 3 3 0 1 1 3 23 0 3 3"
                         ;;
                     "boost" )
-                        echo "1 3 3 0 1 1 3 28 0 3 3"
+                        echo "1 3 3 0 1 1 3 29 0 3 3"
                         ;;
                     "medium" | * )
                         echo "1 3 3 0 1 1 3 26 0 3 3"
@@ -958,7 +988,7 @@ function getSchedulerNrRequests()
                             mt68* )
                                 echo "81375"
                                 ;;
-                            mt67[67]? )
+                            mt67[6-9]? )
                                 echo "81394"
                                 ;;
                             * )
@@ -978,9 +1008,9 @@ function getSchedulerNrRequests()
                                 echo "82861"
                                 ;;
                             mt68* )
-                                echo "83373"
+                                echo "84500"
                                 ;;
-                            mt67[67]? )
+                            mt67[6-9]? )
                                 echo "83373"
                                 ;;
                             * )
@@ -1002,7 +1032,7 @@ function getSchedulerNrRequests()
                             mt68* )
                                 echo "81394"
                                 ;;
-                            mt67[67]? )
+                            mt67[6-9]? )
                                 echo "81394"
                                 ;;
                             * )
@@ -1038,7 +1068,7 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "81600"
+                                echo "81940"
                                 ;;
                             * )
                                 echo "82200"
