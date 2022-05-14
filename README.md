@@ -57,7 +57,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | ---: | ---: | ---: | ---: | ---- |
     | 90 | 32 | 100 | | AOSP default |
     | 160 | 480 | 91 | | This script's default |
-    | 169 | 368 | | 106 | This script's A12 low performance |
+    | 167 | 368 | | 106 | This script's A12 low performance |
     | 179 | 408 | | 99 | This script's A12 general purpose |
     | 194 | 520 | 100 | | This script's 1:1 resampling (bit-perfect) |
     | 100 | 29 | | 109 | AK4493 (Sharp Roll-Off for x N over-sampling) |
