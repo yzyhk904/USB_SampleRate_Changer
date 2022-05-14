@@ -44,22 +44,33 @@ function reloadAudioserver()
     # wait for system boot completion and audiosever boot up
     local i
     for i in `seq 1 3` ; do
-      if [ "`getprop sys.boot_completed`" = "1"  -a  "`getprop init.svc.audioserver`" = "running" ]; then
+      if [ "`getprop sys.boot_completed`" = "1"  -a  -n "`getprop init.svc.audioserver`" ]; then
         break
       fi
       sleep 0.9
     done
 
-    if [ "`getprop init.svc.audioserver`" = "running" ]; then
+    if [ -n "`getprop init.svc.audioserver`" ]; then
         setprop ctl.restart audioserver
-        if [ $? -gt 0 ]; then
-            echo "audioserver reload failed!" 1>&2
-            return 1
+        sleep 0.2
+        if [ "`getprop init.svc.audioserver`" != "running" ]; then
+            # workaround for Android 12 old devices hanging up the audioserver after "setprop ctl.restart audioserver" is executed
+            local pid="`getprop init.svc_debug_pid.audioserver`"
+            if [ -n "$pid" ]; then
+                kill -HUP $pid 1>"/dev/null" 2>&1
+            fi
+            sleep 0.2
+            if [ "`getprop init.svc.audioserver`" != "running" ]; then
+                echo "audioserver reload failed!" 1>&2
+                return 1
+            else
+                return 0
+            fi
         else
             return 0
         fi
     else
-        echo "audioserver is not running!" 1>&2
+        echo "audioserver is not found!" 1>&2 
         return 1
     fi
 }
