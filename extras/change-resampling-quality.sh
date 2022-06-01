@@ -44,13 +44,14 @@ function reloadAudioserver()
     # wait for system boot completion and audiosever boot up
     local i
     for i in `seq 1 3` ; do
-      if [ "`getprop sys.boot_completed`" = "1"  -a  -n "`getprop init.svc.audioserver`" ]; then
-        break
-      fi
-      sleep 0.9
+        if [ "`getprop sys.boot_completed`" = "1"  -a  -n "`getprop init.svc.audioserver`" ]; then
+            break
+        fi
+        sleep 0.9
     done
 
     if [ -n "`getprop init.svc.audioserver`" ]; then
+
         setprop ctl.restart audioserver
         sleep 0.2
         if [ "`getprop init.svc.audioserver`" != "running" ]; then
@@ -59,16 +60,18 @@ function reloadAudioserver()
             if [ -n "$pid" ]; then
                 kill -HUP $pid 1>"/dev/null" 2>&1
             fi
-            sleep 0.2
-            if [ "`getprop init.svc.audioserver`" != "running" ]; then
-                echo "audioserver reload failed!" 1>&2
-                return 1
-            else
-                return 0
-            fi
-        else
-            return 0
+            for i in `seq 1 10` ; do
+                sleep 0.2
+                if [ "`getprop init.svc.audioserver`" = "running" ]; then
+                    break
+                elif [ $i -eq 10 ]; then
+                    echo "audioserver reload failed!" 1>&2
+                    return 1
+                fi
+            done
         fi
+        return 0
+        
     else
         echo "audioserver is not found!" 1>&2 
         return 1
