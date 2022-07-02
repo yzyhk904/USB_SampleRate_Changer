@@ -110,27 +110,69 @@ function reduceThermalJitter()
             if [ "`getprop init.svc.mpdecision`" = "running" ]; then
                 setprop ctl.stop mpdecision
                 forceOnlineCPUs
+            elif [ "`getprop init.svc.mpdecision`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.mpdecision`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                    forceOnlineCPUs
+                fi
             elif [ "`getprop init.svc.vendor.mpdecision`" = "running" ]; then
                 setprop ctl.stop vendor.mpdecision
                 forceOnlineCPUs
+            elif [ "`getprop init.svc.vendor.mpdecision`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.mpdecision`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                    forceOnlineCPUs
+                fi
             fi
             # Stop the thermal server
             if [ "`getprop init.svc.thermal`" = "running" ]; then
                 setprop ctl.stop thermal
+            elif [ "`getprop init.svc.thermal`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.thermal`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             elif [ "`getprop init.svc.vendor.thermal`" = "running" ]; then
                 setprop ctl.stop vendor.thermal
+            elif [ "`getprop init.svc.vendor.thermal`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.thermal`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             # Stop the mi_thermald server
             if [ "`getprop init.svc.mi_thermald`" = "running" ]; then
                 setprop ctl.stop mi_thermald
+            elif [ "`getprop init.svc.mi_thermald`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.mi_thermald`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             elif [ "`getprop init.svc.vendor.mi_thermald`" = "running" ]; then
                 setprop ctl.stop vendor.mi_thermald
+            elif [ "`getprop init.svc.vendor.mi_thermald`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.mi_thermald`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             # Stop the thermal-engine server
             if [ "`getprop init.svc.thermal-engine`" = "running" ]; then
                 setprop ctl.stop thermal-engine
+            elif [ "`getprop init.svc.thermal-engine`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.thermal-engine`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             elif [ "`getprop init.svc.vendor.thermal-engine`" = "running" ]; then
                 setprop ctl.stop vendor.thermal-engine
+            elif [ "`getprop init.svc.thermal-engine`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.thermal-engine`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             # For MediaTek CPU's
             if [ -w "/proc/cpufreq/cpufreq_sched_disable" ]; then
@@ -584,18 +626,43 @@ function reduceCameraJitter()
             # Stop the camera servers
             if [ "`getprop init.svc.qcamerasvr`" = "running" ]; then
                 setprop ctl.stop qcamerasvr
+            elif [ "`getprop init.svc.qcamerasvr`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.qcamerasvr`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             if [ "`getprop init.svc.vendor.qcamerasvr`" = "running" ]; then
                 setprop ctl.stop vendor.qcamerasvr
+            elif [ "`getprop init.svc.vendor.qcamerasvr`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.qcamerasvr`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             if [ "`getprop init.svc.cameraserver`" = "running" ]; then
                 setprop ctl.stop cameraserver
+            elif [ "`getprop init.svc.cameraserver`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.cameraserver`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             if [ "`getprop init.svc.camerasloganserver`" = "running" ]; then
                 setprop ctl.stop camerasloganserver
+            elif [ "`getprop init.svc.camerasloganserver`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.camerasloganserver`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             if [ "`getprop init.svc.camerahalserver`" = "running" ]; then
                 setprop ctl.stop camerahalserver
+            elif [ "`getprop init.svc.camerahalserver`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.camerahalserver`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             
         elif [ $flag -lt 0 ]; then
@@ -603,9 +670,13 @@ function reduceCameraJitter()
             # Start the camera servers
             if [ "`getprop init.svc.qcamerasvr`" = "stopped" ]; then
                 setprop ctl.start qcamerasvr
+            elif [ "`getprop init.svc.qcamerasvr`" = "stopping" ]; then
+                setprop ctl.restart qcamerasvr
             fi
             if [ "`getprop init.svc.vendor.qcamerasvr`" = "stopped" ]; then
                 setprop ctl.start vendor.qcamerasvr
+            elif [ "`getprop init.svc.vendor.qcamerasvr`" = "stopping" ]; then
+                setprop ctl.restart vendor.qcamerasvr
             fi
             if [ "`getprop init.svc.cameraserver`" = "stopped" ]; then
                 setprop ctl.start cameraserver
