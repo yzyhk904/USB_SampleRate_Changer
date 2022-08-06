@@ -1,13 +1,13 @@
 #!/system/bin/sh
 
-period_us=3375
+period_us=2625
 
 resetFlag=0
 
 function usage()
 {
     echo "Usage: ${0##*/} [--help] [--status] [--reset] [period_usec]" 1>&2
-    echo "  (default: 3375 usec)" 1>&2
+    echo "  (default: 2625 usec)" 1>&2
 }
 
 function which_resetprop_command()
@@ -78,9 +78,15 @@ function PrintStatus()
 function AudioDriverStatus()
 {
     local val
-    val="`getprop ro.audio.usb.period_us`"
+    val="`getprop vendor.audio.usb.perio`"
+    if [ -z "$val" ]; then
+        val="`getprop ro.audio.usb.period_us`"
+    fi
     if [ -n "$val" ]; then
         PrintStatus "$val"
+    elif [ $resetFlag -eq 0 ]; then
+        echo "Warning: root permisson is needed for the right answer!" 1>&2
+        PrintStatus 5000
     else
         PrintStatus 5000
     fi
@@ -130,8 +136,14 @@ resetprop_command="`which_resetprop_command`"
 if [ -n "$resetprop_command" ]; then
     if [ $resetFlag -gt 0 ]; then
         "$resetprop_command" --delete ro.audio.usb.period_us 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete vendor.audio.usb.perio 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete vendor.audio.usb.out.period_us 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete vendor.audio.usb.out.period_count 1>"/dev/null" 2>&1
     else
         "$resetprop_command" "ro.audio.usb.period_us" "$period_us" 1>"/dev/null" 2>&1
+        "$resetprop_command" "vendor.audio.usb.perio" "$period_us" 1>"/dev/null" 2>&1
+        "$resetprop_command" "vendor.audio.usb.out.period_us" "$period_us" 1>"/dev/null" 2>&1
+        "$resetprop_command" "vendor.audio.usb.out.period_count" "2" 1>"/dev/null" 2>&1
     fi
     reloadAudioserver
 else

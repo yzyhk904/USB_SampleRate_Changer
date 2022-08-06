@@ -615,6 +615,81 @@ function reduceGovernorJitter()
     fi
 }
 
+function reduceLogdJitter()
+{
+    if [ $# -eq 2 ]; then
+        local flag="$1"
+        local printStatus="$2"
+
+        if [ $flag -gt 0 ]; then
+        
+            # Stop the Logd servers
+            if [ "`getprop init.svc.logd`" = "running" ]; then
+                setprop ctl.stop logd
+            elif [ "`getprop init.svc.logd`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.logd`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            if [ "`getprop init.svc.traced`" = "running" ]; then
+                setprop ctl.stop traced
+            elif [ "`getprop init.svc.traced`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.traced`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            if [ "`getprop init.svc.traced_probes`" = "running" ]; then
+                setprop ctl.stop traced_probes
+            elif [ "`getprop init.svc.traced_probes`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.traced_probes`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            
+        elif [ $flag -lt 0 ]; then
+        
+            # Start the Logd servers
+            if [ "`getprop init.svc.traced_probes`" = "stopped" ]; then
+                setprop ctl.start traced_probes
+            elif [ "`getprop init.svc.traced_probes`" = "stopping" ]; then
+                setprop ctl.restart traced_probes
+            fi
+            if [ "`getprop init.svc.traced`" = "stopped" ]; then
+                setprop ctl.start traced
+            elif [ "`getprop init.svc.traced`" = "stopping" ]; then
+                setprop ctl.restart traced
+            fi
+            if [ "`getprop init.svc.logd`" = "stopped" ]; then
+                setprop ctl.start logd
+            elif [ "`getprop init.svc.logd`" = "stopping" ]; then
+                setprop ctl.restart logd
+            fi
+            
+        fi
+        
+        if [ $printStatus -gt 0 ]; then
+            local val="`getprop init.svc.logd`"
+            if [ -n  "$val" ]; then
+                echo "  Logd main server: $val"
+            fi
+            val="`getprop init.svc.traced`"
+            if [ -n  "$val" ]; then
+                echo "  Logd traced server: $val"
+            fi
+            val="`getprop init.svc.traced_probes`"
+            if [ -n  "$val" ]; then
+                echo "  Logd traced_probes server: $val"
+            fi
+        fi
+        
+    else
+        return 1
+    fi
+}
+
 function reduceCameraJitter()
 {
     if [ $# -eq 2 ]; then
