@@ -153,20 +153,20 @@ if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"
         || isMounted "/proc/self/mountinfo" "/system/vendor/lib64/libalsautils.so" "IncludeMagisk" "NoShowKey" \
         || isMounted "/proc/self/mountinfo" "/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey" \
         || isMounted "/proc/self/mountinfo" "/system/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey"
-    if [ $? -ne 0 ]; then
-        echo "    Warning: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
+    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker"  -o  $? -ne 0 ]; then
+        echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
     fi
 elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" ]; then
     case "`getprop ro.board.platform`" in
         mt* | exynos* )
             if [ $sRate -gt 96000 ]; then
-                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of hardware offload driver's limitation" 1>&2
+                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
                 echo     " (upto 96kHz lock)" 1>&2
             fi
         ;;
         * )
             if [ $sRate -gt 384000 ]; then
-                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of hardware offload driver's limitation" 1>&2
+                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
                 echo     " (upto 384kHz lock)" 1>&2
             fi
         ;;
