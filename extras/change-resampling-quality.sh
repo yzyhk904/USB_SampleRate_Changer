@@ -1,11 +1,13 @@
 #!/system/bin/sh
 
-# AOSP standard values:         Stop_Band_Attenuation   Half_Filter_Length   Cut_Off_Percent (% of Nyquist freq.)
-#   DYN_HIGH_QUALITY(7):          98dB                            32                         100
-#   AOSP default:                          90dB                            32                          100
-#   DYN_MEDIUM_QUALITY(6):     84dB                            16                          100
-#   DYN_LOW_QUALITY(5):          80dB                              8                          100
-#   This script's default:               160dB                          480                            91
+# AOSP standard values+others:          Stop_Band_Attenuation   Half_Filter_Length   Cut_Off_Percent (% of Nyquist freq.)
+#   DYN_HIGH_QUALITY(7):                               98dB                            32                         100
+#   AOSP default:                                               90dB                            32                          100
+#   DYN_MEDIUM_QUALITY(6):                          84dB                            16                          100
+#   DYN_LOW_QUALITY(5):                               80dB                              8                          100
+#   This script's default:                                    160dB                          480                            91
+#   Recommended for Android 12:                     167dB                          368                          106 (options: --bypass --cheat)
+#   Recommended for 1:1 ratio pass through:     194dB                          480                          100
 #
 
 stopBand=160
@@ -42,22 +44,36 @@ function reloadAudioserver()
     # wait for system boot completion and audiosever boot up
     local i
     for i in `seq 1 3` ; do
-      if [ "`getprop sys.boot_completed`" = "1"  -a  "`getprop init.svc.audioserver`" = "running" ]; then
-        break
-      fi
-      sleep 0.9
+        if [ "`getprop sys.boot_completed`" = "1"  -a  -n "`getprop init.svc.audioserver`" ]; then
+            break
+        fi
+        sleep 0.9
     done
 
-    if [ "`getprop init.svc.audioserver`" = "running" ]; then
+    if [ -n "`getprop init.svc.audioserver`" ]; then
+
         setprop ctl.restart audioserver
-        if [ $? -gt 0 ]; then
-            echo "audioserver reload failed!" 1>&2
-            return 1
-        else
-            return 0
+        sleep 0.2
+        if [ "`getprop init.svc.audioserver`" != "running" ]; then
+            # workaround for Android 12 old devices hanging up the audioserver after "setprop ctl.restart audioserver" is executed
+            local pid="`getprop init.svc_debug_pid.audioserver`"
+            if [ -n "$pid" ]; then
+                kill -HUP $pid 1>"/dev/null" 2>&1
+            fi
+            for i in `seq 1 10` ; do
+                sleep 0.2
+                if [ "`getprop init.svc.audioserver`" = "running" ]; then
+                    break
+                elif [ $i -eq 10 ]; then
+                    echo "audioserver reload failed!" 1>&2
+                    return 1
+                fi
+            done
         fi
+        return 0
+        
     else
-        echo "audioserver is not running!" 1>&2
+        echo "audioserver is not found!" 1>&2 
         return 1
     fi
 }
@@ -65,7 +81,7 @@ function reloadAudioserver()
 function PrintStatus()
 {
     if [ $# -eq 5 ]; then
-        echo "AudioFlinger's current resampling configuration" 1>&2
+        echo "AudioFlinger's current resampling configuration:" 1>&2
         if [ -n "$2" ]; then
             echo "  Effective Freq. (kHz) >= : $2" 1>&2
         fi

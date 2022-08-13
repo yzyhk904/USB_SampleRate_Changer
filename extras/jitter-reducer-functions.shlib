@@ -2,13 +2,16 @@
 
 function forceOnlineCPUs()
 {
-    local i
-    for i in `seq 0 9`; do
-        if [ -e "/sys/devices/system/cpu/cpu$i/online" ]; then
-            chmod 644 "/sys/devices/system/cpu/cpu$i/online"
-            echo '1' >"/sys/devices/system/cpu/cpu$i/online"
-        fi
-    done
+    local i st en
+    IFS="-" read st en <"/sys/devices/system/cpu/present"
+    if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
+        for i in `seq $st $en`; do
+            if [ -e "/sys/devices/system/cpu/cpu$i/online" ]; then
+                chmod 644 "/sys/devices/system/cpu/cpu$i/online"
+                echo '1' >"/sys/devices/system/cpu/cpu$i/online"
+            fi
+        done
+    fi
 }
 
 function searchDefaultCpuGovernor()
@@ -66,17 +69,110 @@ function reduceThermalJitter()
             if [ -w "/sys/module/msm_thermal/core_control/enabled" ]; then
                 echo '0' > "/sys/module/msm_thermal/core_control/enabled"
             fi
+            if [ -r "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                local i st en
+                IFS="-" read st en <"/sys/devices/system/cpu/present"
+                if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
+                    if [ -w "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
+                        # SD850 or higher type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
+                        echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/min_cpus"
+                        echo '0'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
+                        if [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                            echo '3'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
+                            echo '0'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                        fi
+                        if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        fi
+                    elif [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                        # SD840 or lower type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                        echo '4'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
+                        echo '0'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                        if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        fi
+                    elif [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                        # unknown type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                        echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                    fi
+                fi
+            fi
             # Stop the MPDecision (CPU hotplug)
             if [ "`getprop init.svc.mpdecision`" = "running" ]; then
                 setprop ctl.stop mpdecision
                 forceOnlineCPUs
+            elif [ "`getprop init.svc.mpdecision`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.mpdecision`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                    forceOnlineCPUs
+                fi
             elif [ "`getprop init.svc.vendor.mpdecision`" = "running" ]; then
                 setprop ctl.stop vendor.mpdecision
                 forceOnlineCPUs
+            elif [ "`getprop init.svc.vendor.mpdecision`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.mpdecision`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                    forceOnlineCPUs
+                fi
             fi
             # Stop the thermal server
             if [ "`getprop init.svc.thermal`" = "running" ]; then
                 setprop ctl.stop thermal
+            elif [ "`getprop init.svc.thermal`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.thermal`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            elif [ "`getprop init.svc.vendor.thermal`" = "running" ]; then
+                setprop ctl.stop vendor.thermal
+            elif [ "`getprop init.svc.vendor.thermal`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.thermal`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            # Stop the mi_thermald server
+            if [ "`getprop init.svc.mi_thermald`" = "running" ]; then
+                setprop ctl.stop mi_thermald
+            elif [ "`getprop init.svc.mi_thermald`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.mi_thermald`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            elif [ "`getprop init.svc.vendor.mi_thermald`" = "running" ]; then
+                setprop ctl.stop vendor.mi_thermald
+            elif [ "`getprop init.svc.vendor.mi_thermald`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.mi_thermald`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            # Stop the thermal-engine server
+            if [ "`getprop init.svc.thermal-engine`" = "running" ]; then
+                setprop ctl.stop thermal-engine
+            elif [ "`getprop init.svc.thermal-engine`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.thermal-engine`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            elif [ "`getprop init.svc.vendor.thermal-engine`" = "running" ]; then
+                setprop ctl.stop vendor.thermal-engine
+            elif [ "`getprop init.svc.thermal-engine`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.thermal-engine`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             # For MediaTek CPU's
             if [ -w "/proc/cpufreq/cpufreq_sched_disable" ]; then
@@ -90,6 +186,38 @@ function reduceThermalJitter()
              if [ -w "/sys/module/msm_thermal/core_control/enabled" ]; then
                 echo '1' > "/sys/module/msm_thermal/core_control/enabled"
             fi
+            if [ -r "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                local st en
+                IFS="-" read st en <"/sys/devices/system/cpu/present"
+                if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
+                    if [ -w "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
+                        # SD850 or higher type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
+                        echo '0'  > "/sys/devices/system/cpu/cpu7/core_ctl/min_cpus"
+                        if [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                            echo '2'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
+                        fi
+                        if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        fi
+                    elif [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                        # SD840 or lower type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                        echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
+                        if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                        fi
+                    elif [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                        # unknown type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                    fi
+                fi
+            fi
             # Start the MPDecision (CPU hotplug)
             if [ "`getprop init.svc.mpdecision`" = "stopped" ]; then
                 setprop ctl.start mpdecision
@@ -101,12 +229,26 @@ function reduceThermalJitter()
             # Start the thermal server
             if [ "`getprop init.svc.thermal`" = "stopped" ]; then
                 setprop ctl.start thermal
+            elif [ "`getprop init.svc.vendor.thermal`" = "stopped" ]; then
+                setprop ctl.start vendor.thermal
+            fi
+            # Start the mi_thermald server
+            if [ "`getprop init.svc.mi_thermald`" = "stopped" ]; then
+                setprop ctl.start mi_thermald
+            elif [ "`getprop init.svc.vendor.mi_thermald`" = "stopped" ]; then
+                setprop ctl.start vendor.mi_thermald
+            fi
+            # Start the thermal-engine server
+            if [ "`getprop init.svc.thermal-engine`" = "stopped" ]; then
+                setprop ctl.start thermal-engine
+            elif [ "`getprop init.svc.vendor.thermal-engine`" = "stopped" ]; then
+                setprop ctl.start vendor.thermal-engine
             fi
             # For MediaTek CPU's
             if [ -w "/proc/cpufreq/cpufreq_sched_disable" ]; then
                 val="`searchDefaultCpuGovernor`"
-                if [ "$val" = "schedutil" ]; then
-                    echo "    Notice: EAS has been enabled, so skipping thermal MTK EAS+ enabling" 1>&2
+                if [ "$val" = "schedutil"  -a  "`getprop ro.vendor.build.version.release`" -lt "11" ]; then
+                    echo "    Notice: EAS hasn't been enabled, so skipping thermal MTK EAS+ enabling" 1>&2
                 else
                     echo '0' > "/proc/cpufreq/cpufreq_sched_disable"
                 fi
@@ -115,24 +257,65 @@ function reduceThermalJitter()
         fi
       
         if [ $printStatus -gt 0 ]; then
+            local found=0
+            
             # Qualcomm Core control
             if [ -w "/sys/module/msm_thermal/core_control/enabled" ]; then
                 if [ "`cat /sys/module/msm_thermal/core_control/enabled`" -eq 0 ]; then
-                    echo "  Thermal core control: stopped"
+                    echo "  Thermal msm_thermal: disabled"
                 else
-                    echo "  Thermal core control: running"
+                    echo "  Thermal msm_thermal: enabled"
                 fi
-            elif [ -n "`getprop init.svc.thermal`" ]; then
+                found=1
+            fi
+            if [ -r "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                local i st en ctl_enabled=0
+                IFS="-" read st en <"/sys/devices/system/cpu/present"
+                if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
+                    if [ -r "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
+                        read ctl_enabled <"/sys/devices/system/cpu/cpu7/core_ctl/enable"
+                    elif [ -r "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                        read ctl_enabled <"/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                    elif [ -r "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                        read ctl_enabled <"/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                    fi
+                    if [ "$ctl_enabled" -gt 0 ]; then
+                        echo "  Thermal core_ctl: enabled"
+                    else
+                        echo "  Thermal core_ctl: disabled"
+                    fi
+                    found=1
+                fi
+            fi
+            if [ -n "`getprop init.svc.thermal`" ]; then
                 echo "  Thermal server: `getprop init.svc.thermal`"
-            else
-                echo "  Thermal control: N/A"
+                found=1
+            elif [ -n "`getprop init.svc.vendor.thermal`" ]; then
+                echo "  Thermal server: `getprop init.svc.vendor.thermal`"
+                found=1
+            fi
+            if [ -n "`getprop init.svc.mi_thermald`" ]; then
+                echo "  Thermal mi_thermald: `getprop init.svc.mi_thermald`"
+                found=1
+            elif [ -n "`getprop init.svc.vendor.mi_thermald`" ]; then
+                echo "  Thermal mi_thermald: `getprop init.svc.vendor.mi_thermald`"
+                found=1
+            fi
+            if [ -n "`getprop init.svc.thermal-engine`" ]; then
+                echo "  Thermal thermal-engine: `getprop init.svc.thermal-engine`"
+                found=1
+            elif [ -n "`getprop init.svc.vendor.thermal-engine`" ]; then
+                echo "  Thermal thermal-engine: `getprop init.svc.vendor.thermal-engine`"
+                found=1
             fi
 
             # MPDecision
             if [ -n "`getprop init.svc.mpdecision`" ]; then
                 echo "  Thermal MPDecision: `getprop init.svc.mpdecision`"
+                found=1
             elif [ -n "`getprop init.svc.vendor.mpdecision`" ]; then
                 echo "  Thermal MPDecision: `getprop init.svc.vendor.mpdecision`"
+                found=1
             fi
 
             # MediaTek EAS+ scheduling
@@ -144,8 +327,40 @@ function reduceThermalJitter()
                 else
                     echo "  Thermal MTK EAS+: running"
                 fi
+                found=1
+            fi
+            
+            if [ $found -eq 0 ]; then
+                echo "  Thermal control: N/A"
             fi
         # End of status print section
+        fi
+        
+    else
+        return 1
+    fi
+}
+
+function reduceDozeJitter()
+{
+    if [ $# -eq 2 ]; then
+        local flag="$1"
+        local printStatus="$2"
+
+        if [ $flag -gt 0 ]; then
+            # Disable Doze of the device
+            dumpsys deviceidle disable all 1>"/dev/null" 2>&1
+        elif [ $flag -lt 0 ]; then
+            # Enable Doze of the device
+            dumpsys deviceidle enable all 1>"/dev/null" 2>&1
+        fi
+        
+        if [ $printStatus -gt 0 ]; then
+            if [ "`dumpsys deviceidle enabled all`" -gt 0 ]; then
+                echo "  Doze battery saver: enabled"
+            else
+                echo "  Doze battery saver: disabled"
+            fi
         fi
         
     else
@@ -256,16 +471,19 @@ function reduceGovernorJitter()
         
             # CPU governor
             # prevent CPU offline stuck by forcing online between double  governor writing 
-            local i
-            for i in `seq 0 9`; do
-                if [ -e "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor" ]; then
-                    chmod 644 "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
-                    echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
-                    chmod 644 "/sys/devices/system/cpu/cpu$i/online"
-                    echo '1' >"/sys/devices/system/cpu/cpu$i/online"
-                    echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
-                fi
-            done
+            local i st en
+            IFS="-" read st en <"/sys/devices/system/cpu/present"
+            if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
+                for i in `seq $st $en`; do
+                    if [ -e "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor" ]; then
+                        chmod 644 "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+                        echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+                        chmod 644 "/sys/devices/system/cpu/cpu$i/online"
+                        echo '1' >"/sys/devices/system/cpu/cpu$i/online"
+                        echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+                    fi
+                done
+            fi
             # GPU's
             if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
                 # For old Qcomm GPU's
@@ -281,6 +499,8 @@ function reduceGovernorJitter()
                     # Set the min power level to be maximum
                     echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
                 fi
+                # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel
+                echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Maximum fixed frequency setting for MediaTek GPU's
                 local freq="`getMtkGpuFreqKhz \"max\"`"
@@ -293,16 +513,19 @@ function reduceGovernorJitter()
         
             local gov="`searchDefaultCpuGovernor`"
             # prevent CPU offline stuck by forcing online between double  governor writing
-            local i
-            for i in `seq 0 9`; do
-                if [ -e "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor" ]; then
-                    chmod 644 "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
-                    echo "$gov" >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
-                    chmod 644 "/sys/devices/system/cpu/cpu$i/online"
-                    echo '1' >"/sys/devices/system/cpu/cpu$i/online"
-                    echo "$gov" >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
-                fi
-            done
+            local i st en
+            IFS="-" read st en <"/sys/devices/system/cpu/present"
+            if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
+                for i in `seq $st $en`; do
+                    if [ -e "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor" ]; then
+                        chmod 644 "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+                        echo "$gov" >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+                        chmod 644 "/sys/devices/system/cpu/cpu$i/online"
+                        echo '1' >"/sys/devices/system/cpu/cpu$i/online"
+                        echo "$gov" >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+                    fi
+                done
+            fi
 
             if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
                 # Default GPU governor for old Qcomm GPU's
@@ -328,6 +551,11 @@ function reduceGovernorJitter()
                         echo "$x" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
                     fi
                 fi
+                # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel
+                echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                # For a certain Kernel, because it is not effective only once
+                sleep 0.1
+                echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Variable frequency setting for MediaTek GPU's
                 echo '0' >"/proc/gpufreq/gpufreq_opp_freq"
@@ -387,6 +615,81 @@ function reduceGovernorJitter()
     fi
 }
 
+function reduceLogdJitter()
+{
+    if [ $# -eq 2 ]; then
+        local flag="$1"
+        local printStatus="$2"
+
+        if [ $flag -gt 0 ]; then
+        
+            # Stop the Logd servers
+            if [ "`getprop init.svc.logd`" = "running" ]; then
+                setprop ctl.stop logd
+            elif [ "`getprop init.svc.logd`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.logd`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            if [ "`getprop init.svc.traced`" = "running" ]; then
+                setprop ctl.stop traced
+            elif [ "`getprop init.svc.traced`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.traced`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            if [ "`getprop init.svc.traced_probes`" = "running" ]; then
+                setprop ctl.stop traced_probes
+            elif [ "`getprop init.svc.traced_probes`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.traced_probes`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            
+        elif [ $flag -lt 0 ]; then
+        
+            # Start the Logd servers
+            if [ "`getprop init.svc.traced_probes`" = "stopped" ]; then
+                setprop ctl.start traced_probes
+            elif [ "`getprop init.svc.traced_probes`" = "stopping" ]; then
+                setprop ctl.restart traced_probes
+            fi
+            if [ "`getprop init.svc.traced`" = "stopped" ]; then
+                setprop ctl.start traced
+            elif [ "`getprop init.svc.traced`" = "stopping" ]; then
+                setprop ctl.restart traced
+            fi
+            if [ "`getprop init.svc.logd`" = "stopped" ]; then
+                setprop ctl.start logd
+            elif [ "`getprop init.svc.logd`" = "stopping" ]; then
+                setprop ctl.restart logd
+            fi
+            
+        fi
+        
+        if [ $printStatus -gt 0 ]; then
+            local val="`getprop init.svc.logd`"
+            if [ -n  "$val" ]; then
+                echo "  Logd main server: $val"
+            fi
+            val="`getprop init.svc.traced`"
+            if [ -n  "$val" ]; then
+                echo "  Logd traced server: $val"
+            fi
+            val="`getprop init.svc.traced_probes`"
+            if [ -n  "$val" ]; then
+                echo "  Logd traced_probes server: $val"
+            fi
+        fi
+        
+    else
+        return 1
+    fi
+}
+
 function reduceCameraJitter()
 {
     if [ $# -eq 2 ]; then
@@ -398,18 +701,43 @@ function reduceCameraJitter()
             # Stop the camera servers
             if [ "`getprop init.svc.qcamerasvr`" = "running" ]; then
                 setprop ctl.stop qcamerasvr
+            elif [ "`getprop init.svc.qcamerasvr`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.qcamerasvr`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             if [ "`getprop init.svc.vendor.qcamerasvr`" = "running" ]; then
                 setprop ctl.stop vendor.qcamerasvr
+            elif [ "`getprop init.svc.vendor.qcamerasvr`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.qcamerasvr`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             if [ "`getprop init.svc.cameraserver`" = "running" ]; then
                 setprop ctl.stop cameraserver
+            elif [ "`getprop init.svc.cameraserver`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.cameraserver`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             if [ "`getprop init.svc.camerasloganserver`" = "running" ]; then
                 setprop ctl.stop camerasloganserver
+            elif [ "`getprop init.svc.camerasloganserver`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.camerasloganserver`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             if [ "`getprop init.svc.camerahalserver`" = "running" ]; then
                 setprop ctl.stop camerahalserver
+            elif [ "`getprop init.svc.camerahalserver`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.camerahalserver`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
             fi
             
         elif [ $flag -lt 0 ]; then
@@ -417,9 +745,13 @@ function reduceCameraJitter()
             # Start the camera servers
             if [ "`getprop init.svc.qcamerasvr`" = "stopped" ]; then
                 setprop ctl.start qcamerasvr
+            elif [ "`getprop init.svc.qcamerasvr`" = "stopping" ]; then
+                setprop ctl.restart qcamerasvr
             fi
             if [ "`getprop init.svc.vendor.qcamerasvr`" = "stopped" ]; then
                 setprop ctl.start vendor.qcamerasvr
+            elif [ "`getprop init.svc.vendor.qcamerasvr`" = "stopping" ]; then
+                setprop ctl.restart vendor.qcamerasvr
             fi
             if [ "`getprop init.svc.cameraserver`" = "stopped" ]; then
                 setprop ctl.start cameraserver
@@ -546,11 +878,48 @@ function nth()
     fi
 }
 
+function getSocModelName()
+{
+    local modelName="`getprop ro.board.platform`"
+    case "$modelName" in
+            sd* | msm* | exynos* | mt* )
+                echo "$modelName"
+                return 0
+                ;;
+            * )
+                case "`getprop ro.boot.hardware`" in
+                    qcom )
+                        # High performance Qcomm SoC devices tend to have code names
+                        case "$modelName" in
+                            "kona" )
+                                echo "sdm870"
+                                ;;
+                            * )
+                                 if [ -r "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
+                                    echo "sdm855"
+                                 else
+                                    echo "sdm845"
+                                 fi
+                                ;;
+                        esac
+                        return 0
+                        ;;
+                    * )
+                        echo "unknown"
+                        return 0
+                        ;;
+                esac
+                ;;
+    esac
+    
+    return 1
+}
+
 function adjustForSoC()
 {
     if [ $# -eq 1  -a  -n "$1"  -a  "$1" -ge 0 ]; then
         
-        case "`getprop ro.board.platform`" in
+        case "`getSocModelName`" in
             sdm* | msm* | sd* | exynos* )
                 echo "`expr  '(' $1 / 10 ')' '*' 10 + '(' '(' $1 % 10 ')' / 3 ')' '*' 3`"
                 ;;
@@ -627,51 +996,75 @@ function getSchedulerValues()
                 #   fifo_batch front_merges read_expire write_expire writes_starved
                 case "$2" in
                     "light" )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "43 0 20 488 0"
+                                ;;
                             sdm8* )
-                                echo "37 0 16 480 0"
+                                echo "42 0 16 488 0"
                                 ;;
                             * )
-                                echo "37 0 16 480 0"
+                                echo "42 0 16 484 0"
                                 ;;
                         esac
                         ;;
                     "m-light" )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "48 0 20 496 0"
+                                ;;
                             sdm8* )
-                                echo "38 0 16 484 0"
+                                echo "45 0 20 497 0"
+                                ;;
+                            mt67[6-9]? | mt68* )
+                                echo "48 0 24 496 0"
                                 ;;
                             * )
-                                echo "39 0 16 480 0"
+                                echo "48 0 24 496 0"
                                 ;;
                         esac
                         ;;
                     "boost" )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "58 0 28 512 0"
+                                ;;
                             sdm8* )
-                                echo "43 0 20 497 0"
+                                echo "59 0 27 510 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "43 0 20 497 0"
+                                echo "58 0 27 514 0"
                                 ;;
-                            mt677? | mt68* )
-                                echo "44 0 20 488 0"
+                            mt68* )
+                                echo "57 0 28 508 0"
+                                ;;
+                            mt67[6-9]? )
+                                echo "57 0 28 508 0"
                                 ;;
                             * )
-                                echo "44 0 20 488 0"
+                                echo "57 0 28 508 0"
                                 ;;
                         esac
                         ;;
                     "medium" | *)
-                        case "`getprop ro.board.platform`" in
-                            sdm8* )
-                                echo "42 0 16 484 0"
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "49 0 24 500 0"
                                 ;;
-                            mt677? | mt68* )
-                                echo "42 0 16 484 0"
+                            sdm8* )
+                                echo "49 0 24 500 0"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "49 0 24 500 0"
+                                ;;
+                            mt68* )
+                                echo "52 0 24 500 0"
+                                ;;
+                            mt67[6-9]? )
+                                echo "48 0 24 496 0"
                                 ;;
                             * )
-                                echo "42 0 16 484 0"
+                                echo "48 0 24 496 0"
                                 ;;
                         esac
                         ;;
@@ -686,13 +1079,13 @@ function getSchedulerValues()
                         echo "1 3 3 0 1 1 3 23 0 3 3"
                         ;;
                     "m-light" )
-                        echo "1 3 3 0 1 1 3 23 0 3 3"
+                        echo "1 3 3 0 1 1 3 26 0 3 3"
                         ;;
                     "boost" )
-                        echo "1 3 3 0 1 1 3 28 0 3 3"
+                        echo "1 3 3 0 1 1 3 34 0 3 3"
                         ;;
                     "medium" | * )
-                        echo "1 3 3 0 1 1 3 26 0 3 3"
+                        echo "1 3 3 0 1 1 3 29 0 3 3"
                         ;;
                 esac
                 ;;
@@ -715,35 +1108,28 @@ function getSchedulerNrRequests()
             "deadline" )
                 case "$2" in
                     "light" )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "80645"
+                                ;;
                             sdm8* )
-                                echo "77600"
+                                echo "80000"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "77130"
-                                ;;
-                            * )
-                                echo "77500"
-                                ;;
-                        esac
-                        ;;
-                    "m-light" )
-                        case "`getprop ro.board.platform`" in
-                            sdm8* )
-                                echo "79120"
-                                ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "78150"
+                                echo "81660"
                                 ;;
                             * )
                                 echo "78550"
                                 ;;
                         esac
                         ;;
-                    "boost" )
-                        case "`getprop ro.board.platform`" in
+                    "m-light" )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "82545"
+                                ;;
                             sdm8* )
-                                echo "81004"
+                                echo "81425"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "80904"
@@ -751,30 +1137,55 @@ function getSchedulerNrRequests()
                             mt68* )
                                 echo "81375"
                                 ;;
-                            mt67[67]? )
-                                echo "81394"
+                            mt67[6-9]? )
+                                echo "81375"
                                 ;;
                             * )
                                 echo "81394"
                                 ;;
                         esac
                         ;;
-                    "medium" | * )
-                        case "`getprop ro.board.platform`" in
+                    "boost" )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "84578"
+                                ;;
                             sdm8* )
-                                echo "79987"
+                                echo "84876"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "79887"
+                                echo "84875"
                                 ;;
                             mt68* )
-                                echo "79795"
+                                echo "85838"
                                 ;;
-                            mt67[67]? )
-                                echo "79785"
+                            mt67[6-9]? )
+                                echo "84456"
                                 ;;
                             * )
-                                echo "79785"
+                                echo "84456"
+                                ;;
+                        esac
+                        ;;
+                    "medium" | * )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "83853"
+                                ;;
+                            sdm8* )
+                                echo "83965"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "82861"
+                                ;;
+                            mt68* )
+                                echo "83953"
+                                ;;
+                            mt67[6-9]? )
+                                echo "83953"
+                                ;;
+                            * )
+                                echo "83373"
                                 ;;
                         esac
                         ;;
@@ -784,17 +1195,7 @@ function getSchedulerNrRequests()
             "cfq" )
                 case "$2" in
                     "light" )
-                        case "`getprop ro.board.platform`" in
-                            sdm* | msm* | sd* | exynos* )
-                                echo "14476"
-                                ;;
-                            * )
-                                echo "13875"
-                                ;;
-                        esac
-                        ;;
-                    "m-light" )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
                                 echo "14540"
                                 ;;
@@ -803,23 +1204,33 @@ function getSchedulerNrRequests()
                                 ;;
                         esac
                         ;;
-                    "boost" )
-                        case "`getprop ro.board.platform`" in
-                            sdm* | msm* | sd* | exynos* )
-                                echo "81600"
-                                ;;
-                            * )
-                                echo "82200"
-                                ;;
-                        esac
-                        ;;
-                    "medium" | * )
-                        case "`getprop ro.board.platform`" in
+                    "m-light" )
+                        case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
                                 echo "31170"
                                 ;;
                             * )
                                 echo "30545"
+                                ;;
+                        esac
+                        ;;
+                    "boost" )
+                        case "`getSocModelName`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "83587"
+                                ;;
+                            * )
+                                echo "83587"
+                                ;;
+                        esac
+                        ;;
+                    "medium" | * )
+                        case "`getSocModelName`" in
+                            sdm* | msm* | sd* | exynos* )
+                                echo "81940"
+                                ;;
+                            * )
+                                echo "82200"
                                 ;;
                         esac
                         ;;
@@ -829,7 +1240,7 @@ function getSchedulerNrRequests()
             "noop" | * )
                 case "$2" in
                     "light" )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
                                 echo "14615"
                                 ;;
@@ -839,7 +1250,7 @@ function getSchedulerNrRequests()
                         esac
                         ;;
                     "m-light" )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
                                 echo "20650"
                                 ;;
@@ -849,7 +1260,7 @@ function getSchedulerNrRequests()
                         esac
                         ;;
                     "boost" )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
                                 echo "61675"
                                 ;;
@@ -859,7 +1270,7 @@ function getSchedulerNrRequests()
                         esac
                         ;;
                     "medium" | * )
-                        case "`getprop ro.board.platform`" in
+                        case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
                                 echo "30630"
                                 ;;
@@ -903,7 +1314,7 @@ function reduceIoJitter()
                         vals="`getSchedulerValues \"$sched\" \"$toneMode\"`"
                         nr_requests="`getSchedulerNrRequests \"$sched\" \"$toneMode\"`"
                         echo "$sched" >"/sys/block/$i/queue/scheduler"
-                        echo '10240' >"/sys/block/$i/queue/read_ahead_kb"
+                        echo '16384' >"/sys/block/$i/queue/read_ahead_kb"
                         echo '0' >"/sys/block/$i/queue/iostats"
                         echo '0' >"/sys/block/$i/queue/add_random"
                         echo '2' >"/sys/block/$i/queue/rq_affinity"
@@ -937,7 +1348,14 @@ function reduceIoJitter()
                     sleep 0.05
                     echo 'cfq' >"/sys/block/$i/queue/scheduler"
                     sleep 0.05
-                    echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+                    case "`getSocModelName`" in
+                        sdm8[5-9]* | sdm9* )
+                            echo '512' >"/sys/block/$i/queue/read_ahead_kb"
+                            ;;
+                        * )
+                            echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+                            ;;
+                    esac
                     echo '1' >"/sys/block/$i/queue/iostats"
                     echo '0' >"/sys/block/$i/queue/add_random"
                     echo '1' >"/sys/block/$i/queue/rq_affinity"
@@ -995,10 +1413,10 @@ function reduceVmJitter()
             if [ -w "/proc/sys/vm/direct_swappiness" ]; then
                 echo '0' >"/proc/sys/vm/direct_swappiness"
             fi
-            echo '50' >"/proc/sys/vm/dirty_ratio"
-            echo '25' >"/proc/sys/vm/dirty_background_ratio"
-            echo '600000' >"/proc/sys/vm/dirty_expire_centisecs"
-            echo '111000' >"/proc/sys/vm/dirty_writeback_centisecs"
+            echo '84' >"/proc/sys/vm/dirty_ratio"
+            echo '97' >"/proc/sys/vm/dirty_background_ratio"
+            echo '1201001' >"/proc/sys/vm/dirty_expire_centisecs"
+            echo '221001' >"/proc/sys/vm/dirty_writeback_centisecs"
             echo '1' >"/proc/sys/vm/laptop_mode"
             if [ -w "/proc/sys/vm/swap_ratio" ]; then
                 echo '0' >"/proc/sys/vm/swap_ratio"
@@ -1091,22 +1509,36 @@ function reloadAudioserver()
     # wait for system boot completion and audiosever boot up
     local i
     for i in `seq 1 3` ; do
-      if [ "`getprop sys.boot_completed`" = "1"  -a  "`getprop init.svc.audioserver`" = "running" ]; then
-        break
-      fi
-      sleep 0.9
+        if [ "`getprop sys.boot_completed`" = "1"  -a  -n "`getprop init.svc.audioserver`" ]; then
+            break
+        fi
+        sleep 0.9
     done
 
-    if [ "`getprop init.svc.audioserver`" = "running" ]; then
+    if [ -n "`getprop init.svc.audioserver`" ]; then
+
         setprop ctl.restart audioserver
-        if [ $? -gt 0 ]; then
-            echo "audioserver reload failed!" 1>&2
-            return 1
-        else
-            return 0
+        sleep 0.2
+        if [ "`getprop init.svc.audioserver`" != "running" ]; then
+            # workaround for Android 12 old devices hanging up the audioserver after "setprop ctl.restart audioserver" is executed
+            local pid="`getprop init.svc_debug_pid.audioserver`"
+            if [ -n "$pid" ]; then
+                kill -HUP $pid 1>"/dev/null" 2>&1
+            fi
+            for i in `seq 1 10` ; do
+                sleep 0.2
+                if [ "`getprop init.svc.audioserver`" = "running" ]; then
+                    break
+                elif [ $i -eq 10 ]; then
+                    echo "audioserver reload failed!" 1>&2
+                    return 1
+                fi
+            done
         fi
+        return 0
+        
     else
-        echo "audioserver is not running!" 1>&2 
+        echo "audioserver is not found!" 1>&2 
         return 1
     fi
 }

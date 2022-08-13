@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.1.1
+# Version: 2.4.2
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -17,7 +17,7 @@ fi
 
 function usage()
 {
-      echo "Usage: ${0%/*} [--selinux|++selinux][--thermal|++thermal][---governor|++governor][--camera|++camera][--io [scheduler [light | m-light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]" 1>&2
+      echo "Usage: ${0%/*} [--selinux|++selinux][--thermal|++thermal][--doze|++doze][---governor|++governor][--logd][++logd][--camera|++camera][--io [scheduler [light | m-light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]" 1>&2
       echo -n "\nNote 1: each \"--\" prefixed option except \"--status\" and \"--help\" options is an enabler for its corresponding jitter reducer," 1>&2
       echo -n " conversely each \"++\" prefixed option is an disabler for its corresponding jitter reducer." 1>&2
       echo -n " \"--all\" option is an alias of all \"--\" prefixed options except \"--effect\", \"--status\" and \"--help\" options," 1>&2
@@ -31,8 +31,10 @@ function usage()
 
 selinuxFlag=0
 thermalFlag=0
+dozeFlag=0
 governorFlag=0
 cameraFlag=0
+logdFlag=0
 ioFlag=0
 ioScheduler=""
 toneMode="medium"
@@ -55,9 +57,11 @@ else
                 thermalFlag=1
                 governorFlag=1
                 cameraFlag=1
+                logdFlag=1
                 ioFlag=1
                 vmFlag=1
                 wifiFlag=1
+                dozeFlag=1
                 shift
                 ;;
             "+a" | "++all" )
@@ -65,9 +69,11 @@ else
                 thermalFlag=-1
                 governorFlag=-1
                 cameraFlag=-1
+                logdFlag=-1
                 ioFlag=-1
                 vmFlag=-1
                 wifiFlag=-1
+                dozeFlag=-1
                 shift
                 ;;
             "-se" | "--selinux" )
@@ -86,6 +92,14 @@ else
                 thermalFlag=-1
                 shift
                 ;;
+            "-d" | "--doze" )
+                dozeFlag=1
+                shift
+                ;;
+            "+d" | "++doze" )
+                dozeFlag=-1
+                shift
+                ;;
             "-g" | "--governor" )
                 governorFlag=1
                 shift
@@ -100,6 +114,14 @@ else
                 ;;
             "+c" | "++camera" )
                 cameraFlag=-1
+                shift
+                ;;
+            "-l" | "--logd" )
+                logdFlag=1
+                shift
+                ;;
+            "+l" | "++logd" )
+                logdFlag=-1
                 shift
                 ;;
             "-i" | "--io" )
@@ -197,7 +219,9 @@ fi
 
 reduceSelinuxJitter $selinuxFlag $printStatus
 reduceThermalJitter $thermalFlag $printStatus
+reduceDozeJitter $dozeFlag $printStatus
 reduceGovernorJitter $governorFlag $printStatus
+reduceLogdJitter $logdFlag $printStatus
 reduceCameraJitter $cameraFlag $printStatus
 reduceIoJitter "$ioFlag" "$ioScheduler" "$toneMode" "$printStatus"
 reduceVmJitter $vmFlag $printStatus

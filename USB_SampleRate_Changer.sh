@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.4.8
+# Version: 2.5.2
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -63,9 +63,10 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         "-h" | "--help" | -* )
-            echo "Usage: ${0##*/} [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--safe][--safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32]]]" 1>&2
-            echo -n "\nNote: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz offload lock)" 1>&2
-            echo     " if you specify greater than 96kHz or 384kHz (in case of offload)." 1>&2
+            echo -n "Usage: ${0##*/} [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--offload-hifi-playback][--safe][--safest] [--drc]" 1>&2
+            echo     " [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]" 1>&2
+            echo -n "\nNote: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz Qcomm offload lock)" 1>&2
+            echo     " if you specify greater than 96kHz or 384kHz (in case of Qcomm offload)." 1>&2
             exit 0
             ;;
         * )
@@ -152,11 +153,24 @@ if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"
         || isMounted "/proc/self/mountinfo" "/system/vendor/lib64/libalsautils.so" "IncludeMagisk" "NoShowKey" \
         || isMounted "/proc/self/mountinfo" "/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey" \
         || isMounted "/proc/self/mountinfo" "/system/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey"
-    if [ $? -ne 0 ]; then
-        echo "    Warning: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
+    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker"  -o  $? -ne 0 ]; then
+        echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
     fi
-elif [ \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" \)  -a  $sRate -gt 384000 ]; then
-    echo "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of hardware offload driver's limitation (upto 384kHz lock)" 1>&2
+elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" ]; then
+    case "`getprop ro.board.platform`" in
+        mt* | exynos* )
+            if [ $sRate -gt 96000 ]; then
+                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
+                echo     " (upto 96kHz lock)" 1>&2
+            fi
+        ;;
+        * )
+            if [ $sRate -gt 384000 ]; then
+                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
+                echo     " (upto 384kHz lock)" 1>&2
+            fi
+        ;;
+    esac
 fi
 
 aFormat="AUDIO_FORMAT_PCM_32_BIT"
@@ -169,6 +183,9 @@ case "$bDepth" in
         ;;
     32 )
         aFormat="AUDIO_FORMAT_PCM_32_BIT"
+        ;;
+    float )
+        aFormat="AUDIO_FORMAT_PCM_FLOAT"
         ;;
     * )
         echo "unknow bit depth specified (depth=$bDepth)!" 1>&2
