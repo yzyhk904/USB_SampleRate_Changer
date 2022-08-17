@@ -1027,7 +1027,7 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "58 0 28 512 0"
+                                echo "59 0 28 516 0"
                                 ;;
                             sdm8* )
                                 echo "59 0 27 510 0"
@@ -1148,7 +1148,7 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "84578"
+                                echo "84746"
                                 ;;
                             sdm8* )
                                 echo "84876"
