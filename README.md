@@ -82,7 +82,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - please remember that "--wifi" option is persistent even after reboot, but other options are not.
     - and "--doze" option disables doze (light and deep) of your device at all and its battery charge remaining may fall rapidly while idling.
 
-  - For most "hifi" example,  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh --all --effect --status` enables all jitter reducers including effects framework one and outputs the jitter related statuses. For Bluetooth earphones, you may need to add `--io "*" boost` or `--io "*" m-light` option.  For DLNA transmitting, you may need to add `--io "*" boost` option. (If you use "AirMusic" to transmit audio data, I recommend setting around 4573 msec additional delay to reduce jitter distortion on the AirMusic panel to display target device(s).)
+  - For most "hifi" example,  `sh /sdcard/USB_SampleRate_Changer/extras/jitter-reducer.sh --all --effect --status` enables all jitter reducers including effects framework one and outputs the jitter related statuses. For Bluetooth earphones, you may need to add `--io "*" boost` or `--io "*" m-light` option.  For DLNA transmitting, you may need to add `--io "*" boost` option. (If you use "AirMusic" to transmit audio data, I recommend setting around 4577 msec additional delay to reduce jitter distortion on the AirMusic panel to display target device(s).)
 
 * Tips 3 (Convenient): Please use another magisk module of mine ["Audio jitter silencer"](https://github.com/Magisk-Modules-Alt-Repo/audio-jitter-silencer) with this module. I don't recommend this, but for your convenience. This module works automatically (but not completely) as following my recommendation.
 
