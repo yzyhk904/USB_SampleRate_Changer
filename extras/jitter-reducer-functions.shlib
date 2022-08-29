@@ -1016,7 +1016,7 @@ function getSchedulerValues()
                             sdm8* )
                                 echo "45 0 20 497 0"
                                 ;;
-                            mt67[6-9]? | mt68* )
+                            mt67[7-9]? | mt68* )
                                 echo "48 0 24 496 0"
                                 ;;
                             * )
@@ -1027,22 +1027,22 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "59 0 28 516 0"
+                                echo "63 0 32 508 0"
                                 ;;
                             sdm8* )
-                                echo "59 0 27 510 0"
+                                echo "63 0 34 510 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "58 0 27 514 0"
+                                echo "63 0 34 510 0"
                                 ;;
                             mt68* )
-                                echo "57 0 28 508 0"
+                                echo "61 0 32 508 0"
                                 ;;
-                            mt67[6-9]? )
-                                echo "57 0 28 508 0"
+                            mt67[7-9]? )
+                                echo "61 0 32 508 0"
                                 ;;
                             * )
-                                echo "57 0 28 508 0"
+                                echo "61 0 32 508 0"
                                 ;;
                         esac
                         ;;
@@ -1060,7 +1060,7 @@ function getSchedulerValues()
                             mt68* )
                                 echo "52 0 24 500 0"
                                 ;;
-                            mt67[6-9]? )
+                            mt67[7-9]? )
                                 echo "48 0 24 496 0"
                                 ;;
                             * )
@@ -1148,22 +1148,22 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "84746"
+                                echo "86064"
                                 ;;
                             sdm8* )
-                                echo "84876"
+                                echo "85931"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "84875"
+                                echo "85931"
                                 ;;
                             mt68* )
-                                echo "85838"
+                                echo "85891"
                                 ;;
-                            mt67[6-9]? )
-                                echo "84456"
+                            mt67[7-9]? )
+                                echo "85966"
                                 ;;
                             * )
-                                echo "84456"
+                                echo "85781"
                                 ;;
                         esac
                         ;;

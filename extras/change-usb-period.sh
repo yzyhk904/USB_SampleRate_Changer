@@ -1,13 +1,13 @@
 #!/system/bin/sh
 
-period_us=2625
+period_us=2500
 
 resetFlag=0
 
 function usage()
 {
     echo "Usage: ${0##*/} [--help] [--status] [--reset] [period_usec]" 1>&2
-    echo "  (default: 2625 usec)" 1>&2
+    echo "  (default: 2500 usec)" 1>&2
 }
 
 function which_resetprop_command()
