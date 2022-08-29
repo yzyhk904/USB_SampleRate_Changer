@@ -15,9 +15,9 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - `--auto`: investigates device's environment and changes an audio policy configuration file appropriately in most situations. (default behavior)
     - `--usb-only`: changes a USB audio policy configuration file only.
     - `--legacy`: changes an audio policy configuration file for a Bluetooth audio legacy HAL (<em>/system/{lib,lib64}/hw/audio.a2dp.default.so</em>).
-    - `--offload`: changes an audio policy configuration file for worse audio quality USB & Bluetooth hardware offloading except a hifi_playback mixer. 
-    - `--bypass-offload`: changes an audio policy configuration file for bypassing worse audio quality USB & Bluetooth hardware offloading and using a better non- hardware offloading USB & Bluetooth audio driver while a 3.5mm jack and an internal speaker use a hardware offloading driver.
-    - `--offload-hifi-playback`: changes an audio policy configuration file for worse audio quality USB hardware offloading including a hifi_playback mixer while disabling worse audio quality a2dp hardware offloading. 
+    - `--offload`: changes an audio policy configuration file for USB & Bluetooth hardware offloading (worse in audio quality) except a hifi_playback mixer. 
+    - `--bypass-offload`: changes an audio policy configuration file for bypassing USB & Bluetooth hardware offloading (worse in audio quality) and using a non- hardware offloading USB & Bluetooth audio driver (better in audio quality) while a 3.5mm jack and an internal speaker use a hardware offloading driver.
+    - `--offload-hifi-playback`: changes an audio policy configuration file for USB hardware offloading including a hifi_playback mixer (worse in audio quality)while disabling a2dp hardware offloading (worse in audio quality). 
     - `--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps considerably traditional settings for an internal speaker and others.
     - `--safest`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps most traditional settings for an internal speaker and others.
     - `--drc`: forces to enable DRC (Dynamic Range Control, i.e., compression) for the purpose of comparison to this script's usual DRC-less audio quality (not effective for --usb-only mode).
