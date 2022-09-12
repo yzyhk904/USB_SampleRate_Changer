@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.4.2
+# Version: 2.4.3
 #     by zyhk
 
 MYDIR="${0%/*}"

@@ -1011,44 +1011,6 @@ function getSchedulerValues()
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "48 0 20 496 0"
-                                ;;
-                            sdm8* )
-                                echo "45 0 20 497 0"
-                                ;;
-                            mt67[7-9]? | mt68* )
-                                echo "48 0 24 496 0"
-                                ;;
-                            * )
-                                echo "48 0 24 496 0"
-                                ;;
-                        esac
-                        ;;
-                    "boost" )
-                        case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
-                                echo "63 0 32 508 0"
-                                ;;
-                            sdm8* )
-                                echo "63 0 34 510 0"
-                                ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "63 0 34 510 0"
-                                ;;
-                            mt68* )
-                                echo "61 0 32 508 0"
-                                ;;
-                            mt67[7-9]? )
-                                echo "61 0 32 508 0"
-                                ;;
-                            * )
-                                echo "61 0 32 508 0"
-                                ;;
-                        esac
-                        ;;
-                    "medium" | *)
-                        case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
                                 echo "49 0 24 500 0"
                                 ;;
                             sdm8* )
@@ -1065,6 +1027,50 @@ function getSchedulerValues()
                                 ;;
                             * )
                                 echo "48 0 24 496 0"
+                                ;;
+                        esac
+                        ;;
+                    "boost" )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "67 0 32 504 0"
+                                ;;
+                            sdm8* )
+                                echo "67 0 34 504 0"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "67 0 34 504 0"
+                                ;;
+                            mt68* )
+                                echo "67 0 32 504 0"
+                                ;;
+                            mt67[7-9]? )
+                                echo "67 0 32 504 0"
+                                ;;
+                            * )
+                                echo "62 0 32 504 0"
+                                ;;
+                        esac
+                        ;;
+                    "medium" | *)
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "65 0 32 508 0"
+                                ;;
+                            sdm8* )
+                                echo "64 0 34 510 0"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "64 0 34 510 0"
+                                ;;
+                            mt68* )
+                                echo "64 0 32 504 0"
+                                ;;
+                            mt67[7-9]? )
+                                echo "64 0 32 504 0"
+                                ;;
+                            * )
+                                echo "64 0 32 504 0"
                                 ;;
                         esac
                         ;;
@@ -1126,50 +1132,6 @@ function getSchedulerNrRequests()
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "82545"
-                                ;;
-                            sdm8* )
-                                echo "81425"
-                                ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "80904"
-                                ;;
-                            mt68* )
-                                echo "81375"
-                                ;;
-                            mt67[6-9]? )
-                                echo "81375"
-                                ;;
-                            * )
-                                echo "81394"
-                                ;;
-                        esac
-                        ;;
-                    "boost" )
-                        case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
-                                echo "86064"
-                                ;;
-                            sdm8* )
-                                echo "85931"
-                                ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "85931"
-                                ;;
-                            mt68* )
-                                echo "85891"
-                                ;;
-                            mt67[7-9]? )
-                                echo "85966"
-                                ;;
-                            * )
-                                echo "85781"
-                                ;;
-                        esac
-                        ;;
-                    "medium" | * )
-                        case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
                                 echo "83853"
                                 ;;
                             sdm8* )
@@ -1186,6 +1148,50 @@ function getSchedulerNrRequests()
                                 ;;
                             * )
                                 echo "83373"
+                                ;;
+                        esac
+                        ;;
+                    "boost" )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "86075"
+                                ;;
+                            sdm8* )
+                                echo "86077"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "86077"
+                                ;;
+                            mt68* )
+                                echo "85927"
+                                ;;
+                            mt67[7-9]? )
+                                echo "86086"
+                                ;;
+                            * )
+                                echo "86065"
+                                ;;
+                        esac
+                        ;;
+                    "medium" | * )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "86059"
+                                ;;
+                            sdm8* )
+                                echo "86055"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "86055"
+                                ;;
+                            mt68* )
+                                echo "85977"
+                                ;;
+                            mt67[6-9]? )
+                                echo "85977"
+                                ;;
+                            * )
+                                echo "85977"
                                 ;;
                         esac
                         ;;
