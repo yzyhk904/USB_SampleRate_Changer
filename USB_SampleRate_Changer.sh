@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.5.3
+# Version: 2.5.4
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -32,6 +32,10 @@ while [ $# -gt 0 ]; do
             ;;
         "-b" | "--bypass-offload" )
             policyMode="bypass"
+            shift
+            ;;
+        "-bs" | "--bypass-offload-safer" )
+            policyMode="bypass-safer"
             shift
             ;;
         "-l" | "--legacy" )
@@ -222,6 +226,9 @@ case "$policyMode" in
         ;;
     "bypass" )
         template="$MYDIR/templates/bypass_offload_template.xml"
+        ;;
+    "bypass-safer" )
+        template="$MYDIR/templates/bypass_offload_safer_template.xml"
         ;;
     "legacy" )
         template="$MYDIR/templates/legacy_template.xml"

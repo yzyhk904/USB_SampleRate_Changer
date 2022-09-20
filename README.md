@@ -6,7 +6,7 @@ Additionally, this script disables DRC (Dynamic Range Control, i.e., a kind of c
 <br/>
 Finally, the Android OS mixer (AudioFlinger) always apply resampling even to 1:1 ratio pass-through (e.g., 44.1kHz to 44.1kHz resampling with Kaiser windowed digital low-pass filtering), so you need to be careful for resampling parameters even when resampling is not needed (see the description of "extras/change-resampling-quality.sh" below).
 
-* Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--offload-hifi-playback][--safe][-safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
+* Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--bypass-offload-safer][--offload-hifi-playback][--safe][-safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
 
 if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth (or 32bit float) to which you want to change, respectively. Their default values are `44k` (sample rate: 44.1 kHz) and `32` (bit depth: 32 bits) except both safe and safest mode internal outputs (default values: 48 kHz, 32 or 16 bits).
 
@@ -15,8 +15,9 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - `--auto`: investigates device's environment and changes an audio policy configuration file appropriately in most situations. (default behavior)
     - `--usb-only`: changes a USB audio policy configuration file only.
     - `--legacy`: changes an audio policy configuration file for a Bluetooth audio legacy HAL (<em>/system/{lib,lib64}/hw/audio.a2dp.default.so</em>).
-    - `--offload`: changes an audio policy configuration file for USB & Bluetooth hardware offloading (worse in audio quality; Typically, with Bluetooth AAC & SBC codec music data is forced to resample twice, i.e., 44.1kHz -> 48kHz -> 44.1kHz) except a hifi_playback mixer. 
-    - `--bypass-offload`: changes an audio policy configuration file for bypassing USB & Bluetooth hardware offloading (worse in audio quality) and using a non- hardware offloading USB & Bluetooth audio driver (better in audio quality; Typically, with Bluetooth AAC & SBC codec music data isn't resampled, i.e., 44.1kHz -> 44.1kHz) while a 3.5mm jack and an internal speaker use a hardware offloading driver.
+    - `--offload`: changes an audio policy configuration file for USB & Bluetooth hardware offloading (worse in audio quality; A large jitter USB driver and a Bluetooth driver forcing unnecessary resampling, i.e., typically 44.1kHz -> 48kHz -> 44.1kHz) except a hifi_playback mixer. 
+    - `--bypass-offload`: changes an audio policy configuration file for bypassing USB & Bluetooth hardware offloading (worse in audio quality) and using a non- hardware offloading USB & Bluetooth audio driver (better in audio quality; A small jitter USB driver and an AOSP Bluetooth driver without unnecessary resampling) while a 3.5mm jack and an internal speaker use a hardware offloading driver.
+    - `--bypass-offload-safer`: changes an audio policy configuration file for bypassing USB & Bluetooth hardware offloading (worse in audio quality) and using a non- hardware offloading USB & Bluetooth audio driver (better in audio quality) while a 3.5mm jack and an internal speaker use a hardware offloading driver keeping the same settings (48kHz & 16bit/24bit).
     - `--offload-hifi-playback`: changes an audio policy configuration file for USB hardware offloading including a hifi_playback mixer (worse in audio quality) while disabling a2dp hardware offloading (worse in audio quality). 
     - `--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps considerably traditional settings for an internal speaker and others.
     - `--safest`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps most traditional settings for an internal speaker and others.
