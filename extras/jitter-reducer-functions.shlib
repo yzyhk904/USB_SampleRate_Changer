@@ -500,6 +500,9 @@ function reduceGovernorJitter()
                     echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
                 fi
                 # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel
+                sleep 0.1
+                echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                sleep 0.2
                 echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Maximum fixed frequency setting for MediaTek GPU's
@@ -798,8 +801,9 @@ function chooseBestIOScheduler()
         for x in $scheds; do
             case "$x" in
                 "deadline" ) ret_val="deadline"; break ;;
+                "mq-deadline" ) ret_val="mq-deadline"; break ;;
                 "cfq" ) ret_val="cfq" ;;
-                "noop" ) if [ "$ret_val" != "cfq" ]; then ret_val="noop"; fi ;;
+                "noop" | "none" ) if [ "$ret_val" != "cfq" ]; then ret_val="$x"; fi ;;
                 * ) ;;
             esac
         done
@@ -943,7 +947,7 @@ function adjustSchedulerParameter()
 {
     if [ $# -eq 3 ]; then
         
-        if [ "$1" = "deadline"  -a  -n "$2"  -a  -n "$3" ]; then
+        if [ \( "$1" = "deadline"  -o  "$1" = "mq-deadline" \)  -a  -n "$2"  -a  -n "$3" ]; then
             case "$2" in
                 "read_expire" )
                     echo "`adjustForSoC \"$3\"`"
@@ -971,14 +975,14 @@ function getSchedulerParams()
 {
     if [ $# -eq 1 ]; then
         case "$1" in
-            "deadline" )
+            "deadline" | "mq-deadline" )
                 echo "fifo_batch front_merges read_expire write_expire writes_starved"
                 ;;
             "cfq" )
                 echo "back_seek_penalty fifo_expire_async fifo_expire_sync group_idle low_latency quantum slice_async slice_async_rq \
                     slice_idle slice_sync target_latency"
                 ;;
-            "noop" | * )
+            "noop" | "none" | * )
                 echo ""
                 ;;
         esac
@@ -992,7 +996,7 @@ function getSchedulerValues()
 {
     if [ $# -eq 2 ]; then
         case "$1" in
-            "deadline" )
+            "deadline" | "mq-deadline" )
                 #   fifo_batch front_merges read_expire write_expire writes_starved
                 case "$2" in
                     "light" )
@@ -1033,13 +1037,13 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "67 0 32 504 0"
+                                echo "75 0 32 500 0"
                                 ;;
                             sdm8* )
-                                echo "67 0 34 504 0"
+                                echo "75 0 34 500 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "67 0 34 504 0"
+                                echo "75 0 34 500 0"
                                 ;;
                             mt68* )
                                 echo "67 0 32 504 0"
@@ -1096,7 +1100,7 @@ function getSchedulerValues()
                 esac
                 ;;
                 
-            "noop" | * )
+            "noop" | "none" | * )
                 echo ""
                 ;;
                 
@@ -1110,8 +1114,9 @@ function getSchedulerValues()
 function getSchedulerNrRequests()
 {
     if [ $# -eq 2 ]; then
+        
         case "$1" in
-            "deadline" )
+            "deadline" | "mq-deadline" )
                 case "$2" in
                     "light" )
                         case "`getSocModelName`" in
@@ -1154,13 +1159,13 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "86075"
+                                echo "86117"
                                 ;;
                             sdm8* )
-                                echo "86077"
+                                echo "86094"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86077"
+                                echo "86094"
                                 ;;
                             mt68* )
                                 echo "85927"
@@ -1243,45 +1248,45 @@ function getSchedulerNrRequests()
                 esac
                 ;;
                 
-            "noop" | * )
+            "noop" | "none" | * )
                 case "$2" in
                     "light" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "14615"
+                                echo "80645"
                                 ;;
                             * )
-                                echo "14133"
+                                echo "81660"
                                 ;;
                         esac
                         ;;
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "20650"
+                                echo "83853"
                                 ;;
                             * )
-                                echo "20326"
+                                echo "83953"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "61675"
+                                echo "86094"
                                 ;;
                             * )
-                                echo "60915"
+                                echo "85927"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* )
-                                echo "30630"
+                                echo "86055"
                                 ;;
                             * )
-                                echo "30555"
+                                echo "85977"
                                 ;;
                         esac
                         ;;
@@ -1326,6 +1331,13 @@ function reduceIoJitter()
                         echo '2' >"/sys/block/$i/queue/rq_affinity"
                         echo '2' >"/sys/block/$i/queue/nomerges"
                         echo "$nr_requests" >"/sys/block/$i/queue/nr_requests"
+                        # waiting for kenel tunables syncing
+                        sleep 0.05
+                        read v <"/sys/block/$i/queue/nr_requests"
+                        if [ "$nr_requests" -ne "$v" ]; then
+                            # If exceeding its max value, then use a safe Nyx kenel value 2048 (except its "none" scheduler)
+                            echo "2048" >"/sys/block/$i/queue/nr_requests"
+                        fi
                         j=1
                         for p in $params; do
                             v="`nth \"$vals\" \"$j\"`"
@@ -1350,12 +1362,24 @@ function reduceIoJitter()
         
             for i in sda mmcblk0 mmcblk1; do
                 if [ -d "/sys/block/$i/queue" ]; then
-                    echo 'noop' >"/sys/block/$i/queue/scheduler"
-                    sleep 0.05
-                    echo 'cfq' >"/sys/block/$i/queue/scheduler"
-                    sleep 0.05
+                    if validScheduler "/sys/block/$i/queue/scheduler" "noop"; then
+                        echo 'noop' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    elif validScheduler "/sys/block/$i/queue/scheduler" "none"; then
+                        echo 'none' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    fi
+                    
+                    if validScheduler "/sys/block/$i/queue/scheduler" "cfq"; then
+                        echo 'cfq' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    elif validScheduler "/sys/block/$i/queue/scheduler" "bfq"; then
+                        echo 'bfq' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    fi
+                    
                     case "`getSocModelName`" in
-                        sdm8[5-9]* | sdm9* )
+                        sdm8[5-9]* | sdm9* | sdm66* )
                             echo '512' >"/sys/block/$i/queue/read_ahead_kb"
                             ;;
                         * )
@@ -1420,8 +1444,16 @@ function reduceVmJitter()
                 echo '0' >"/proc/sys/vm/direct_swappiness"
             fi
             echo '84' >"/proc/sys/vm/dirty_ratio"
-            echo '97' >"/proc/sys/vm/dirty_background_ratio"
-            echo '1201001' >"/proc/sys/vm/dirty_expire_centisecs"
+            if [ -w "/proc/sys/vm/dirty_background_ratio" ]; then
+                echo '97' >"/proc/sys/vm/dirty_background_ratio"
+            elif [ -w "/proc/sys/vm/dirty_background_ratio_nosys" ]; then
+                echo '97' >"/proc/sys/vm/dirty_background_ratio_nosys"
+            fi
+            if [ -w "/proc/sys/vm/dirty_expire_centisecs" ]; then
+                echo '1201001' >"/proc/sys/vm/dirty_expire_centisecs"
+            elif [ -w "/proc/sys/vm/dirty_expire_centisecs_nosys" ]; then
+                echo '1201001' >"/proc/sys/vm/dirty_expire_centisecs_nosys"
+            fi
             echo '221001' >"/proc/sys/vm/dirty_writeback_centisecs"
             echo '1' >"/proc/sys/vm/laptop_mode"
             if [ -w "/proc/sys/vm/swap_ratio" ]; then
@@ -1442,9 +1474,18 @@ function reduceVmJitter()
                 echo '60' >"/proc/sys/vm/direct_swappiness"
             fi
             echo '20' >"/proc/sys/vm/dirty_ratio"
-            echo '5' >"/proc/sys/vm/dirty_background_ratio"
-            echo '200' >"/proc/sys/vm/dirty_expire_centisecs"
-            echo '500' >"/proc/sys/vm/dirty_writeback_centisecs"
+            if [ -w "/proc/sys/vm/dirty_background_ratio" ]; then
+                echo '5' >"/proc/sys/vm/dirty_background_ratio"
+            elif [ -w "/proc/sys/vm/dirty_background_ratio_nosys" ]; then
+                echo '10' >"/proc/sys/vm/dirty_background_ratio_nosys"
+            fi
+            if [ -w "/proc/sys/vm/dirty_expire_centisecs" ]; then
+                echo '200' >"/proc/sys/vm/dirty_expire_centisecs"
+                echo '500' >"/proc/sys/vm/dirty_writeback_centisecs"
+            elif [ -w "/proc/sys/vm/dirty_expire_centisecs_nosys" ]; then
+                echo '3000' >"/proc/sys/vm/dirty_expire_centisecs_nosys"
+                echo '0' >"/proc/sys/vm/dirty_writeback_centisecs"
+            fi
             echo '0' >"/proc/sys/vm/laptop_mode"
             if [ -w "/proc/sys/vm/swap_ratio" ]; then
                 echo '100' >"/proc/sys/vm/swap_ratio"
@@ -1472,13 +1513,27 @@ function reduceVmJitter()
             if [ -n "$val" ]; then
                 echo "  VM dirty ratio: $val"
             fi
-            val="`cat /proc/sys/vm/dirty_background_ratio`"
-            if [ -n "$val" ]; then
-                echo "  VM dirty background ratio: $val"
+            if [ -r "/proc/sys/vm/dirty_background_ratio" ]; then
+                val="`cat /proc/sys/vm/dirty_background_ratio`"
+                if [ -n "$val" ]; then
+                    echo "  VM dirty background ratio: $val"
+                fi
+            elif [ -r "/proc/sys/vm/dirty_background_ratio_nosys" ]; then
+                val="`cat /proc/sys/vm/dirty_background_ratio_nosys`"
+                if [ -n "$val" ]; then
+                    echo "  VM dirty background ratio (nosys): $val"
+                fi
             fi
-            val="`cat /proc/sys/vm/dirty_expire_centisecs`"
-            if [ -n "$val" ]; then
-                echo "  VM dirty expire centisecs: $val"
+            if [ -r "/proc/sys/vm/dirty_expire_centisecs" ]; then
+                val="`cat /proc/sys/vm/dirty_expire_centisecs`"
+                if [ -n "$val" ]; then
+                    echo "  VM dirty expire centisecs: $val"
+                fi
+            elif [ -r "/proc/sys/vm/dirty_expire_centisecs_nosys" ]; then
+                val="`cat /proc/sys/vm/dirty_expire_centisecs_nosys`"
+                if [ -n "$val" ]; then
+                    echo "  VM dirty expire centisecs (nosys): $val"
+                fi
             fi
             val="`cat /proc/sys/vm/dirty_writeback_centisecs`"
             if [ -n "$val" ]; then

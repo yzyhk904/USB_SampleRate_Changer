@@ -123,6 +123,12 @@
                 </devicePort>
                 <devicePort tagName="Speaker" type="AUDIO_DEVICE_OUT_SPEAKER" role="sink">
                 </devicePort>
+                <devicePort tagName="Wired Headset" type="AUDIO_DEVICE_OUT_WIRED_HEADSET" role="sink">
+                </devicePort>
+                <devicePort tagName="Wired Headphones" type="AUDIO_DEVICE_OUT_WIRED_HEADPHONE" role="sink">
+                </devicePort>
+                <devicePort tagName="Line" type="AUDIO_DEVICE_OUT_LINE" role="sink">
+                </devicePort>
                 <devicePort tagName="BT SCO" type="AUDIO_DEVICE_OUT_BLUETOOTH_SCO" role="sink">
                 </devicePort>
                 <devicePort tagName="BT SCO Headset" type="AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET" role="sink">
@@ -150,6 +156,12 @@
                        sources="primary output,raw,deep_buffer,mmap_no_irq_out,voip_rx"/>
                 <route type="mix" sink="Speaker"
                        sources="primary output,raw,deep_buffer,mmap_no_irq_out,voip_rx"/>
+                <route type="mix" sink="Wired Headset"
+                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out,voip_rx"/>
+                <route type="mix" sink="Wired Headphones"
+                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out,voip_rx"/>
+                <route type="mix" sink="Line"
+                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out,voip_rx"/>
                 <route type="mix" sink="BT SCO"
                        sources="primary output,raw,deep_buffer,voip_rx"/>
                 <route type="mix" sink="BT SCO Headset"
