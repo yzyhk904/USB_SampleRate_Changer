@@ -471,7 +471,7 @@ function reduceGovernorJitter()
         
             # CPU governor
             # prevent CPU offline stuck by forcing online between double  governor writing 
-            local i st en
+            local i st en x
             IFS="-" read st en <"/sys/devices/system/cpu/present"
             if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
                 for i in `seq $st $en`; do
@@ -495,15 +495,20 @@ function reduceGovernorJitter()
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
                 # For Qcomm GPU's
                 echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                sleep 0.1
                 if [ -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be maximum
                     echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
                 fi
-                # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel
-                sleep 0.1
-                echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
-                sleep 0.2
-                echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel several times
+                for i in `seq 1 5`; do
+                    sleep 0.${i}
+                    read x <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                    if [ "$x" = "performance" ]; then
+                        break
+                    fi
+                    echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                done
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Maximum fixed frequency setting for MediaTek GPU's
                 local freq="`getMtkGpuFreqKhz \"max\"`"
@@ -802,8 +807,9 @@ function chooseBestIOScheduler()
             case "$x" in
                 "deadline" ) ret_val="deadline"; break ;;
                 "mq-deadline" ) ret_val="mq-deadline"; break ;;
-                "cfq" ) ret_val="cfq" ;;
-                "noop" | "none" ) if [ "$ret_val" != "cfq" ]; then ret_val="$x"; fi ;;
+                "kyber" ) ret_val="kyber" ;;
+                "cfq" ) if [ "$ret_val" != "kyber" ]; then ret_val="cfq"; fi ;;
+                "noop" | "none" ) if [ "$ret_val" != "cfq"  -o  "$ret_val" != "kyber" ]; then ret_val="$x"; fi ;;
                 * ) ;;
             esac
         done
@@ -923,6 +929,14 @@ function adjustForSoC()
 {
     if [ $# -eq 1  -a  -n "$1"  -a  "$1" -ge 0 ]; then
         
+        local kername="`uname -r`"
+        kername=${kername##*-}
+        if [ "$kername" = "Nyx"  -a  "`getprop ro.system.build.version.release`" -ge "13" ]; then
+            # Round off (<7) for the Nyx kernel & A13 or later
+            echo "`expr  '(' '(' $1 + 3 ')' / 10 ')' '*' 10`"
+            return 0
+        fi
+        
         case "`getSocModelName`" in
             sdm* | msm* | sd* | exynos* )
                 echo "`expr  '(' $1 / 10 ')' '*' 10 + '(' '(' $1 % 10 ')' / 3 ')' '*' 3`"
@@ -982,6 +996,9 @@ function getSchedulerParams()
                 echo "back_seek_penalty fifo_expire_async fifo_expire_sync group_idle low_latency quantum slice_async slice_async_rq \
                     slice_idle slice_sync target_latency"
                 ;;
+            "kyber" )
+                echo "read_lat_nsec write_lat_nsec"
+                ;;
             "noop" | "none" | * )
                 echo ""
                 ;;
@@ -1015,7 +1032,7 @@ function getSchedulerValues()
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "49 0 24 500 0"
+                                echo "78 0 32 504 0"
                                 ;;
                             sdm8* )
                                 echo "49 0 24 500 0"
@@ -1046,26 +1063,26 @@ function getSchedulerValues()
                                 echo "75 0 34 500 0"
                                 ;;
                             mt68* )
-                                echo "67 0 32 504 0"
+                                echo "68 0 32 504 0"
                                 ;;
                             mt67[7-9]? )
-                                echo "67 0 32 504 0"
+                                echo "68 0 32 504 0"
                                 ;;
                             * )
-                                echo "62 0 32 504 0"
+                                echo "68 0 32 504 0"
                                 ;;
                         esac
                         ;;
                     "medium" | *)
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "65 0 32 508 0"
+                                echo "75 0 32 500 0"
                                 ;;
                             sdm8* )
-                                echo "64 0 34 510 0"
+                                echo "74 0 34 504 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "64 0 34 510 0"
+                                echo "74 0 34 504 0"
                                 ;;
                             mt68* )
                                 echo "64 0 32 504 0"
@@ -1098,6 +1115,11 @@ function getSchedulerValues()
                         echo "1 3 3 0 1 1 3 29 0 3 3"
                         ;;
                 esac
+                ;;
+                
+            "kyber" )
+                #  read_lat_nsec write_lat_nsec
+                echo "1000000 1000000"
                 ;;
                 
             "noop" | "none" | * )
@@ -1137,7 +1159,7 @@ function getSchedulerNrRequests()
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "83853"
+                                echo "85950"
                                 ;;
                             sdm8* )
                                 echo "83965"
@@ -1162,32 +1184,32 @@ function getSchedulerNrRequests()
                                 echo "86117"
                                 ;;
                             sdm8* )
-                                echo "86094"
+                                echo "86110"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86094"
+                                echo "86110"
                                 ;;
                             mt68* )
-                                echo "85927"
+                                echo "86120"
                                 ;;
                             mt67[7-9]? )
-                                echo "86086"
+                                echo "86120"
                                 ;;
                             * )
-                                echo "86065"
+                                echo "86120"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "86059"
+                                echo "86116"
                                 ;;
                             sdm8* )
-                                echo "86055"
+                                echo "85951"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86055"
+                                echo "85951"
                                 ;;
                             mt68* )
                                 echo "85977"
@@ -1248,6 +1270,10 @@ function getSchedulerNrRequests()
                 esac
                 ;;
                 
+            "kyber" )
+                echo "2048"
+                ;;
+            
             "noop" | "none" | * )
                 case "$2" in
                     "light" )
@@ -1372,6 +1398,9 @@ function reduceIoJitter()
                     
                     if validScheduler "/sys/block/$i/queue/scheduler" "cfq"; then
                         echo 'cfq' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    elif validScheduler "/sys/block/$i/queue/scheduler" "kyber"; then
+                        echo 'kyber' >"/sys/block/$i/queue/scheduler"
                         sleep 0.05
                     elif validScheduler "/sys/block/$i/queue/scheduler" "bfq"; then
                         echo 'bfq' >"/sys/block/$i/queue/scheduler"
