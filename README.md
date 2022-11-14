@@ -27,6 +27,8 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
 
     - I recommend using `sManager` (Script Manager) or the like for easiness (at boot automatic execution, saving many combinations of script options and parameters as aliases, and so on.
 
+* This script and following ones in "extras" folder have been tested on LineageOS and ArrowOS ROM's, and phh GSI's (Android 10 ~ 13, Qualcomm & MediaTek SoC, and Arm32 & Arm64 combinations).
+
 * Note 1: "USB_SampleRate_Changer.sh" requires unlocking the USB audio class driver's limitation (upto 96kHz (USB HAL) lock, 384kHz offload lock for Qcomm devices or 96kHz offload (actually only bypass to the USB HAL driver with a 192kHz limitter) lock for MTK and Tensor devices) if you want to specify greater than 96kHz or 384kHz (in case of Qcomm USB hardware offloading, i.e., maybe hardware offload tunneling to the ALSA driver). See my companion magisk module ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) for non- hardware offload drivers. Although you specify a high sample rate for this script execution, you cannot connect your device to a USB DAC with the sample rate unless the USB DAC supports the sample rate (the USB driver will limit the connecting sample rate down to its maximum sample rate).
 
 * Note 2: This script and other extras ones can be executed under "phh's SuperUser" root environment on recent A/B partition phh-GSI's. If you find some errors under the environment, try `setenforce 0` with root permission for making Selinux mode to be permissive. Some phh-GSI's have wrong selinux settings.
