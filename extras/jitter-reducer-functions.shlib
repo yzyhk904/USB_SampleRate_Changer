@@ -484,6 +484,13 @@ function reduceGovernorJitter()
                     fi
                 done
             fi
+
+            # Support for the Nyx kernel and others; Disable a workqueue power efficient featute
+            if [ -e "/sys/module/workqueue/parameters/power_efficient" ]; then
+                chmod 644 "/sys/module/workqueue/parameters/power_efficient"
+                echo 'N' >"/sys/module/workqueue/parameters/power_efficient"
+            fi
+
             # GPU's
             if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
                 # For old Qcomm GPU's
@@ -518,7 +525,8 @@ function reduceGovernorJitter()
             fi
             
         elif [ $flag -lt 0 ]; then
-        
+
+            # CPU's governor
             local gov="`searchDefaultCpuGovernor`"
             # prevent CPU offline stuck by forcing online between double  governor writing
             local i st en
@@ -534,7 +542,14 @@ function reduceGovernorJitter()
                     fi
                 done
             fi
+            
+            # Support for the Nyx kernel and others; Revert a workqueue power efficient featute
+            if [ -e "/sys/module/workqueue/parameters/power_efficient" ]; then
+                chmod 644 "/sys/module/workqueue/parameters/power_efficient"
+                echo 'Y' >"/sys/module/workqueue/parameters/power_efficient"
+            fi
 
+            # GPU's
             if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
                 # Default GPU governor for old Qcomm GPU's
                 echo 'ondemand' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
@@ -574,7 +589,19 @@ function reduceGovernorJitter()
         if [ $printStatus -gt 0 ]; then
             #CPU Governor
             if [ -r "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor" ]; then
-                echo "  Governor CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`"
+                # Support for the Nyx kernel and others; Print the status of a workqueue power efficient featute
+                if [ -r "/sys/module/workqueue/parameters/power_efficient" ]; then
+                    local pf
+                    read pf <"/sys/module/workqueue/parameters/power_efficient"
+                    if [ "$pf" = "Y" ]; then
+                        pf="yes"
+                    else
+                        pf="no"
+                    fi
+                    echo "  Governor CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor` (wq psave: $pf)"
+                else
+                    echo "  Governor CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`"
+                fi
             fi
             
             if [ -r "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
