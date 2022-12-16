@@ -135,7 +135,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
 # V2.5
 * Added extras/change-resampling-quality.sh (to reduce resampling distortion) and extras/change-usb-period.sh (to reduce the jitter of a PLL in a DAC)directly). Tuned kernel tunables by assuming an audio scheduling tunable "vendor.audio.adm.buffering.ms" to be "2" (please set this property by my magisk modules ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) and/or ["audio-misc-settings"](https://github.com/Magisk-Modules-Alt-Repo/audio-misc-settings)).
 
-# V2.5
+# V2.6
 * Added support for the usbv2 HAL module
 
 ##
