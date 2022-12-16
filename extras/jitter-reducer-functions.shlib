@@ -919,7 +919,7 @@ function getSocModelName()
 {
     local modelName="`getprop ro.board.platform`"
     case "$modelName" in
-            sd* | msm* | exynos* | mt* )
+            sd* | msm* | exynos* | mt* | gs* )
                 echo "$modelName"
                 return 0
                 ;;
@@ -959,8 +959,8 @@ function adjustForSoC()
         local kername="`uname -r`"
         kername=${kername##*-}
         if [ "$kername" = "Nyx"  -a  "`getprop ro.system.build.version.release`" -ge "13" ]; then
-            # Round off (<7) for the Nyx kernel & A13 or later
-            echo "`expr  '(' '(' $1 + 3 ')' / 10 ')' '*' 10`"
+            # Round off (<5) for the Nyx kernel & A13 or later
+            echo "`expr  '(' '(' $1 + 5 ')' / 10 ')' '*' 10`"
             return 0
         fi
         
@@ -1059,13 +1059,13 @@ function getSchedulerValues()
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "78 0 32 504 0"
+                                echo "49 0 24 492 0"
                                 ;;
                             sdm8* )
-                                echo "49 0 24 500 0"
+                                echo "49 0 24 492 0"
                                 ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "49 0 24 500 0"
+                            sdm* | msm* | sd* | exynos* | gs* )
+                                echo "49 0 24 492 0"
                                 ;;
                             mt68* )
                                 echo "52 0 24 500 0"
@@ -1084,32 +1084,32 @@ function getSchedulerValues()
                                 echo "75 0 32 500 0"
                                 ;;
                             sdm8* )
-                                echo "75 0 34 500 0"
+                                echo "76 0 34 500 0"
                                 ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "75 0 34 500 0"
+                            sdm* | msm* | sd* | exynos* | gs* )
+                                echo "75 0 35 500 0"
                                 ;;
                             mt68* )
-                                echo "68 0 32 504 0"
+                                echo "76 0 36 500 0"
                                 ;;
                             mt67[7-9]? )
-                                echo "68 0 32 504 0"
+                                echo "76 0 36 500 0"
                                 ;;
                             * )
-                                echo "68 0 32 504 0"
+                                echo "76 0 36 500 0"
                                 ;;
                         esac
                         ;;
                     "medium" | *)
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "75 0 32 500 0"
+                                echo "72 0 28 496 0"
                                 ;;
                             sdm8* )
-                                echo "74 0 34 504 0"
+                                echo "73 0 24 484 0"
                                 ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "74 0 34 504 0"
+                            sdm* | msm* | sd* | exynos* | gs* )
+                                echo "73 0 24 484 0"
                                 ;;
                             mt68* )
                                 echo "64 0 32 504 0"
@@ -1175,7 +1175,7 @@ function getSchedulerNrRequests()
                             sdm8* )
                                 echo "80000"
                                 ;;
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "81660"
                                 ;;
                             * )
@@ -1191,7 +1191,7 @@ function getSchedulerNrRequests()
                             sdm8* )
                                 echo "83965"
                                 ;;
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "82861"
                                 ;;
                             mt68* )
@@ -1211,31 +1211,31 @@ function getSchedulerNrRequests()
                                 echo "86117"
                                 ;;
                             sdm8* )
-                                echo "86110"
+                                echo "86113"
                                 ;;
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "86110"
                                 ;;
                             mt68* )
-                                echo "86120"
+                                echo "86123"
                                 ;;
                             mt67[7-9]? )
-                                echo "86120"
+                                echo "86123"
                                 ;;
                             * )
-                                echo "86120"
+                                echo "86123"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "86116"
+                                echo "86017"
                                 ;;
                             sdm8* )
-                                echo "85951"
+                                echo "85969"
                                 ;;
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "85951"
                                 ;;
                             mt68* )
@@ -1256,7 +1256,7 @@ function getSchedulerNrRequests()
                 case "$2" in
                     "light" )
                         case "`getSocModelName`" in
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "14540"
                                 ;;
                             * )
@@ -1266,7 +1266,7 @@ function getSchedulerNrRequests()
                         ;;
                     "m-light" )
                         case "`getSocModelName`" in
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "31170"
                                 ;;
                             * )
@@ -1276,7 +1276,7 @@ function getSchedulerNrRequests()
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "83587"
                                 ;;
                             * )
@@ -1286,7 +1286,7 @@ function getSchedulerNrRequests()
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "81940"
                                 ;;
                             * )
@@ -1298,14 +1298,14 @@ function getSchedulerNrRequests()
                 ;;
                 
             "kyber" )
-                echo "2048"
+                echo "2043"
                 ;;
             
             "noop" | "none" | * )
                 case "$2" in
                     "light" )
                         case "`getSocModelName`" in
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "80645"
                                 ;;
                             * )
@@ -1315,7 +1315,7 @@ function getSchedulerNrRequests()
                         ;;
                     "m-light" )
                         case "`getSocModelName`" in
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "83853"
                                 ;;
                             * )
@@ -1325,7 +1325,7 @@ function getSchedulerNrRequests()
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "86094"
                                 ;;
                             * )
@@ -1335,7 +1335,7 @@ function getSchedulerNrRequests()
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
-                            sdm* | msm* | sd* | exynos* )
+                            sdm* | msm* | sd* | exynos* | gs* )
                                 echo "86055"
                                 ;;
                             * )
@@ -1388,8 +1388,8 @@ function reduceIoJitter()
                         sleep 0.05
                         read v <"/sys/block/$i/queue/nr_requests"
                         if [ "$nr_requests" -ne "$v" ]; then
-                            # If exceeding its max value, then use a safe Nyx kenel value 2048 (except its "none" scheduler)
-                            echo "2048" >"/sys/block/$i/queue/nr_requests"
+                            # If exceeding its max value, then use a safe (Nyx only?) kenel value within 2048 (except its "none" scheduler)
+                            echo "2043" >"/sys/block/$i/queue/nr_requests"
                         fi
                         j=1
                         for p in $params; do
@@ -1737,6 +1737,7 @@ function reduceWifiJitter ()
         
             # Reducing wifi jitter by suspend wifi optimizations
             settings put global wifi_suspend_optimizations_enabled 0 1>"/dev/null" 2>&1
+            settings put secure adaptive_connectivity_enabled 0 1>"/dev/null" 2>&1
             if [ "$restartFlag" = "Restart" ]; then
                 restartWifi
             fi
@@ -1745,6 +1746,7 @@ function reduceWifiJitter ()
         
             # Revert wifi jitter by suspend wifi optimizations
             settings delete global wifi_suspend_optimizations_enabled 1>"/dev/null" 2>&1
+            settings delete secure adaptive_connectivity_enabled 1>"/dev/null" 2>&1
             if [ "$restartFlag" = "Restart" ]; then
                 restartWifi
             fi
@@ -1757,6 +1759,12 @@ function reduceWifiJitter ()
                 echo "  Wifi suspend optimizations: disabled"
             else
                 echo "  Wifi suspend optimizations: enabled"
+            fi
+            val="`settings get secure adaptive_connectivity_enabled`"
+            if [ -n "$val"  -a  "$val" = "0" ]; then
+                echo "  Wifi adaptive connectivity (if >A11): disabled"
+            else
+                echo "  Wifi adaptive connectivity (if >A11): enabled"
             fi
         fi
 

@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.5.5
+# Version: 2.6.0
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -19,6 +19,7 @@ fi
 policyMode="auto"
 resetMode="false"
 DRC_enabled="false"
+USB_module="usb"
 
 while [ $# -gt 0 ]; do
      case "$1" in
@@ -54,6 +55,10 @@ while [ $# -gt 0 ]; do
             policyMode="usb"
             shift
             ;;
+        "-fu" | "--force-usbv2" )
+            USB_module="usbv2"
+            shift
+            ;;
         "-a" | "--auto" )
             policyMode="auto"
             shift
@@ -67,7 +72,7 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         "-h" | "--help" | -* )
-            echo -n "Usage: ${0##*/} [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--offload-hifi-playback][--safe][--safest] [--drc]" 1>&2
+            echo -n "Usage: ${0##*/} [--reset][--usb-only][--legacy][--offload][--bypass-offload][--bypass-offload-safer][--offload-hifi-playback][--safe][--safest] [--drc]" 1>&2
             echo     " [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]" 1>&2
             echo -n "\nNote: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz Qcomm offload lock)" 1>&2
             echo     " if you specify greater than 96kHz or 384kHz (in case of Qcomm offload)." 1>&2
@@ -153,16 +158,12 @@ case "$sRate" in
 esac
 
 if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" \)  -a  $sRate -gt 96000 ]; then
-    isMounted "/proc/self/mountinfo" "/vendor/lib64/libalsautils.so" "IncludeMagisk" "NoShowKey" \
-        || isMounted "/proc/self/mountinfo" "/system/vendor/lib64/libalsautils.so" "IncludeMagisk" "NoShowKey" \
-        || isMounted "/proc/self/mountinfo" "/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey" \
-        || isMounted "/proc/self/mountinfo" "/system/vendor/lib/libalsautils.so" "IncludeMagisk" "NoShowKey"
-    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker"  -o  $? -ne 0 ]; then
+    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker" ]; then
         echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
     fi
 elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" ]; then
     case "`getprop ro.board.platform`" in
-        mt* | exynos* )
+        mt* | exynos* | gs* )
             if [ $sRate -gt 96000 ]; then
                 echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
                 echo     " (upto 96kHz lock)" 1>&2
@@ -235,7 +236,15 @@ case "$policyMode" in
         ;;
     "usb" )
         template="$MYDIR/templates/usb_only_template.xml"
-        overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
+        if [ -r "/vendor/etc/usb_audio_policy_configuration.xml" ]; then
+            overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
+        elif [ -r "/vendor/etc/usbv2_audio_policy_configuration.xml"  -a  -r "/vendor/lib64/hw/audio.usbv2.default.so" ]; then
+            overlayTarget="/vendor/etc/usbv2_audio_policy_configuration.xml"
+            USB_module="usbv2"
+        else
+            echo "target USB configuration file (\"/vendor/etc/usb_audio_policy_configuration.xml\") not found!" 1>&2 
+            exit 1
+        fi
         ;;
     "safe" )
         template="$MYDIR/templates/safe_template.xml"
@@ -251,7 +260,11 @@ esac
 if [ -r "$template" ]; then
 
     removeGenFile "$genfile"
-    sed -e "s/%DRC_ENABLED%/$DRC_enabled/" -e "s/%SAMPLING_RATE%/$sRate/" -e "s/%AUDIO_FORMAT%/$aFormat/" "$template" >"$genfile"
+    if [ "$USB_module" = "usb"  -a  ! -r "/vendor/lib64/hw/audio.usb.default.so"  -a  -r "/vendor/lib64/hw/audio.usbv2.default.so" ]; then
+        USB_module="usbv2"
+    fi
+    sed -e "s/%DRC_ENABLED%/$DRC_enabled/" -e "s/%USB_MODULE%/$USB_module/" \
+            -e "s/%SAMPLING_RATE%/$sRate/" -e "s/%AUDIO_FORMAT%/$aFormat/" "$template" >"$genfile"
 
     if [ $? -eq 0 ]; then
     

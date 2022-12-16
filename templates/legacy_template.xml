@@ -179,7 +179,7 @@
     </module>
 
         <!-- Usb Audio HAL -->
-        <module name="usb" halVersion="2.0">
+        <module name="%USB_MODULE%" halVersion="2.0">
             <mixPorts>
                 <mixPort name="usb_accessory output" role="source">
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"

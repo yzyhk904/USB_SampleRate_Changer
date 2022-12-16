@@ -6,13 +6,12 @@ Additionally, this script disables DRC (Dynamic Range Control, i.e., a kind of c
 <br/>
 Finally, the Android OS mixer (AudioFlinger) always apply resampling even to 1:1 ratio pass-through (e.g., 44.1kHz to 44.1kHz resampling with Kaiser windowed digital low-pass filtering; a resampler is consiting of an interpolator to the analogue space (limited analogue values needed only for the following sampler are computed) with an anti-aliasing low-pass filter and a digital sampler by a specified output frequency from the anlogue space to the digital one. The output frequency can be the same as the input one), so you need to be careful for resampling parameters even when resampling is not needed (see the description of "extras/change-resampling-quality.sh" below).
 
-* Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset][--auto][--usb-only][--legacy][--offload][--bypass-offload][--bypass-offload-safer][--offload-hifi-playback][--safe][-safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
+* Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset][--usb-only][--legacy][--offload][--bypass-offload][--bypass-offload-safer][--offload-hifi-playback][--safe][-safest] [--drc] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
 
 if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth (or 32bit float) to which you want to change, respectively. Their default values are `44k` (sample rate: 44.1 kHz) and `32` (bit depth: 32 bits) except both safe and safest mode internal outputs (default values: 48 kHz, 32 or 16 bits).
 
   - Options
     - `--reset`(without arguments): resets its previous execution results.
-    - `--auto`: investigates device's environment and changes an audio policy configuration file appropriately in most situations. (default behavior)
     - `--usb-only`: changes a USB audio policy configuration file only.
     - `--legacy`: changes an audio policy configuration file for a Bluetooth audio legacy HAL (<em>/system/{lib,lib64}/hw/audio.a2dp.default.so</em>).
     - `--offload`: changes an audio policy configuration file for USB & Bluetooth hardware offloading (worse in audio quality; A large jitter USB driver and a Bluetooth driver forcing unnecessary resampling, i.e., typically 44.1kHz -> 48kHz -> 44.1kHz) except a hifi_playback mixer. 
@@ -135,5 +134,8 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
 
 # V2.5
 * Added extras/change-resampling-quality.sh (to reduce resampling distortion) and extras/change-usb-period.sh (to reduce the jitter of a PLL in a DAC)directly). Tuned kernel tunables by assuming an audio scheduling tunable "vendor.audio.adm.buffering.ms" to be "2" (please set this property by my magisk modules ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) and/or ["audio-misc-settings"](https://github.com/Magisk-Modules-Alt-Repo/audio-misc-settings)).
+
+# V2.5
+* Added support for the usbv2 HAL module
 
 ##
