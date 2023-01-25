@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.6.0
+# Version: 2.6.1
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -229,7 +229,14 @@ case "$policyMode" in
         template="$MYDIR/templates/bypass_offload_template.xml"
         ;;
     "bypass-safer" )
-        template="$MYDIR/templates/bypass_offload_safer_template.xml"
+        case "`getprop ro.board.platform`" in
+            mt* )
+                template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
+                ;;
+            * )
+                template="$MYDIR/templates/bypass_offload_safer_template.xml"
+                ;;
+        esac
         ;;
     "legacy" )
         template="$MYDIR/templates/legacy_template.xml"
@@ -270,9 +277,11 @@ if [ -r "$template" ]; then
     
         chmod 644 "$genfile"
         chcon u:object_r:vendor_configs_file:s0 "$genfile"
-        
-        if [ -r "$overlayTarget" ]; then
-        
+
+        local dir=${overlayTarget%/*}
+        if [ -r "$overlayTarget"  -o  "${dir##*_}" = "qssi" ]; then
+            # "${dir##*_}" = "qssi" is for some OnePlus ROM's (probably a bug?)
+            
             isMounted "/proc/self/mountinfo" "$overlayTarget" "ExcludeMagisk" "NoShowKey"
             if [ $? -eq 0 ]; then
                 umount "$overlayTarget" 1>"/dev/null" 2>&1
@@ -280,7 +289,7 @@ if [ -r "$template" ]; then
              
             mount -o bind "$genfile" "$overlayTarget"
             if [ $? -gt 0 ]; then
-                echo "overlaying a generated USB configuration XML file failed!" 1>&2 
+                echo "failed to overlay a generated audio policy configuration XML file!" 1>&2 
                 exit 1
             fi
             

@@ -86,9 +86,9 @@ function AudioDriverStatus()
         PrintStatus "$val"
     elif [ $resetFlag -eq 0 ]; then
         echo "Warning: root permisson is needed for the right answer!" 1>&2
-        PrintStatus 5000
+        PrintStatus "5000(?)"
     else
-        PrintStatus 5000
+        PrintStatus "5000(?)"
     fi
 }
 
@@ -139,11 +139,13 @@ if [ -n "$resetprop_command" ]; then
         "$resetprop_command" --delete vendor.audio.usb.perio 1>"/dev/null" 2>&1
         "$resetprop_command" --delete vendor.audio.usb.out.period_us 1>"/dev/null" 2>&1
         "$resetprop_command" --delete vendor.audio.usb.out.period_count 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete vendor.audio_hal.period_multiplier 1>"/dev/null" 2>&1
     else
         "$resetprop_command" "ro.audio.usb.period_us" "$period_us" 1>"/dev/null" 2>&1
         "$resetprop_command" "vendor.audio.usb.perio" "$period_us" 1>"/dev/null" 2>&1
         "$resetprop_command" "vendor.audio.usb.out.period_us" "$period_us" 1>"/dev/null" 2>&1
         "$resetprop_command" "vendor.audio.usb.out.period_count" "2" 1>"/dev/null" 2>&1
+        "$resetprop_command" "vendor.audio_hal.period_multiplier" "1" 1>"/dev/null" 2>&1
     fi
     reloadAudioserver
 else

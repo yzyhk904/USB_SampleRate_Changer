@@ -497,7 +497,10 @@ function reduceGovernorJitter()
                 echo 'performance' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
                 if [ -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be maximum
-                    echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    read x <"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    if [ "$x" -ne 0 ]; then
+                        echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    fi
                 fi
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
                 # For Qcomm GPU's
@@ -505,11 +508,15 @@ function reduceGovernorJitter()
                 sleep 0.1
                 if [ -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be maximum
-                    echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    read x <"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    if [ "$x" -ne 0 ]; then
+                        echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    fi
                 fi
                 # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel several times
-                for i in `seq 1 5`; do
-                    sleep 0.${i}
+                for i in `seq 1 10`; do
+                    x="`echo \"scale=1;${i}/10\" | bc`"
+                    sleep $x
                     read x <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
                     if [ "$x" = "performance" ]; then
                         break
@@ -556,29 +563,43 @@ function reduceGovernorJitter()
                 if [ -r "/sys/class/kgsl/kgsl-3d0/num_pwrlevels"  -a  -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be minimum
                     local x="4"
+                    local tmp
                     read x <"/sys/class/kgsl/kgsl-3d0/num_pwrlevels"
                     x="`expr $x - 1`"
                     if [ -n "$x" ]; then
-                        echo "$x" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                        read tmp <"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                        if [ "$tmp" -ne "$x" ]; then
+                            echo "$x" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                        fi
                     fi
                 fi
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
                 # Default GPU governor for Qcomm GPU's
                 echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                sleep 0.1
                 if [ -r "/sys/class/kgsl/kgsl-3d0/num_pwrlevels"  -a  -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be minimum
                     local x="6"
+                    local tmp
                     read x <"/sys/class/kgsl/kgsl-3d0/num_pwrlevels"
                     x="`expr $x - 1`"
                     if [ -n "$x" ]; then
-                        echo "$x" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                        read tmp <"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                        if [ "$tmp" -ne "$x" ]; then
+                            echo "$x" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                        fi
                     fi
                 fi
-                # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel
-                echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
-                # For a certain Kernel, because it is not effective only once
-                sleep 0.1
-                echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel several times
+                for i in `seq 1 10`; do
+                    x="`echo \"scale=1;${i}/10\" | bc`"
+                    sleep $x
+                    read x <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                    if [ "$x" = "msm-adreno-tz" ]; then
+                        break
+                    fi
+                    echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                done
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Variable frequency setting for MediaTek GPU's
                 echo '0' >"/proc/gpufreq/gpufreq_opp_freq"
@@ -1081,7 +1102,7 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "75 0 32 500 0"
+                                echo "76 0 32 500 0"
                                 ;;
                             sdm8* )
                                 echo "76 0 34 500 0"
@@ -1103,7 +1124,7 @@ function getSchedulerValues()
                     "medium" | *)
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "72 0 28 496 0"
+                                echo "71 0 28 496 0"
                                 ;;
                             sdm8* )
                                 echo "73 0 24 484 0"
@@ -1136,10 +1157,24 @@ function getSchedulerValues()
                         echo "1 3 3 0 1 1 3 26 0 3 3"
                         ;;
                     "boost" )
-                        echo "1 3 3 0 1 1 3 34 0 3 3"
+                        case "`getSocModelName`" in
+                            sdm* | mt68* | gs* )
+                                echo "1 3 3 0 1 1 3 46 0 3 3"
+                                ;;
+                            * )
+                                echo "1 3 3 0 1 1 3 34 0 3 3"
+                                ;;
+                        esac
                         ;;
                     "medium" | * )
-                        echo "1 3 3 0 1 1 3 29 0 3 3"
+                        case "`getSocModelName`" in
+                            sdm* | mt68* | gs* )
+                                echo "1 3 3 0 1 1 3 34 0 3 3"
+                                ;;
+                            * )
+                                echo "1 3 3 0 1 1 3 29 0 3 3"
+                                ;;
+                        esac
                         ;;
                 esac
                 ;;
@@ -1230,7 +1265,7 @@ function getSchedulerNrRequests()
                     "medium" | * )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "86017"
+                                echo "86021"
                                 ;;
                             sdm8* )
                                 echo "85969"
@@ -1277,7 +1312,7 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "83587"
+                                echo "86113"
                                 ;;
                             * )
                                 echo "83587"
@@ -1287,7 +1322,7 @@ function getSchedulerNrRequests()
                     "medium" | * )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "81940"
+                                echo "85951"
                                 ;;
                             * )
                                 echo "82200"
@@ -1378,7 +1413,7 @@ function reduceIoJitter()
                         vals="`getSchedulerValues \"$sched\" \"$toneMode\"`"
                         nr_requests="`getSchedulerNrRequests \"$sched\" \"$toneMode\"`"
                         echo "$sched" >"/sys/block/$i/queue/scheduler"
-                        echo '16384' >"/sys/block/$i/queue/read_ahead_kb"
+                        echo '16400' >"/sys/block/$i/queue/read_ahead_kb"
                         echo '0' >"/sys/block/$i/queue/iostats"
                         echo '0' >"/sys/block/$i/queue/add_random"
                         echo '2' >"/sys/block/$i/queue/rq_affinity"
