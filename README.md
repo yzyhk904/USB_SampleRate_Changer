@@ -75,7 +75,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 98 | 130 | 98.5 | | MacOS Leopard (guess) |
     | 160 | 240 | | 100 | iZotope, No-Alias (guess) |
     | 98 | 64 | | 100 | SoX HQ linear phase (guess) |
-    | 194 | 480 | | 100 | SoX VHQ linear phase (guess) |
+    | 170 | 520 | | 100 | SoX VHQ linear phase (guess) |
 
 * Tips 2: "jitter-reducer.sh" in "extras" folder is an interactive tool derived from ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitter distortions in all digital audio outputs relating to SELinux mode, thermal controls, doze (battery saving while idling), CPU&GPU governors, logd servers (to interface to logcat or the like), camera server, I/O scheduling, virtual memory, wifi suspension and the audio effects framework (to interface to equalizers, virtualizers, visualizers, echo cancelers, automatic gain controls, etc.). In my opinion, jitter distortions reduction is the very key to ultimate hifi audio quality.
 
