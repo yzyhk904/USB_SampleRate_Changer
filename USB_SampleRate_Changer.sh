@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.6.1
+# Version: 2.6.2
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -29,6 +29,10 @@ while [ $# -gt 0 ]; do
             ;;
         "-oh" | "--offload-hifi-playback" )
             policyMode="offload-hifi-playback"
+            shift
+            ;;
+        "-od" | "--offload-direct" )
+            policyMode="offload-direct"
             shift
             ;;
         "-b" | "--bypass-offload" )
@@ -72,8 +76,8 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         "-h" | "--help" | -* )
-            echo -n "Usage: ${0##*/} [--reset][--usb-only][--legacy][--offload][--bypass-offload][--bypass-offload-safer][--offload-hifi-playback][--safe][--safest] [--drc]" 1>&2
-            echo     " [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]" 1>&2
+            echo -n "Usage: ${0##*/} [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-direct]" 1>&2
+            echo    "[--legacy][--safe][--safest][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]" 1>&2
             echo -n "\nNote: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz Qcomm offload lock)" 1>&2
             echo     " if you specify greater than 96kHz or 384kHz (in case of Qcomm offload)." 1>&2
             exit 0
@@ -157,11 +161,11 @@ case "$sRate" in
         ;;
 esac
 
-if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" \)  -a  $sRate -gt 96000 ]; then
+if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \)  -a  $sRate -gt 96000 ]; then
     if [ ! -e "/data/adb/modules/usb-samplerate-unlocker" ]; then
         echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
     fi
-elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback" ]; then
+elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" ]; then
     case "`getprop ro.board.platform`" in
         mt* | exynos* | gs* )
             if [ $sRate -gt 96000 ]; then
@@ -224,6 +228,9 @@ case "$policyMode" in
         ;;
     "offload-hifi-playback" )
         template="$MYDIR/templates/offload_hifi_playback_template.xml"
+        ;;
+    "offload-direct" )
+        template="$MYDIR/templates/offload_direct_template.xml"
         ;;
     "bypass" )
         template="$MYDIR/templates/bypass_offload_template.xml"
