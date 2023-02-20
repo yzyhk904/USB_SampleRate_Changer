@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.6.2
+# Version: 2.6.3
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -161,27 +161,6 @@ case "$sRate" in
         ;;
 esac
 
-if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \)  -a  $sRate -gt 96000 ]; then
-    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker" ]; then
-        echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
-    fi
-elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" ]; then
-    case "`getprop ro.board.platform`" in
-        mt* | exynos* | gs* )
-            if [ $sRate -gt 96000 ]; then
-                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
-                echo     " (upto 96kHz lock)" 1>&2
-            fi
-        ;;
-        * )
-            if [ $sRate -gt 384000 ]; then
-                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
-                echo     " (upto 384kHz lock)" 1>&2
-            fi
-        ;;
-    esac
-fi
-
 aFormat="AUDIO_FORMAT_PCM_32_BIT"
 case "$bDepth" in
     16 )
@@ -220,6 +199,27 @@ fi
 
 if [ "$policyMode" = "auto"  -a  -n "$BluetoothHal" ];then
     policyMode="$BluetoothHal"
+fi
+
+if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \)  -a  $sRate -gt 96000 ]; then
+    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker" ]; then
+        echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
+    fi
+elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" ]; then
+    case "`getprop ro.board.platform`" in
+        mt* | exynos* | gs* )
+            if [ $sRate -gt 96000 ]; then
+                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
+                echo     " (upto 96kHz lock)" 1>&2
+            fi
+        ;;
+        * )
+            if [ $sRate -gt 384000 ]; then
+                echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
+                echo     " (upto 384kHz lock)" 1>&2
+            fi
+        ;;
+    esac
 fi
 
 case "$policyMode" in
@@ -285,9 +285,9 @@ if [ -r "$template" ]; then
         chmod 644 "$genfile"
         chcon u:object_r:vendor_configs_file:s0 "$genfile"
 
-        local dir=${overlayTarget%/*}
-        if [ -r "$overlayTarget"  -o  "${dir##*_}" = "qssi" ]; then
-            # "${dir##*_}" = "qssi" is for some OnePlus ROM's (probably a bug?)
+        targetDir=${overlayTarget%/*}
+        if [ -r "$overlayTarget"  -o  "${targetDir##*_}" = "qssi" ]; then
+            # "${targetDir##*_}" = "qssi" is for some OnePlus ROM's (probably a bug?)
             
             isMounted "/proc/self/mountinfo" "$overlayTarget" "ExcludeMagisk" "NoShowKey"
             if [ $? -eq 0 ]; then
