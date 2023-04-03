@@ -952,6 +952,12 @@ function getSocModelName()
                             "kona" )
                                 echo "sdm870"
                                 ;;
+                            "kalama" )
+                                echo "sdm870"
+                                ;;
+                            "bengal" )
+                                echo "sdm680"
+                                ;;
                             * )
                                  if [ -r "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
                                     echo "sdm855"
@@ -976,15 +982,6 @@ function getSocModelName()
 function adjustForSoC()
 {
     if [ $# -eq 1  -a  -n "$1"  -a  "$1" -ge 0 ]; then
-        
-        local kername="`uname -r`"
-        kername=${kername##*-}
-        if [ "$kername" = "Nyx"  -a  "`getprop ro.system.build.version.release`" -ge "13" ]; then
-            # Round off (<5) for the Nyx kernel & A13 or later
-            echo "`expr  '(' '(' $1 + 5 ')' / 10 ')' '*' 10`"
-            return 0
-        fi
-        
         case "`getSocModelName`" in
             sdm* | msm* | sd* | exynos* )
                 echo "`expr  '(' $1 / 10 ')' '*' 10 + '(' '(' $1 % 10 ')' / 3 ')' '*' 3`"
@@ -999,7 +996,35 @@ function adjustForSoC()
         return 0
         
     else
+        return 1
         
+    fi
+}
+
+function adjustForSoC_mq()
+{
+    if [ $# -eq 1  -a  -n "$1"  -a  "$1" -ge 0 ]; then
+        local kername="`uname -r`"
+        kername=${kername#*-}
+
+        case  "$kername" in
+            Nyx* | SouthWest* )
+                # Round off (<5) and up (>=5); for Nyx and SouthWest kernels
+                echo "`expr  '(' '(' $1 + 5 ')' / 10 ')' '*' 10`"
+                return 0
+                ;;
+            perf* )
+                # Round to multiples of 4; for Xiaomi Bengal kernels
+                echo "`expr  '(' '(' $1 + 2 ')' / 4 ')' '*' 4`"
+                return 0
+                ;;
+            * )
+                adjustForSoC "$3"
+                ;;
+        esac
+        return 0
+        
+    else
         return 1
         
     fi
@@ -1009,13 +1034,25 @@ function adjustSchedulerParameter()
 {
     if [ $# -eq 3 ]; then
         
-        if [ \( "$1" = "deadline"  -o  "$1" = "mq-deadline" \)  -a  -n "$2"  -a  -n "$3" ]; then
+        if [ "$1" = "deadline"  -a  -n "$2"  -a  -n "$3" ]; then
             case "$2" in
                 "read_expire" )
                     echo "`adjustForSoC \"$3\"`"
                     ;;
                 "write_expire" )
                     echo "`adjustForSoC \"$3\"`"
+                    ;;
+                * )
+                    echo "$3"
+                    ;;
+            esac
+        elif [ "$1" = "mq-deadline"  -a  -n "$2"  -a  -n "$3" ]; then
+            case "$2" in
+                "read_expire" )
+                    echo "`adjustForSoC_mq \"$3\"`"
+                    ;;
+                "write_expire" )
+                    echo "`adjustForSoC_mq \"$3\"`"
                     ;;
                 * )
                     echo "$3"
@@ -1066,7 +1103,7 @@ function getSchedulerValues()
                 case "$2" in
                     "light" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
+                            sdm8[5-9]* | sdm9* | gs* )
                                 echo "43 0 20 488 0"
                                 ;;
                             sdm8* )
@@ -1079,35 +1116,79 @@ function getSchedulerValues()
                         ;;
                     "m-light" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
-                                echo "49 0 24 492 0"
+                            sdm8[5-9]* | sdm9* | gs* )
+                                echo "71 0 28 496 0"
                                 ;;
                             sdm8* )
-                                echo "49 0 24 492 0"
+                                echo "73 0 24 484 0"
                                 ;;
-                            sdm* | msm* | sd* | exynos* | gs* )
-                                echo "49 0 24 492 0"
+                            sdm* | msm* | sd* | exynos* )
+                                echo "73 0 24 484 0"
                                 ;;
                             mt68* )
-                                echo "52 0 24 500 0"
+                                echo "64 0 32 504 0"
                                 ;;
                             mt67[7-9]? )
-                                echo "48 0 24 496 0"
+                                echo "64 0 32 504 0"
                                 ;;
                             * )
-                                echo "48 0 24 496 0"
+                                echo "64 0 32 504 0"
+                                ;;
+                        esac
+                        ;;
+                    "exp" )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* | gs* )
+                                echo "80 0 36 512 0"
+                                ;;
+                            sdm8* )
+                                echo "78 0 34 510 0"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "79 0 34 510 0"
+                                ;;
+                            mt68* )
+                                echo "81 0 36 516 0"
+                                ;;
+                            mt67[7-9]? )
+                                echo "81 0 36 516 0"
+                                ;;
+                            * )
+                                echo "81 0 36 516 0"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
+                            sdm8[5-9]* | sdm9* | gs* )
+                                echo "80 0 36 512 0"
+                                ;;
+                            sdm8* )
+                                echo "78 0 34 510 0"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "79 0 34 510 0"
+                                ;;
+                            mt68* )
+                                echo "81 0 36 516 0"
+                                ;;
+                            mt67[7-9]? )
+                                echo "81 0 36 516 0"
+                                ;;
+                            * )
+                                echo "81 0 36 516 0"
+                                ;;
+                        esac
+                        ;;
+                    "medium" | *)
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* | gs* )
                                 echo "76 0 32 500 0"
                                 ;;
                             sdm8* )
                                 echo "76 0 34 500 0"
                                 ;;
-                            sdm* | msm* | sd* | exynos* | gs* )
+                            sdm* | msm* | sd* | exynos* )
                                 echo "75 0 35 500 0"
                                 ;;
                             mt68* )
@@ -1118,28 +1199,6 @@ function getSchedulerValues()
                                 ;;
                             * )
                                 echo "76 0 36 500 0"
-                                ;;
-                        esac
-                        ;;
-                    "medium" | *)
-                        case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
-                                echo "71 0 28 496 0"
-                                ;;
-                            sdm8* )
-                                echo "73 0 24 484 0"
-                                ;;
-                            sdm* | msm* | sd* | exynos* | gs* )
-                                echo "73 0 24 484 0"
-                                ;;
-                            mt68* )
-                                echo "64 0 32 504 0"
-                                ;;
-                            mt67[7-9]? )
-                                echo "64 0 32 504 0"
-                                ;;
-                            * )
-                                echo "64 0 32 504 0"
                                 ;;
                         esac
                         ;;
@@ -1204,13 +1263,13 @@ function getSchedulerNrRequests()
                 case "$2" in
                     "light" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
+                            sdm8[5-9]* | sdm9* | gs* )
                                 echo "80645"
                                 ;;
                             sdm8* )
                                 echo "80000"
                                 ;;
-                            sdm* | msm* | sd* | exynos* | gs* )
+                            sdm* | msm* | sd* | exynos* )
                                 echo "81660"
                                 ;;
                             * )
@@ -1220,57 +1279,13 @@ function getSchedulerNrRequests()
                         ;;
                     "m-light" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
-                                echo "85950"
+                            sdm8[5-9]* | sdm9* | gs* )
+                                echo "86021"
                                 ;;
                             sdm8* )
                                 echo "83965"
                                 ;;
-                            sdm* | msm* | sd* | exynos* | gs* )
-                                echo "82861"
-                                ;;
-                            mt68* )
-                                echo "83953"
-                                ;;
-                            mt67[6-9]? )
-                                echo "83953"
-                                ;;
-                            * )
-                                echo "83373"
-                                ;;
-                        esac
-                        ;;
-                    "boost" )
-                        case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
-                                echo "86117"
-                                ;;
-                            sdm8* )
-                                echo "86113"
-                                ;;
-                            sdm* | msm* | sd* | exynos* | gs* )
-                                echo "86110"
-                                ;;
-                            mt68* )
-                                echo "86123"
-                                ;;
-                            mt67[7-9]? )
-                                echo "86123"
-                                ;;
-                            * )
-                                echo "86123"
-                                ;;
-                        esac
-                        ;;
-                    "medium" | * )
-                        case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
-                                echo "86021"
-                                ;;
-                            sdm8* )
-                                echo "85969"
-                                ;;
-                            sdm* | msm* | sd* | exynos* | gs* )
+                            sdm* | msm* | sd* | exynos* )
                                 echo "85951"
                                 ;;
                             mt68* )
@@ -1281,6 +1296,72 @@ function getSchedulerNrRequests()
                                 ;;
                             * )
                                 echo "85977"
+                                ;;
+                        esac
+                        ;;
+                    "exp" )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* | gs* )
+                                echo "86137"
+                                ;;
+                            sdm8* )
+                                echo "86139"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "86139"
+                                ;;
+                            mt68* )
+                                echo "86137"
+                                ;;
+                            mt67[7-9]? )
+                                echo "86137"
+                                ;;
+                            * )
+                                echo "86137"
+                                ;;
+                        esac
+                        ;;
+                    "boost" )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* | gs* )
+                                echo "86137"
+                                ;;
+                            sdm8* )
+                                echo "86139"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "86139"
+                                ;;
+                            mt68* )
+                                echo "86137"
+                                ;;
+                            mt67[7-9]? )
+                                echo "86137"
+                                ;;
+                            * )
+                                echo "86137"
+                                ;;
+                        esac
+                        ;;
+                    "medium" | * )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* | gs* )
+                                echo "86117"
+                                ;;
+                            sdm8* )
+                                echo "85969"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "86110"
+                                ;;
+                            mt68* )
+                                echo "86123"
+                                ;;
+                            mt67[6-9]? )
+                                echo "86123"
+                                ;;
+                            * )
+                                echo "86123"
                                 ;;
                         esac
                         ;;
@@ -1333,7 +1414,7 @@ function getSchedulerNrRequests()
                 ;;
                 
             "kyber" )
-                echo "2043"
+                echo "2035"
                 ;;
             
             "noop" | "none" | * )
@@ -1413,7 +1494,7 @@ function reduceIoJitter()
                         vals="`getSchedulerValues \"$sched\" \"$toneMode\"`"
                         nr_requests="`getSchedulerNrRequests \"$sched\" \"$toneMode\"`"
                         echo "$sched" >"/sys/block/$i/queue/scheduler"
-                        echo '16400' >"/sys/block/$i/queue/read_ahead_kb"
+                        echo '16960' >"/sys/block/$i/queue/read_ahead_kb"
                         echo '0' >"/sys/block/$i/queue/iostats"
                         echo '0' >"/sys/block/$i/queue/add_random"
                         echo '2' >"/sys/block/$i/queue/rq_affinity"
@@ -1424,7 +1505,7 @@ function reduceIoJitter()
                         read v <"/sys/block/$i/queue/nr_requests"
                         if [ "$nr_requests" -ne "$v" ]; then
                             # If exceeding its max value, then use a safe (Nyx only?) kenel value within 2048 (except its "none" scheduler)
-                            echo "2043" >"/sys/block/$i/queue/nr_requests"
+                            echo "2035" >"/sys/block/$i/queue/nr_requests"
                         fi
                         j=1
                         for p in $params; do
@@ -1716,11 +1797,17 @@ function reduceEffectJitter()
     if [ $# -eq 2 ]; then
         local flag="$1"
         local printStatus="$2"
+        local val
 
         if [ $flag -gt 0 ]; then
             resetprop_command="`which_resetprop_command`"
             if [ -n "$resetprop_command" ]; then
                 "$resetprop_command" ro.audio.ignore_effects true
+                # support for Tensor devices, etc.
+                val="`getprop ro.audio.spatializer_enabled`"
+                if [ -n "$val"  -a  "$val" = "true" ]; then
+                    "$resetprop_command" ro.audio.spatializer_enabled false
+                fi
                 reloadAudioserver
             else
                 return 2
@@ -1729,6 +1816,11 @@ function reduceEffectJitter()
             resetprop_command="`which_resetprop_command`"
             if [ -n "$resetprop_command" ]; then
                 "$resetprop_command" --delete ro.audio.ignore_effects
+                # support for Tensor devices, etc.
+                val="`getprop ro.audio.spatializer_enabled`"
+                if [ -n "$val"  -a  "$val" = "false" ]; then
+                    "$resetprop_command" ro.audio.spatializer_enabled true
+                fi
                 reloadAudioserver
             else
                 return 2
@@ -1736,7 +1828,7 @@ function reduceEffectJitter()
         fi
         
         if [ $printStatus -gt 0 ]; then
-            local val="`getprop ro.audio.ignore_effects`"
+            val="`getprop ro.audio.ignore_effects`"
             if [ -n "$val"  -a  "$val" = "true" ]; then
                 echo "  Effects framework: disabled"
             else

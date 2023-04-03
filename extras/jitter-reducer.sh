@@ -139,7 +139,7 @@ else
                             ;;
                      esac
                     
-                    # Tone: "light", "medium", "boost"
+                    # Tone: "light", "medium", "boost", "exp"
                     if [ "$1" = "light" ]; then
                         toneMode="light" 
                         shift
@@ -151,6 +151,9 @@ else
                         shift
                     elif [ "$1" = "boost" ]; then
                         toneMode="boost"
+                        shift
+                    elif [ "$1" = "exp" ]; then
+                        toneMode="exp"
                         shift
                     elif expr "$1" : '[^-].*' >"/dev/null" 2>&1; then
                         echo "wrong I/O scheduler parameter (\"$1\"). valid parameters: light m-light medium boost" 1>&2
