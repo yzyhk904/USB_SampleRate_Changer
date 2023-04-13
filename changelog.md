@@ -1,40 +1,159 @@
 ## Change logs
 
-# v2.6
+# v2.6.3
+* Adjusted bluetooth device formats for letting Am*zon music app to output 44kHz & 32bit float format
+
+Note: The Am*zon app determines its output format (of its internal resampler) for bluetooth by looking at the bluetooth device format (picking up the max sample rate if multiple rates specified) in the audio policy configuration XML file on each phone, e.g. outputting 48kHz & 16bit for 48kHz & 16bit phones, 96kHz & 16bit for 96kHz & 16bit phones, 44.1kHz & 32bit float for 44.1kHz & 24bit or 32bit (used by my script). Please choose 44.1kHz & 32bit (or the possible largest bits) in developer settings.
+
+If you like to specify the Am*zon's output format on recent phones, specify "--offload-hifi-playback" and "96k 32", "48k 24", etc. This option changes the initial format of bluetooth devices only, so you can change the current format through developer settings afterward.
+
+# v2.6.2
+* Added "--offload-direct" mode for comparing usual (non-a2dp hardware offload) mixer modes to "direct_pcm" and "compressed_offload" modes with&without DRC, especially for bluetooth audio
+
+Note: "direct_pcm" and "compressed_offload" modes cannot avoid default DRC on Qcomm devices. As some recent custom ROM's sometimes reverse on/off of the DRC switch, please confirm the difference by your ears.
+
+# v2.6.1
+* Added a bypass offload safer mode for recent MTK devices
+* Changed the default behavior to prefer bypass offload safer modes to bypass offload modes for limiting effect only on USB audio
+
+# v2.6.0
 * Added support for the usbv2 HAL module
+* Tuned for LDAC TWS's (use extras/jitter-reducer.sh --io * medium).
 
-# v2.5
-* Added extras/change-resampling-quality.sh (to reduce resampling distortion) and extras/change-usb-period.sh (to reduce the jitter of a PLL in a DAC)directly). Tuned kernel tunables by assuming an audio scheduling tunable "vendor.audio.adm.buffering.ms" to be "2" (please set this property by my magisk modules ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) and/or ["audio-misc-settings"](https://github.com/Magisk-Modules-Alt-Repo/audio-misc-settings)).
+Note: For crDroid Alioth users, try "--bypass-offload-safer 96k 32" or "--offload-hifi-playback 48k 24" option.
 
-# v2.4
+# v2.5.5
+* Tuned "extras/jitter-reducer.sh" with respect to tunables for "mq-deadline", "kyber" and "none" I/O scheduler (latest kernel common schedulers?)
+* Added forgotten wired phone entries in "bypass-offload-safer" mode
+* Fixed for the Nyx kernel 4.19 (expiration tunables of its mq-deadline scheduler were changed in 10msec resolution from 3msec)
+* Disabled the work queue power efficient mode for reducing jitter if possible (especially for the Nyx kernel and other latest ones)
+
+# v2.5.4
+* Fixed a telephone audio configuration issue on Qcomm SoC Android 12 caused by a hal version mismatch
+* Added "--bypass-offload-safer" option for keeping the sample rate and the bit depth of internal speakers and a 3.5mm jack to be 48kHz 16/24bit
+
+# v2.5.3
+* Tuned "extras/jitter-reducer.sh" for Bluetooth devices, USB DAC's and DLNA receivers
+    "extras/jitter-reducer.sh --all --io deadline medium" for Bluetooth devices
+    "extras/jitter-reducer.sh --all --io deadline boost" for USB DAC's and DLNA receivers
+
+# v2.5.2
+* Added a workaround for Android 12 SELinux bug w.r.t. "ro.audio.usb.period_us" property
+* Tuned kernel tunables for clearer audio quality
+
+# v2.5.0
+* Added extras/change-resampling-quality.sh (to reduce resampling distortion) and extras/change-usb-period.sh (to reduce the jitter of a PLL in a DAC)directly)
+* Tuned kernel tunables by assuming an audio scheduling tunable "vendor.audio.adm.buffering.ms" to be "2" (please set this property by my magisk modules ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) and/or ["audio-misc-settings"](https://github.com/Magisk-Modules-Alt-Repo/audio-misc-settings))
+
+# v2.4.11
+* extras/jitter-reducer.sh:
+    Disabled the Android doze itself for reducing jitter considerably unless disabling battery optimizations of app's
+    Tuned kernel tunables for recent Qcomm and MTK devices
+
+* USB_SampleRate_Changer.sh:
+    Added an option specifying "float" bit depth.
+
+* Fixed an audioserver hang-up after setprop restart on A12 low performance devices (by sending a SIGHUP signal to the server)
+* Added resampling parameter examples in README
+
+# v2.4.10
+* Tuned for POCO F3 (SD870) on phh GSI's because I abandoned tuning for custom ROM's on POCO F3 except phh GSI's
+* Tuned for SD845 devices; Perhaps also SD855 & SD865 & SD880 devices
+* Tuned I/O scheduler and virtual memory parameters, especially on bluetooth earphones
+
+# v2.4.9
+* Improved "extras/jitter-reducer.sh" about thermal controls of performance Snapdragon's
+* Optimized for POCO F3, but some of its custom ROM's cannot disable DRC (ArrowOS has inverted the DRC switch, so add "--drc" option to disable DRC)
+
+# v2.4.8
+* Tuned tunable values of the I/O jitter reducer and added "transition band cheat" option (specifying a cut-off point over the Nyquist frequency) to "extras/change-resampling-quality.sh"
+* Fixed too many argument for resetprop
+
+# v2.4.7
+* Improved the I/O jitter-reducer
+
+# v2.4.6
+* Fixed a bug of usb-samplerate-unlocker detection
+* Added AudioFlinger's current resampling quality print option to "extras/change-resampling-quality.sh"
+* Improved "extras/change-resampling-quality.sh" for 1:1 ratio resampling, especially 44.1kHz 32bit data pass-through
+* Tuned parameters of the I/O jitter reducer
+
+# v2.4.5
+* "extras/change-resampling-quality.sh" (a changer for the resampling quality of AudioFlinger (the OS mixer)) was added
+
+# v2.4.4
+* Enhanced the vm jitter reducer in /extras/jitter-reducer.sh to handle "swap_ratio" and "swap_ratio_enable" for Snapdradons
+* Optimized tunables of the I/O jitter reducer
+* Added LICENSE
+
+# v2.4.3
+* Improved "extras/jitter-reducer.sh" by fixing the GPU frequency at the max one for Qualcomm SoC (min_pwrlevel to the max level 0) and MTK SoC (fixed frequency at the max one with no governor) 
+
+Remarks: Don't forget to disable "adaptive battery" in the battery section of "settings" and battery optimizations for "System UI" (system app), etc. to lower reverb like jitter distortion in digital audio outputs.
+
+# v2.4.2
+* Optimized the I/O jitter reducer in "extras/jitter-reducer.sh" for Snapdragon devices
+
+# v2.4.1
+* Added an "m-light" tone mode for the I/O jitter reducer to "extras'jitter-reduce.sh"
+
+The mode is optimal for somewhat insensitive bluetooth earphones
+
+# v2.4.0 (pre-release)
 * Enhanced extras/jitter-reducer.sh by replacing the I/O jitter reducer with that of the hifi maximizer which uses "deadline" and "cfq" I/O schedulers and their optimized tunable values
 
-# v2.3
+# v2.3.0
 * Enhanced extras/jitter-reducer.sh by adding a wifi jitter reducer which is especially effective for music streaming services (both online and offline), Pixel's and other high performance devices
 * Cleaned up source codes
 
-# v2.2
-* extras/jitter-reducer.sh (a simplified version of my ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod)) added
+# v2.2.5
+* Made "--io" option of "extras/jitter-reducer.sh" to have a parameter "nr_requests" (or presets "light", "medium" and "boost") for adjusting various peripheral devices (especially bluetooth earphones)
 
-# v2.1
+# v2.2.4
+* "extras/jitter-reducer.sh" was improved for CPU&GPU governor and I/O scheduler (especially effective to bluetooth earphones)
+
+# v2.2.3
+* "extras/jitter-reducer.sh" was improved especially for old Qcomm devices
+
+# v2.2.2 (pre-release)
+* "extras/jitter-reducer.sh" was improved for virtual memory related jitters
+
+# v2.2.1 (pre-release)
+* "extras/jitter-reducer.sh" improved especially for old MTK SoC devices
+
+# v2.2.0
+* "extras/jitter-reducer.sh" (a simplified version of my ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod)) added
+
+# v2.1.0
 * ``--drc`` option added for the porpus of comparison to usual DRC-less audio quality
 
-# v2.0
+# v2.0.1
+* "--safe", "--safest" and "--usb-only" options added
+
+# v2.0.0 (pre-release)
 * Supported "disable a2dp hardware-offload" in dev. settings and PHH treble GSI's "force disable a2dp hardware-offload"
 * Set an r_submix HAL to be 44.1kHz 16bit mode
 * Added "auto" mode for investigating device's environment and guessing best settings
 
-# v1.3
-* Selinux enforcing mode bug fixed. Now this script can be used under both selinux enforcing and permissive modes
+# v1.3.2
+* Over umounting and mount points loss issues was fixed
 
-# v1.2
+# v1.3.1
+* Initial public release (on the Github)
+
+# v1.3.0
+* Selinux enforcing mode bug fixed
+
+Now this script can be used under both selinux enforcing and permissive modes
+
+# v1.2.0
 * (USB) hardware offload support added (currently experimental)
 * Bypass (USB) offload (using a non- USB hardware offload driver while the 3.5mm jack and internal speaker use a hardware offload driver) support added (currently experimental)
 
-# v1.1
+# v1.1.0
 * Recent higher sample rates added
 
-# v1.0
-* Initial Release
+# v1.0.0
+* Initial limited release
 
 ##
