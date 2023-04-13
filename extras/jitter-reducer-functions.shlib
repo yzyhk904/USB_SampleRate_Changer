@@ -1139,7 +1139,7 @@ function getSchedulerValues()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* | gs* )
-                                echo "80 0 36 512 0"
+                                echo "82 0 40 516 0"
                                 ;;
                             sdm8* )
                                 echo "78 0 34 510 0"
@@ -1302,44 +1302,44 @@ function getSchedulerNrRequests()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* | gs* )
-                                echo "86137"
+                                echo "86141"
                                 ;;
                             sdm8* )
-                                echo "86139"
+                                echo "86141"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86139"
+                                echo "86141"
                                 ;;
                             mt68* )
-                                echo "86137"
+                                echo "86141"
                                 ;;
                             mt67[7-9]? )
-                                echo "86137"
+                                echo "86141"
                                 ;;
                             * )
-                                echo "86137"
+                                echo "86141"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* | gs* )
-                                echo "86137"
+                                echo "86141"
                                 ;;
                             sdm8* )
-                                echo "86139"
+                                echo "86141"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86139"
+                                echo "86141"
                                 ;;
                             mt68* )
-                                echo "86137"
+                                echo "86141"
                                 ;;
                             mt67[7-9]? )
-                                echo "86137"
+                                echo "86141"
                                 ;;
                             * )
-                                echo "86137"
+                                echo "86141"
                                 ;;
                         esac
                         ;;
