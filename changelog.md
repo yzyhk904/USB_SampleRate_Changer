@@ -46,12 +46,12 @@ Note: For crDroid Alioth users, try "--bypass-offload-safer 96k 32" or "--offloa
 * Tuned kernel tunables by assuming an audio scheduling tunable "vendor.audio.adm.buffering.ms" to be "2" (please set this property by my magisk modules ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) and/or ["audio-misc-settings"](https://github.com/Magisk-Modules-Alt-Repo/audio-misc-settings))
 
 # v2.4.11
-* extras/jitter-reducer.sh:
-    Disabled the Android doze itself for reducing jitter considerably unless disabling battery optimizations of app's
-    Tuned kernel tunables for recent Qcomm and MTK devices
+* extras/jitter-reducer.sh:  
+    1. Disabled the Android doze itself for reducing jitter considerably unless disabling battery optimizations of app's  
+    2. Tuned kernel tunables for recent Qcomm and MTK devices  
 
-* USB_SampleRate_Changer.sh:
-    Added an option specifying "float" bit depth.
+* USB_SampleRate_Changer.sh:  
+    1. Added an option specifying "float" bit depth  
 
 * Fixed an audioserver hang-up after setprop restart on A12 low performance devices (by sending a SIGHUP signal to the server)
 * Added resampling parameter examples in README
