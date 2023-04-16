@@ -948,6 +948,7 @@ function getSocModelName()
                 case "`getprop ro.boot.hardware`" in
                     qcom )
                         # High performance Qcomm SoC devices tend to have code names
+                        # (not real SoC name, but compatible name in this library)
                         case "$modelName" in
                             "kona" )
                                 echo "sdm870"
@@ -956,6 +957,9 @@ function getSocModelName()
                                 echo "sdm870"
                                 ;;
                             "bengal" )
+                                echo "sdm680"
+                                ;;
+                            "holi" )
                                 echo "sdm680"
                                 ;;
                             * )

@@ -1,5 +1,10 @@
 ## Change logs
 
+# v2.6.4
+* Optimized "extras/jitter-reducer.sh" for reducing I/O scheduling jitter
+* Fixed bugs related to bluetooth SCO Headset (Hands-free) when "--bypass-offload-safer" modes
+* Improved "extras/dumpsys-filtered.sh" for bluetooth SCO
+
 # v2.6.3
 * Adjusted bluetooth device formats for letting Am*zon music app to output 44kHz & 32bit float format
 
@@ -51,7 +56,7 @@ Note: For crDroid Alioth users, try "--bypass-offload-safer 96k 32" or "--offloa
     2. Tuned kernel tunables for recent Qcomm and MTK devices  
 
 * USB_SampleRate_Changer.sh:  
-    1. Added an option specifying "float" bit depth  
+    1. Added an option specifying "float" bit depth.  
 
 * Fixed an audioserver hang-up after setprop restart on A12 low performance devices (by sending a SIGHUP signal to the server)
 * Added resampling parameter examples in README
