@@ -39,6 +39,7 @@ dumpsys media.audio_flinger | sed -e '/^  Hal stream dump/,/^  Master balance:/d
             FS="\n"
         }
         (allFlag==1 && /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_SPEAKER\)/) ||
+        /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_EARPIECE\)/ ||
         /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_USB_HEADSET\)/ ||
         /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_USB_DEVICE\)/ ||
         /Output devices?:[^(]+\(AUDIO_DEVICE_OUT_WIRED_HEADSET\)/ ||

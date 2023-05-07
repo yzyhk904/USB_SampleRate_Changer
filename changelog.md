@@ -1,5 +1,9 @@
 ## Change logs
 
+# v2.6.5
+* Optimized "extras/jitter-reducer.sh" for reducing I/O scheduling jitter
+* Added extras/dumpsys-bluetooth-filtered.sh command for displaying the active codec information
+
 # v2.6.4
 * Optimized "extras/jitter-reducer.sh" for reducing I/O scheduling jitter
 * Fixed bugs related to bluetooth SCO Headset (Hands-free) when "--bypass-offload-safer" modes

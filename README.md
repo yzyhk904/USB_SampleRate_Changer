@@ -43,7 +43,10 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - outputs information of the ALSA audio driver for USB DAC's, 3.5mm Jack and internal speakers.
 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/dumpsys-filtered.sh [--all][--help]`
-     - outputs active peripheral's information from `dumpsys media.audio_flinger`. With `--all` option, this script outputs all peripheral's information from the command.
+     - outputs the active peripheral's information from `dumpsys media.audio_flinger`. With `--all` option, this script outputs all peripheral's information from the command.
+     
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/dumpsys-bluetooth-filtered.sh [--all][--help]`
+     - outputs the active bluetooth codec information from `dumpsys bluetooth_manager`. With `--all` option, this script outputs all bluetooth manager information from the command.
 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/getConfig.sh [--all][--help]`
     - outputs brief information of the active audio policy configuration. With `--all` option, this script outputs all the information of the configuration.
