@@ -111,7 +111,7 @@
                 <!-- Output devices declaration, i.e. Sink DEVICE PORT -->
                 <devicePort tagName="Earpiece" type="AUDIO_DEVICE_OUT_EARPIECE" role="sink">
                    <profile name="" format="%AUDIO_FORMAT%"
-                            samplingRates="%SAMPLING_RATE%" channelMasks="AUDIO_CHANNEL_IN_MONO"/>
+                            samplingRates="%SAMPLING_RATE%" channelMasks="AUDIO_CHANNEL_OUT_MONO"/>
                 </devicePort>
                 <devicePort tagName="Speaker" role="sink" type="AUDIO_DEVICE_OUT_SPEAKER" address="">
                     <profile name="" format="%AUDIO_FORMAT%"
