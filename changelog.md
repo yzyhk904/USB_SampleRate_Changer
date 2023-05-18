@@ -1,5 +1,9 @@
 ## Change logs
 
+# v2.7.0
+* Optimized "extras/jitter-reducer.sh" for reducing I/O scheduling jitter
+* Added a support for "sysbta" (System Wide Bluetooth Hal) of recent GSI's and "bluetooth_qti" (experimental)
+
 # v2.6.5
 * Optimized "extras/jitter-reducer.sh" for reducing I/O scheduling jitter
 * Added extras/dumpsys-bluetooth-filtered.sh command for displaying the active codec information

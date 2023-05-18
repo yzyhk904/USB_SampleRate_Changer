@@ -184,7 +184,7 @@
         </module>
 
         <!-- A2DP Audio HAL -->
-    <module name="bluetooth" halVersion="2.0">
+    <module name="%BT_MODULE%" halVersion="2.0">
         <mixPorts>
             <mixPort name="a2dp output" role="source">
                 <profile name="" format="AUDIO_FORMAT_PCM_32_BIT"

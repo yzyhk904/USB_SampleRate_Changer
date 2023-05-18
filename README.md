@@ -48,6 +48,9 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/dumpsys-bluetooth-filtered.sh [--all][--help]`
      - outputs the active bluetooth codec information from `dumpsys bluetooth_manager`. With `--all` option, this script outputs all bluetooth manager information from the command.
 
+  - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/change-bluetooth-hal.sh [--help][--status][aosp | legacy | offload | sysbta]"`
+     - changes the active bluetooth audio HAL to one you specify. With `--status` option, this script outputs currently enabled bluetooth audio HALs.
+
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/getConfig.sh [--all][--help]`
     - outputs brief information of the active audio policy configuration. With `--all` option, this script outputs all the information of the configuration.
 

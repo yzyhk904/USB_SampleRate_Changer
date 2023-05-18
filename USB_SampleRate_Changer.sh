@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.6.5
+# Version: 2.7.0
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -14,12 +14,16 @@ elif [ -e "$MYDIR/disable" ] ; then
     exit 0
 fi
 # End
- 
-# Help message
+
+# Default values
 policyMode="auto"
 resetMode="false"
 DRC_enabled="false"
 USB_module="usb"
+BT_module="bluetooth"
+forceBluetoothQti="false"
+
+# Help message
 
 while [ $# -gt 0 ]; do
      case "$1" in
@@ -63,6 +67,10 @@ while [ $# -gt 0 ]; do
             USB_module="usbv2"
             shift
             ;;
+        "-fq" | "--force-bluetooth-qti" )
+            forceBluetoothQti="true"
+            shift
+            ;;
         "-a" | "--auto" )
             policyMode="auto"
             shift
@@ -103,7 +111,7 @@ if "$resetMode"; then
     exit 0
 fi
 # Reset End
- 
+
 # Set parameters
 sRate="44100"
 bDepth="32"
@@ -172,7 +180,7 @@ case "$bDepth" in
     32 )
         aFormat="AUDIO_FORMAT_PCM_32_BIT"
         ;;
-    float )
+    "float" )
         aFormat="AUDIO_FORMAT_PCM_FLOAT"
         ;;
     * )
@@ -199,6 +207,45 @@ fi
 
 if [ "$policyMode" = "auto"  -a  -n "$BluetoothHal" ];then
     policyMode="$BluetoothHal"
+fi
+
+case "$policyMode" in
+    "legacy" | "safe" | "safest" )
+            BT_module="a2dp"
+            ;;
+    * )
+            BT_module="bluetooth"
+            ;;
+esac
+
+# Force the bluetooth HAL to be "bluetooth_qti"
+if "$forceBluetoothQti"; then
+    BT_module="bluetooth_qti"
+    if [ ! -r "/vendor/lib64/hw/audio.bluetooth_qti.default.so"  &&  ! -r "/vendor/lib/hw/audio.bluetooth_qti.default.so" ]; then
+            echo "    Warning: ${0##*/} detected no \"bluetooth_qti\" audio HAL module on this device" 1>&2
+    fi
+fi
+
+SysbtaCapable="`getprop persist.bluetooth.system_audio_hal.enabled`"
+
+if [ "$SysbtaCapable" = "1" ]; then
+    BT_module="sysbta"
+fi
+
+if [ -n "$SysbtaCapable"  -a  "`getprop init.svc.system.bt-audio-hal`" != "stopped" ]; then
+    if [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-direct" ]; then
+        echo "    Warning: ${0##*/} detected that \"sysbta\" (System Wide Bluetooth HAL) service was running" 1>&2
+        
+        if [ "$SysbtaCapable" = "1" ]; then
+            echo "    Info: \"sysbta\" rewrites bluetooth audio parts from \"$policyMode\" to its own forcibly on the fly! \
+If you like \"$policyMode\" to be unmodified anyway, please use \"extras/change-bluetooth-hal.sh\" \
+to change the active bluetooth audio HAL to \"offload\"" 1>&2
+        else
+            echo "    Info: Please use \"extras/change-bluetooth-hal.sh\" to change the active bluetooth audio HAL to \"offload\", \
+or your bluetooth device cannot output sound!" 1>&2
+        fi
+        
+    fi
 fi
 
 if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \)  -a  $sRate -gt 96000 ]; then
@@ -277,7 +324,7 @@ if [ -r "$template" ]; then
     if [ "$USB_module" = "usb"  -a  ! -r "/vendor/lib64/hw/audio.usb.default.so"  -a  -r "/vendor/lib64/hw/audio.usbv2.default.so" ]; then
         USB_module="usbv2"
     fi
-    sed -e "s/%DRC_ENABLED%/$DRC_enabled/" -e "s/%USB_MODULE%/$USB_module/" \
+    sed -e "s/%DRC_ENABLED%/$DRC_enabled/" -e "s/%USB_MODULE%/$USB_module/" -e "s/%BT_MODULE%/$BT_module/" \
             -e "s/%SAMPLING_RATE%/$sRate/" -e "s/%AUDIO_FORMAT%/$aFormat/" "$template" >"$genfile"
 
     if [ $? -eq 0 ]; then
