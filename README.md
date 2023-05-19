@@ -31,7 +31,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
 
 * This script and following ones in "extras" folder have been tested on LineageOS and ArrowOS ROM's, and phh GSI's (Android 10 ~ 13, Qualcomm & MediaTek SoC, and Arm32 & Arm64 combinations).
 
-* Note 1: "USB_SampleRate_Changer.sh" requires unlocking the USB audio class driver's limitation (upto 96kHz (USB HAL) lock, 384kHz offload lock for Qcomm devices or 96kHz offload (actually only bypass to the USB HAL driver with a 192kHz limitter) lock for MTK and Tensor devices) if you want to specify greater than 96kHz or 384kHz (in case of Qcomm USB hardware offloading, i.e., maybe hardware offload tunneling to the ALSA driver). See my companion magisk module ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) for non- hardware offload drivers. Although you specify a high sample rate for this script execution, you cannot connect your device to a USB DAC with the sample rate unless the USB DAC supports the sample rate (the USB driver will limit the connecting sample rate down to its maximum sample rate).
+* Note 1: "USB_SampleRate_Changer.sh" requires unlocking the USB audio class driver's limitation (upto 96kHz (USB HAL) lock, 384kHz offload lock for Qcomm devices or 96kHz offload lock for MTK and Tensor devices (actually only bypass to the USB HAL driver)) if you want to specify greater than 96kHz or 384kHz (in case of Qcomm USB hardware offloading, i.e., maybe hardware offload tunneling to the ALSA driver). See my companion magisk module ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) for non- hardware offload drivers. Although you specify a high sample rate for this script execution, you cannot connect your device to a USB DAC with the sample rate unless the USB DAC supports the sample rate (the USB driver will limit the connecting sample rate down to its maximum sample rate).
 
 * Note 2: This script and other extras ones can be executed under "phh's SuperUser" root environment on recent A/B partition phh-GSI's. If you find some errors under the environment, try `setenforce 0` with root permission for making Selinux mode to be permissive. Some phh-GSI's have wrong selinux settings.
 
@@ -64,7 +64,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - Appendix (Resampling Parameter Examples) :
     
     
-    | Stop band attenuation (dB) | Half filter length | Cut-off (%) | Cheat (%) | Memo |
+    | Stop band attenuation (dB) | Half filter length | Cut-off (%) | Stop band (%) | Memo |
     | ---: | ---: | ---: | ---: | ---- |
     | AOSP parameters: | - | - | - | - |
     | 90 | 32 | 100 | | Default Quality|
@@ -72,10 +72,10 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 84 | 16 | 100 | | MED Quality |
     | 98 | 32 | 100 | | HIGH Quality |
     | Recommended parameters: | - | - | - | - |
-    | 160 | 480 | 91 | | This script's default |
-    | 167 | 368 | | 106 | This script's A12 low performance |
-    | 179 | 408 | | 99 | This script's A12 general purpose |
-    | 194 | 520 | 100 | | This script's 1:1 resampling (bit-perfect) |
+    | 160 | 480 | 91 | | This scrips's default, esp. for A11 and earlier |
+    | 167 | 368 | | 106 | Low performance devices of A12 and later |
+    | 179 | 408 | | 99 | General purpose for A12 and later |
+    | 194 | 520 | 100 | | 1:1 resampling for bit-perfect |
     | External examples: | - | - | - | - |
     | 100 | 29 | | 109 | AK4493 (Sharp Roll-Off for N-fold over-sampling) |
     | 120 | 35 | | 110 | ESS 9038PRO (Sharp Roll-Off for N-fold over-sampling) |
