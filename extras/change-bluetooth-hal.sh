@@ -70,9 +70,9 @@ function BluetoothHalStatus()
         if [ "`getprop persist.bluetooth.bluetooth_audio_hal.disabled`" != "true"  -a  -r "/vendor/lib64/hw/audio.bluetooth.default.so" ]; then
             echo "aosp (\"bluetooth\" HAL) : enabled" 1>&2
         elif [ -r "/system/lib64/hw/audio.a2dp.default.so"  -o  -r "/system/lib/hw/audio.a2dp.default.so" ]; then
-            echo "a2dp (\"a2dp\" HAL) : enabled" 1>&2
+            echo "legacy (\"a2dp\" HAL) : enabled" 1>&2
         elif [ -r "/vendor/lib64/hw/audio.bluetooth_qti.default.so"  -o  -r "/vendor/lib/hw/audio.bluetooth_qti.default.so" ]; then
-            echo "qti (\"bluetooth_qti\" HAL) : enabled" 1>&2
+            echo "legacy (\"bluetooth_qti\" HAL) : enabled" 1>&2
         fi
         
         if [ "`getprop ro.bluetooth.a2dp_offload.supported`" = "true"  -a  "`getprop persist.bluetooth.a2dp_offload.disabled`" = "false" ]; then
@@ -80,6 +80,34 @@ function BluetoothHalStatus()
         fi
         
     fi
+}
+
+function restartAudioHalExceptSysbta()
+{
+    local x
+    
+    for x in "audio-hal" "vendor.audio-hal" "vendor.audio-hal-2-0" "vendor.audio-hal-4-0-msd" "audio_proxy_service" "system.bt-audio-hal"; do
+        if [ "`getprop init.svc.${x}`" = "running" ]; then
+            stop ${x}
+        fi
+    done
+    
+    for x in "audio-hal" "vendor.audio-hal" "vendor.audio-hal-2-0" "vendor.audio-hal-4-0-msd" "audio_proxy_service"; do
+        if [ "`getprop init.svc.${x}`" = "stopped" ]; then
+            start ${x}
+        fi
+    done
+}
+
+function startSysbtaHal()
+{
+    local x
+    
+    for x in "audio-hal" "vendor.audio-hal" "vendor.audio-hal-2-0" "vendor.audio-hal-4-0-msd" "audio_proxy_service" "system.bt-audio-hal"; do
+        if [ "`getprop init.svc.${x}`" = "stopped" ]; then
+            start ${x}
+        fi
+    done
 }
 
 BTmode="aosp"
@@ -130,7 +158,9 @@ fi
 case "$BTmode" in
     "aosp" )
         if [ -r "/vendor/lib64/hw/audio.bluetooth.default.so"  -o   -r "/vendor/lib/hw/audio.bluetooth.default.so" ]; then
+            reloadAudioserver
             setprop persist.bluetooth.bluetooth_audio_hal.disabled false
+            restartAudioHalExceptSysbta
          else
             echo "${0##*/} cannot change to \"${BTmode}\"; (no ${BTmode} HAL module)" 1>&2
             exit 1
@@ -138,7 +168,15 @@ case "$BTmode" in
         ;;
     "legacy" )
         if [ -r "/system/lib64/hw/audio.a2dp.default.so"  -o   -r "/system/lib/hw/audio.a2dp.default.so" ]; then
+            reloadAudioserver
             setprop persist.bluetooth.bluetooth_audio_hal.disabled true
+            restartAudioHalExceptSysbta
+        elif [ -r "/vendor/lib64/hw/audio.bluetooth_qti.default.so"  -o  -r "/vendor/lib/hw/audio.bluetooth_qti.default.so" ]; then
+            reloadAudioserver
+            setprop persist.bluetooth.bluetooth_audio_hal.disabled true
+            setprop persist.bluetooth.a2dp_offload.disabled false
+            "$resetprop_command" ro.bluetooth.a2dp_offload.supported true
+            restartAudioHalExceptSysbta
         else
             echo "${0##*/} cannot change to \"${BTmode}\"; (no ${BTmode} HAL module)" 1>&2
             exit 1
@@ -150,9 +188,7 @@ case "$BTmode" in
             setprop persist.bluetooth.bluetooth_audio_hal.disabled false
             setprop persist.bluetooth.a2dp_offload.disabled false
             "$resetprop_command" ro.bluetooth.a2dp_offload.supported true
-            stop vendor.audio-hal
-            stop system.bt-audio-hal
-            start vendor.audio-hal
+            restartAudioHalExceptSysbta
         else
             echo "${0##*/} cannot change to \"${BTmode}\"; (no ${BTmode} HAL module)" 1>&2
             exit 1
@@ -162,17 +198,12 @@ case "$BTmode" in
         if [ -z "`getprop persist.bluetooth.system_audio_hal.enabled`" ]; then
             echo "${0##*/} cannot change to \"${BTmode}\"; (no ${BTmode} HAL module)" 1>&2
             exit 1
+        else
+            reloadAudioserver
+            startSysbtaHal
         fi
         ;;
 esac
 
-if [ "$BTmode" != "offload" ]; then
-    if [ "`getprop init.svc.system.bt-audio-hal`" = "stopped" ]; then
-        start system.bt-audio-hal
-    fi
-
-    reloadAudioserver
-    
-fi
 BluetoothHalStatus
 exit 0
