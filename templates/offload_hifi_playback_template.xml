@@ -62,11 +62,6 @@
                     <profile name="" format="%AUDIO_FORMAT%"
                              samplingRates="%SAMPLING_RATE%" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
                 </mixPort>
-                <mixPort name="raw" role="source"
-                        flags="AUDIO_OUTPUT_FLAG_FAST|AUDIO_OUTPUT_FLAG_RAW">
-                    <profile name="" format="%AUDIO_FORMAT%"
-                             samplingRates="%SAMPLING_RATE%" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
-                </mixPort>
                 <mixPort name="deep_buffer" role="source"
                         flags="AUDIO_OUTPUT_FLAG_DEEP_BUFFER">
                     <profile name="" format="%AUDIO_FORMAT%"
@@ -213,31 +208,31 @@
             <!-- route declaration, i.e. list all available sources for a given sink -->
             <routes>
                 <route type="mix" sink="Earpiece"
-                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out"/>
+                       sources="primary output,deep_buffer,voip_rx,mmap_no_irq_out"/>
                 <route type="mix" sink="Speaker"
-                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out"/>
+                       sources="primary output,deep_buffer,voip_rx,mmap_no_irq_out"/>
                 <route type="mix" sink="Wired Headset"
-                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out"/>
+                       sources="primary output,deep_buffer,voip_rx,mmap_no_irq_out"/>
                 <route type="mix" sink="Wired Headphones"
-                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out"/>
+                       sources="primary output,deep_buffer,voip_rx,mmap_no_irq_out"/>
                 <route type="mix" sink="Line"
-                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out"/>
+                       sources="primary output,deep_buffer,voip_rx,mmap_no_irq_out"/>
                 <route type="mix" sink="HDMI"
-                       sources="primary output,raw,deep_buffer,voip_rx"/>
+                       sources="primary output,deep_buffer,voip_rx"/>
                 <route type="mix" sink="Proxy"
-                       sources="primary output,raw,deep_buffer"/>
+                       sources="primary output,deep_buffer"/>
                 <route type="mix" sink="FM"
                        sources="primary output"/>
                 <route type="mix" sink="BT SCO"
-                       sources="primary output,raw,deep_buffer,voip_rx"/>
+                       sources="primary output,deep_buffer,voip_rx"/>
                 <route type="mix" sink="BT SCO Headset"
-                       sources="primary output,raw,deep_buffer,voip_rx"/>
+                       sources="primary output,deep_buffer,voip_rx"/>
                 <route type="mix" sink="BT SCO Car Kit"
-                       sources="primary output,raw,deep_buffer,voip_rx"/>
+                       sources="primary output,deep_buffer,voip_rx"/>
                 <route type="mix" sink="USB Device Out"
-                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out,hifi_playback"/>
+                       sources="primary output,deep_buffer,voip_rx,mmap_no_irq_out,hifi_playback"/>
                 <route type="mix" sink="USB Headset Out"
-                       sources="primary output,raw,deep_buffer,voip_rx,mmap_no_irq_out,hifi_playback"/>
+                       sources="primary output,deep_buffer,voip_rx,mmap_no_irq_out,hifi_playback"/>
                 <route type="mix" sink="Telephony Tx"
                        sources="voice_tx"/>
                 <route type="mix" sink="voice_rx"
@@ -253,7 +248,7 @@
 
         </module>
 
-        <!-- A2DP Audio HAL -->
+        <!-- Bluetooth Audio HAL -->
     <module name="%BT_MODULE%" halVersion="2.0">
         <mixPorts>
             <mixPort name="a2dp output" role="source">

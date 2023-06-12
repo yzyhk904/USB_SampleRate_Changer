@@ -1,5 +1,13 @@
 ## Change logs
 
+# v2.7.1
+* Optimized "extras/jitter-reducer.sh" for reducing I/O scheduling jitter
+* "extras/jitter-reducer.sh" now confirms and sets the cpu scaling max freq to its available max (sometimes the scaling max freq has been lowered before by a controller on some devices)
+* Removed "raw" mixers from template files
+* Fixed and adjusted "extras/jitter-reducer.sh" for Tensor devices (e.g., GPU max freq and the mq-deadline scheduler)
+* Added supports to Tensor devices; Tensor specific --offload-hifi-playback mode (USB 96kHz fixed for non- hires. music while 48kHz fixed on stock ROMs) and --bypass-offload-safer mode (but the usbv2 HAL wouldn't work; maybe a bug around the HAL and the AOC?)
+* Note: Audio outputs of stock Tensor devices work by 48kHz & float mode for non-hires. music, 96kHz & 32bit for hires. one, and exceptionally 44.1kHz & 16bit for AAC music files (compressed offload feature) without third party proprietary USB drivers. Till now, the usbv2 HAL driver cannot work at all after AOC (new USB Direct Access feature) was introduced. Tensor's hardware offload driver wouldn't change its sample rate except 44.1kHz, 48kHz, 96kHz and 192kHz (float and 32bit int format).
+
 # v2.7.0
 * Optimized "extras/jitter-reducer.sh" for reducing I/O scheduling jitter
 * Added a support for "sysbta" (System Wide Bluetooth Hal) of recent GSI's and "bluetooth_qti" (experimental)

@@ -20,8 +20,8 @@ function searchDefaultCpuGovernor()
     local gov=""
     local i
     for i in `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors`; do
-        if [ "$i" = "schedutil" ]; then
-            gov="schedutil"
+        if [ "$i" = "sched_pixel"  -o  "$i" = "schedutil" ]; then
+            gov="$i"
             break;
         elif [ ! "$gov" = "schedplus" ]; then
              if [ "$i" = "schedplus" ]; then
@@ -446,6 +446,46 @@ function getMtkGpuFreqKhz()
     fi
 }
 
+function getTensorGpuFreqKhz()
+{
+    local isMax="0"
+    
+    if [ $# -eq 1  -a  "$1" = "max" ]; then
+        isMax="1"
+    elif [ $# -eq 1  -a  "$1" = "min" ]; then
+        isMax="-1"
+    fi
+    
+    if [ -r "/sys/devices/platform/1c500000.mali/available_frequencies" ]; then
+        local tab x freq=""
+        
+        read tab <"/sys/devices/platform/1c500000.mali/available_frequencies"
+        if [ -z "$tab" ]; then
+            return 1
+        fi
+        set $tab 1>"/dev/null" 2>&1
+        
+        if [ "$isMax" -eq 1 ]; then
+            freq="$1"
+        elif [ "$isMax" -eq -1 ]; then
+            freq="$(eval echo '$'{$#})"
+        else
+            # return the current GPU clock
+            read freq <"/sys/devices/platform/1c500000.mali/cur_freq"
+        fi
+        
+        if [ -n "$freq" ]; then
+            echo "$freq"
+            return 0
+        else
+            return 1
+        fi
+        
+    else
+        return 1
+    fi
+}
+
 function isMtkGpuFreqFixed()
 {
     if [ -r "/proc/gpufreq/gpufreq_opp_freq" ]; then
@@ -480,6 +520,10 @@ function reduceGovernorJitter()
                         echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
                         chmod 644 "/sys/devices/system/cpu/cpu$i/online"
                         echo '1' >"/sys/devices/system/cpu/cpu$i/online"
+                        # Set the cpu max freq to the scaling_max_freq because some devices sometimes set it to be lower
+                        read x <"/sys/devices/system/cpu/cpu$i/cpufreq/cpuinfo_max_freq"
+                        chmod 644 "/sys/devices/system/cpu/cpu$i/cpufreq/scaling_max_freq"
+                        echo "$x" >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_max_freq"
                         echo 'performance' >"/sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
                     fi
                 done
@@ -528,6 +572,12 @@ function reduceGovernorJitter()
                 local freq="`getMtkGpuFreqKhz \"max\"`"
                 if [ -n "$freq" ]; then
                     echo "$freq" >"/proc/gpufreq/gpufreq_opp_freq"
+                fi
+            elif [ -w "/sys/devices/platform/1c500000.mali/scaling_min_freq" ]; then
+                # Maximum fixed frequency setting for Tensor GPU's
+                local freq="`getTensorGpuFreqKhz \"max\"`"
+                if [ -n "$freq" ]; then
+                    echo "$freq" >"/sys/devices/platform/1c500000.mali/scaling_min_freq"
                 fi
             fi
             
@@ -603,6 +653,12 @@ function reduceGovernorJitter()
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Variable frequency setting for MediaTek GPU's
                 echo '0' >"/proc/gpufreq/gpufreq_opp_freq"
+            elif [ -w "/sys/devices/platform/1c500000.mali/scaling_min_freq" ]; then
+                # Minimum fixed frequency setting for Tensor GPU's
+                local freq="`getTensorGpuFreqKhz \"min\"`"
+                if [ -n "$freq" ]; then
+                    echo "$freq" >"/sys/devices/platform/1c500000.mali/scaling_min_freq"
+                fi
             fi
             
         fi
@@ -660,6 +716,16 @@ function reduceGovernorJitter()
                     echo "  Governor GPU: max freq (fixed: $freq)"
                 else
                     freq="`getMtkGpuFreqKhz \"typical\"`"
+                    freq="`expr $freq / 1000`MHz"
+                    echo "  Governor GPU: variable freq (typical: $freq)"
+                fi
+            elif [ -r "/sys/devices/platform/1c500000.mali/cur_freq" ]; then
+                # Get the current Tensor GPU frequency
+                local freq="`getTensorGpuFreqKhz`"
+                if [ "$freq" = "`getTensorGpuFreqKhz \"max\"`" ]; then
+                    freq="`expr $freq / 1000`MHz"
+                    echo "  Governor GPU: max freq (fixed: $freq)"
+                else
                     freq="`expr $freq / 1000`MHz"
                     echo "  Governor GPU: variable freq (typical: $freq)"
                 fi
@@ -950,10 +1016,7 @@ function getSocModelName()
                         # High performance Qcomm SoC devices tend to have code names
                         # (not real SoC name, but compatible name in this library)
                         case "$modelName" in
-                            "kona" )
-                                echo "sdm870"
-                                ;;
-                            "kalama" )
+                            "kona" | "kalama" | "shima" | "yupik" )
                                 echo "sdm870"
                                 ;;
                             "bengal" )
@@ -1017,13 +1080,13 @@ function adjustForSoC_mq()
                 echo "`expr  '(' '(' $1 + 5 ')' / 10 ')' '*' 10`"
                 return 0
                 ;;
-            perf* )
-                # Round to multiples of 4; for Xiaomi Bengal kernels
+            perf* | android* )
+                # Round to multiples of 4; for Xiaomi Bengal and Google kernels
                 echo "`expr  '(' '(' $1 + 2 ')' / 4 ')' '*' 4`"
                 return 0
                 ;;
             * )
-                adjustForSoC "$3"
+                adjustForSoC "$1"
                 ;;
         esac
         return 0
@@ -1142,45 +1205,51 @@ function getSchedulerValues()
                         ;;
                     "exp" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* | gs* )
-                                echo "84 0 40 512 0"
+                            sdm8[5-9]* | sdm9* )
+                                echo "89 0 36 512 0"
+                                ;;
+                            gs* )
+                                echo "91 0 36 512 0"
                                 ;;
                             sdm8* )
-                                echo "85 0 34 510 0"
+                                echo "89 0 34 510 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "85 0 34 510 0"
+                                echo "89 0 34 510 0"
                                 ;;
                             mt68* )
-                                echo "82 0 36 516 0"
+                                echo "89 0 36 516 0"
                                 ;;
                             mt67[7-9]? )
-                                echo "82 0 36 516 0"
+                                echo "89 0 36 516 0"
                                 ;;
                             * )
-                                echo "82 0 36 516 0"
+                                echo "89 0 36 516 0"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* | gs* )
-                                echo "82 0 36 512 0"
+                            sdm8[5-9]* | sdm9* )
+                                echo "89 0 36 512 0"
+                                ;;
+                            gs* )
+                                echo "91 0 36 512 0"
                                 ;;
                             sdm8* )
-                                echo "85 0 34 510 0"
+                                echo "89 0 34 510 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "85 0 34 510 0"
+                                echo "89 0 34 510 0"
                                 ;;
                             mt68* )
-                                echo "82 0 36 516 0"
+                                echo "89 0 36 516 0"
                                 ;;
                             mt67[7-9]? )
-                                echo "82 0 36 516 0"
+                                echo "89 0 36 516 0"
                                 ;;
                             * )
-                                echo "82 0 36 516 0"
+                                echo "89 0 36 516 0"
                                 ;;
                         esac
                         ;;
@@ -1214,28 +1283,28 @@ function getSchedulerValues()
                 #       slice_idle slice_sync target_latency
                 case "$2" in
                     "light" )
-                        echo "1 3 3 0 1 1 3 26 0 3 3"
+                        echo "1 3 3 0 1 1 3 34 0 3 3"
                         ;;
                     "m-light" )
-                        echo "1 3 3 0 1 1 3 34 0 3 3"
+                        echo "1 3 3 0 1 1 3 46 0 3 3"
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
                             sdm* | mt68* | gs* )
-                                echo "1 3 3 0 1 1 3 51 0 3 3"
+                                echo "1 2 2 0 1 1 2 56 0 2 1"
                                 ;;
                             * )
-                                echo "1 3 3 0 1 1 3 51 0 3 3"
+                                echo "1 3 3 0 1 1 3 56 0 3 3"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
                             sdm* | mt68* | gs* )
-                                echo "1 3 3 0 1 1 3 46 0 3 3"
+                                echo "1 3 3 0 1 1 3 51 0 3 3"
                                 ;;
                             * )
-                                echo "1 3 3 0 1 1 3 46 0 3 3"
+                                echo "1 3 3 0 1 1 3 51 0 3 3"
                                 ;;
                         esac
                         ;;
@@ -1244,7 +1313,7 @@ function getSchedulerValues()
                 
             "kyber" )
                 #  read_lat_nsec write_lat_nsec
-                echo "1000000 1000000"
+                echo "1000001 1000001"
                 ;;
                 
             "noop" | "none" | * )
@@ -1306,44 +1375,44 @@ function getSchedulerNrRequests()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* | gs* )
-                                echo "86151"
+                                echo "86159"
                                 ;;
                             sdm8* )
-                                echo "86141"
+                                echo "86159"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86141"
+                                echo "86159"
                                 ;;
                             mt68* )
-                                echo "86149"
+                                echo "86159"
                                 ;;
                             mt67[7-9]? )
-                                echo "86149"
+                                echo "86159"
                                 ;;
                             * )
-                                echo "86149"
+                                echo "86159"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* | gs* )
-                                echo "86149"
+                                echo "86153"
                                 ;;
                             sdm8* )
-                                echo "86141"
+                                echo "86153"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86141"
+                                echo "86153"
                                 ;;
                             mt68* )
-                                echo "86149"
+                                echo "86153"
                                 ;;
                             mt67[7-9]? )
-                                echo "86149"
+                                echo "86153"
                                 ;;
                             * )
-                                echo "86149"
+                                echo "86153"
                                 ;;
                         esac
                         ;;
@@ -1377,40 +1446,40 @@ function getSchedulerNrRequests()
                     "light" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "80645"
+                                echo "86021"
                                 ;;
                             * )
-                                echo "80645"
+                                echo "86021"
                                 ;;
                         esac
                         ;;
                     "m-light" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "86021"
+                                echo "86117"
                                 ;;
                             * )
-                                echo "86021"
+                                echo "86117"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "86141"
+                                echo "86153"
                                 ;;
                             * )
-                                echo "86141"
+                                echo "86153"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "86117"
+                                echo "86149"
                                 ;;
                             * )
-                                echo "86117"
+                                echo "86149"
                                 ;;
                         esac
                         ;;
@@ -1446,10 +1515,10 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "86141"
+                                echo "86151"
                                 ;;
                             * )
-                                echo "86141"
+                                echo "86151"
                                 ;;
                         esac
                         ;;
@@ -1508,7 +1577,7 @@ function reduceIoJitter()
                         sleep 0.05
                         read v <"/sys/block/$i/queue/nr_requests"
                         if [ "$nr_requests" -ne "$v" ]; then
-                            # If exceeding its max value, then use a safe (Nyx only?) kenel value within 2048 (except its "none" scheduler)
+                            # If exceeding its max value, then use a safe kenel value (for multi-queue schedulers) within 2048 (except its "none" scheduler)
                             echo "2033" >"/sys/block/$i/queue/nr_requests"
                         fi
                         j=1
@@ -1546,27 +1615,33 @@ function reduceIoJitter()
                     if validScheduler "/sys/block/$i/queue/scheduler" "cfq"; then
                         echo 'cfq' >"/sys/block/$i/queue/scheduler"
                         sleep 0.05
-                    elif validScheduler "/sys/block/$i/queue/scheduler" "kyber"; then
-                        echo 'kyber' >"/sys/block/$i/queue/scheduler"
-                        sleep 0.05
                     elif validScheduler "/sys/block/$i/queue/scheduler" "bfq"; then
                         echo 'bfq' >"/sys/block/$i/queue/scheduler"
                         sleep 0.05
+                    elif validScheduler "/sys/block/$i/queue/scheduler" "kyber"; then
+                        echo 'kyber' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
                     fi
                     
-                    case "`getSocModelName`" in
-                        sdm8[5-9]* | sdm9* | sdm66* )
-                            echo '512' >"/sys/block/$i/queue/read_ahead_kb"
-                            ;;
-                        * )
-                            echo '128' >"/sys/block/$i/queue/read_ahead_kb"
-                            ;;
-                    esac
                     echo '1' >"/sys/block/$i/queue/iostats"
                     echo '0' >"/sys/block/$i/queue/add_random"
                     echo '1' >"/sys/block/$i/queue/rq_affinity"
                     echo '0' >"/sys/block/$i/queue/nomerges"
-                    echo '128' >"/sys/block/$i/queue/nr_requests"
+                    
+                    case "`getSocModelName`" in
+                        sdm8[5-9]* | sdm9* | sdm66* )
+                            echo '512' >"/sys/block/$i/queue/read_ahead_kb"
+                            echo '128' >"/sys/block/$i/queue/nr_requests"
+                            ;;
+                        gs* )
+                            echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+                            echo '64' >"/sys/block/$i/queue/nr_requests"
+                            ;;
+                        * )
+                            echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+                            echo '128' >"/sys/block/$i/queue/nr_requests"
+                            ;;
+                    esac
                 fi
             done
             

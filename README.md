@@ -22,6 +22,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - `--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps considerably traditional settings for an internal speaker and others.
     - `--safest`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps most traditional settings for an internal speaker and others.
     - `--usb-only`: changes a USB audio policy configuration file only.
+    - `--force-bluetooth-qti`: forces to use "bluetooth_qti" bluetooth module (Qcomm's legacy one) instead of usual ones.
 
     - For typical example, `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh` automatically investigates your device and determines the audio policy configuration type ("offload" (including USB & Bluetooth), "bypass-offload-safer" ("offload" except USB & Bluetooth), "legacy" ("offload" except USB & Bluetooth but using a legacy Bluetooth module "a2dp"), "safe" (for non-offloading devices using the "a2dp") and "safest" (for old devices). And this sets the sample rate and the bit depth of your device to be 44.1 kHz and 32 bits except internal ouputs of "bypass-offload-safer", "safe" and "safest" modes. If you want to set another sample rate and bit depth, please specify specific values.
 

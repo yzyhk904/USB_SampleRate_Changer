@@ -28,15 +28,11 @@
                     <profile name="" format="%AUDIO_FORMAT%"
                              samplingRates="%SAMPLING_RATE%" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
                 </mixPort>
-                <mixPort name="raw" role="source" flags="AUDIO_OUTPUT_FLAG_RAW|AUDIO_OUTPUT_FLAG_FAST">
+                <mixPort name="deep_buffer" role="source" flags="AUDIO_OUTPUT_FLAG_DEEP_BUFFER">
                     <profile name="" format="%AUDIO_FORMAT%"
                              samplingRates="%SAMPLING_RATE%" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
                 </mixPort>
                 <mixPort name="mmap_no_irq_out" role="source" flags="AUDIO_OUTPUT_FLAG_DIRECT|AUDIO_OUTPUT_FLAG_MMAP_NOIRQ">
-                    <profile name="" format="%AUDIO_FORMAT%"
-                             samplingRates="%SAMPLING_RATE%" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
-                </mixPort>
-                <mixPort name="deep_buffer" role="source" flags="AUDIO_OUTPUT_FLAG_DEEP_BUFFER">
                     <profile name="" format="%AUDIO_FORMAT%"
                              samplingRates="%SAMPLING_RATE%" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
                 </mixPort>
@@ -112,21 +108,21 @@
             </devicePorts>
             <routes>
                 <route type="mix" sink="Earpiece"
-                       sources="primary output,raw,deep_buffer,mmap_no_irq_out,voip_rx"/>
+                       sources="primary output,deep_buffer,mmap_no_irq_out,voip_rx"/>
                 <route type="mix" sink="Speaker"
-                       sources="primary output,raw,deep_buffer,mmap_no_irq_out,voip_rx"/>
+                       sources="primary output,deep_buffer,mmap_no_irq_out,voip_rx"/>
                 <route type="mix" sink="Wired Headset"
-                       sources="primary output,raw,deep_buffer,mmap_no_irq_out,voip_rx"/>
+                       sources="primary output,deep_buffer,mmap_no_irq_out,voip_rx"/>
                 <route type="mix" sink="Wired Headphones"
-                       sources="primary output,raw,deep_buffer,mmap_no_irq_out,voip_rx"/>
+                       sources="primary output,deep_buffer,mmap_no_irq_out,voip_rx"/>
                 <route type="mix" sink="Line"
-                       sources="primary output,raw,deep_buffer,mmap_no_irq_out,voip_rx"/>
+                       sources="primary output,deep_buffer,mmap_no_irq_out,voip_rx"/>
                 <route type="mix" sink="BT SCO"
-                       sources="primary output,raw,deep_buffer,voip_rx"/>
+                       sources="primary output,deep_buffer,voip_rx"/>
                 <route type="mix" sink="BT SCO Headset"
-                       sources="primary output,raw,deep_buffer,voip_rx"/>
+                       sources="primary output,deep_buffer,voip_rx"/>
                 <route type="mix" sink="BT SCO Car Kit"
-                       sources="primary output,raw,deep_buffer,voip_rx"/>
+                       sources="primary output,deep_buffer,voip_rx"/>
                 <route type="mix" sink="Telephony Tx"
                        sources="voice_tx,incall_music_uplink"/>
                 <route type="mix" sink="primary input"

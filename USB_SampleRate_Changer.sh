@@ -274,7 +274,17 @@ case "$policyMode" in
         template="$MYDIR/templates/offload_template.xml"
         ;;
     "offload-hifi-playback" )
-        template="$MYDIR/templates/offload_hifi_playback_template.xml"
+        case "`getprop ro.board.platform`" in
+            mt* )
+                template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
+                ;;
+            gs* )
+                template="$MYDIR/templates/offload_hifi_playback_tensor_template.xml"
+                ;;
+            * )
+                template="$MYDIR/templates/offload_hifi_playback_template.xml"
+                ;;
+        esac
         ;;
     "offload-direct" )
         template="$MYDIR/templates/offload_direct_template.xml"
@@ -286,6 +296,10 @@ case "$policyMode" in
         case "`getprop ro.board.platform`" in
             mt* )
                 template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
+                ;;
+            gs* )
+                template="$MYDIR/templates/bypass_offload_safer_tensor_template.xml"
+                # template="$MYDIR/templates/bypass_offload_safer_tensor_template2.xml"
                 ;;
             * )
                 template="$MYDIR/templates/bypass_offload_safer_template.xml"

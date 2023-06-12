@@ -82,17 +82,27 @@ function BluetoothHalStatus()
     fi
 }
 
+AudioHALs="
+vendor.audio-hal
+audio_proxy_service
+audio-hal
+audio-hal-2-0
+vendor.audio-hal-2-0
+vendor.audio-hal-4-0-msd
+vendor.audio-hal-7-0
+"
+
 function restartAudioHalExceptSysbta()
 {
     local x
     
-    for x in "audio-hal" "vendor.audio-hal" "vendor.audio-hal-2-0" "vendor.audio-hal-4-0-msd" "audio_proxy_service" "system.bt-audio-hal"; do
+    for x in $AudioHALs "system.bt-audio-hal"; do
         if [ "`getprop init.svc.${x}`" = "running" ]; then
             stop ${x}
         fi
     done
     
-    for x in "audio-hal" "vendor.audio-hal" "vendor.audio-hal-2-0" "vendor.audio-hal-4-0-msd" "audio_proxy_service"; do
+    for x in $AudioHALs; do
         if [ "`getprop init.svc.${x}`" = "stopped" ]; then
             start ${x}
         fi
@@ -103,7 +113,7 @@ function startSysbtaHal()
 {
     local x
     
-    for x in "audio-hal" "vendor.audio-hal" "vendor.audio-hal-2-0" "vendor.audio-hal-4-0-msd" "audio_proxy_service" "system.bt-audio-hal"; do
+    for x in $AudioHALs "system.bt-audio-hal"; do
         if [ "`getprop init.svc.${x}`" = "stopped" ]; then
             start ${x}
         fi
@@ -183,7 +193,7 @@ case "$BTmode" in
         fi
         ;;
     "offload" )
-        if [ -n "`getprop persist.bluetooth.a2dp_offload.cap`" ]; then
+        if [ -n "`getprop persist.bluetooth.a2dp_offload.cap`"  -o  -n "`getprop persist.vendor.qcom.bluetooth.a2dp_offload_cap`" ]; then
             reloadAudioserver
             setprop persist.bluetooth.bluetooth_audio_hal.disabled false
             setprop persist.bluetooth.a2dp_offload.disabled false
@@ -195,12 +205,12 @@ case "$BTmode" in
         fi
         ;;
     "sysbta" )
-        if [ -z "`getprop persist.bluetooth.system_audio_hal.enabled`" ]; then
-            echo "${0##*/} cannot change to \"${BTmode}\"; (no ${BTmode} HAL module)" 1>&2
-            exit 1
-        else
+        if [ -n "`getprop init.svc.system.bt-audio-hal`" ]; then
             reloadAudioserver
             startSysbtaHal
+        else
+            echo "${0##*/} cannot change to \"${BTmode}\"; (no ${BTmode} HAL module)" 1>&2
+            exit 1
         fi
         ;;
 esac

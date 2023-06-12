@@ -202,7 +202,15 @@ function makeConfigFile()
             esac
             
         elif [ -e "/vendor/lib64/hw/audio.bluetooth.default.so" ]; then
-            bltHal="bypass-safer"
+            case "`getprop ro.board.platform`" in
+                gs* )
+                    # temporally for Tensor devices
+                    bltHal="bypass-safer"
+                    ;;
+                * )
+                    bltHal="bypass-safer"
+                    ;;
+                esac
         elif [ "`getprop ro.bluetooth.a2dp_offload.supported`" = "true" ]; then
             bltHal="offload"
         else
