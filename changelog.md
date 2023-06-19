@@ -1,5 +1,9 @@
 ## Change logs
 
+# v2.7.2
+* Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter, especially for Tensor devices
+* Fixed a bug for Magisk 26.x
+
 # v2.7.1
 * Optimized "extras/jitter-reducer.sh" for reducing I/O scheduling jitter
 * "extras/jitter-reducer.sh" now confirms and sets the cpu scaling max freq to its available max (sometimes the scaling max freq has been lowered before by a controller on some devices)

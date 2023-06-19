@@ -116,7 +116,7 @@ function isMounted()
         BEGIN {
             status=1
         }
-        $5 ~ mFile  && (includeMagisk==1 || $10 ~ /^\/dev\/block\//) {
+        $5 ~ mFile  && (includeMagisk==1 || ($4 !~ /^\/adb\/modules\// && $4 !~ /^\/data\/adb\/modules\// && $10 ~ /^\/dev\/block\//)) {
             if (showKey)
                 print $4 " " $5
             status=0

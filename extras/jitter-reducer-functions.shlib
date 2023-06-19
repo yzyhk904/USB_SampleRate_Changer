@@ -1209,7 +1209,7 @@ function getSchedulerValues()
                                 echo "89 0 36 512 0"
                                 ;;
                             gs* )
-                                echo "91 0 36 512 0"
+                                echo "95 0 36 512 0"
                                 ;;
                             sdm8* )
                                 echo "89 0 34 510 0"
@@ -1234,7 +1234,7 @@ function getSchedulerValues()
                                 echo "89 0 36 512 0"
                                 ;;
                             gs* )
-                                echo "91 0 36 512 0"
+                                echo "95 0 36 512 0"
                                 ;;
                             sdm8* )
                                 echo "89 0 34 510 0"
@@ -1313,7 +1313,7 @@ function getSchedulerValues()
                 
             "kyber" )
                 #  read_lat_nsec write_lat_nsec
-                echo "1000001 1000001"
+                echo "500001 500001"
                 ;;
                 
             "noop" | "none" | * )
@@ -1332,7 +1332,15 @@ function getSchedulerNrRequests()
     if [ $# -eq 2 ]; then
         
         case "$1" in
-            "deadline" | "mq-deadline" )
+            "mq-deadline" | "kyber" | "bfq" )
+                echo "2031"
+                ;;
+                
+            "none" )
+                echo "31"
+                ;;
+                
+            "deadline" )
                 case "$2" in
                     "light" )
                         case "`getSocModelName`" in
@@ -1485,12 +1493,8 @@ function getSchedulerNrRequests()
                         ;;
                 esac
                 ;;
-                
-            "kyber" )
-                echo "2033"
-                ;;
             
-            "noop" | "none" | * )
+            "noop" | * )
                 case "$2" in
                     "light" )
                         case "`getSocModelName`" in
@@ -1578,8 +1582,23 @@ function reduceIoJitter()
                         read v <"/sys/block/$i/queue/nr_requests"
                         if [ "$nr_requests" -ne "$v" ]; then
                             # If exceeding its max value, then use a safe kenel value (for multi-queue schedulers) within 2048 (except its "none" scheduler)
-                            echo "2033" >"/sys/block/$i/queue/nr_requests"
+                            if [ "$sched" = "none" ]; then
+                                echo "31" >"/sys/block/$i/queue/nr_requests"
+                            else
+                                echo "2031" >"/sys/block/$i/queue/nr_requests"
+                            fi
                         fi
+                        
+                        # For Tensor devices (5.10 Kernels)
+                        if [ "$sched" = "mq-deadline" ]; then
+                            if [ -w "/sys/block/$i/queue/iosched/async_depth" ]; then
+                                echo '39' >"/sys/block/$i/queue/iosched/async_depth"
+                            fi
+                            if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
+                                echo '1000000' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                            fi
+                        fi
+                        
                         j=1
                         for p in $params; do
                             v="`nth \"$vals\" \"$j\"`"
