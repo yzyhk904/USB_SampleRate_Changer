@@ -1209,7 +1209,7 @@ function getSchedulerValues()
                                 echo "89 0 36 512 0"
                                 ;;
                             gs* )
-                                echo "95 0 36 512 0"
+                                echo "97 0 36 516 0"
                                 ;;
                             sdm8* )
                                 echo "89 0 34 510 0"
@@ -1234,7 +1234,7 @@ function getSchedulerValues()
                                 echo "89 0 36 512 0"
                                 ;;
                             gs* )
-                                echo "95 0 36 512 0"
+                                echo "97 0 36 516 0"
                                 ;;
                             sdm8* )
                                 echo "89 0 34 510 0"
@@ -1255,8 +1255,11 @@ function getSchedulerValues()
                         ;;
                     "medium" | *)
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* | gs* )
+                            sdm8[5-9]* | sdm9* )
                                 echo "76 0 32 500 0"
+                                ;;
+                            gs* )
+                                echo "95 0 36 512 0"
                                 ;;
                             sdm8* )
                                 echo "79 0 34 510 0"
@@ -1333,7 +1336,7 @@ function getSchedulerNrRequests()
         
         case "$1" in
             "mq-deadline" | "kyber" | "bfq" )
-                echo "2031"
+                echo "2029"
                 ;;
                 
             "none" )
@@ -1592,7 +1595,7 @@ function reduceIoJitter()
                         # For Tensor devices (5.10 Kernels)
                         if [ "$sched" = "mq-deadline" ]; then
                             if [ -w "/sys/block/$i/queue/iosched/async_depth" ]; then
-                                echo '39' >"/sys/block/$i/queue/iosched/async_depth"
+                                echo '38' >"/sys/block/$i/queue/iosched/async_depth"
                             fi
                             if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
                                 echo '1000000' >"/sys/block/$i/queue/iosched/prio_aging_expire"
