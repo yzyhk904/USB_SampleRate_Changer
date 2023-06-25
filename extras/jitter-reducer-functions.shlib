@@ -558,7 +558,7 @@ function reduceGovernorJitter()
                     fi
                 fi
                 # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel several times
-                for i in `seq 1 10`; do
+                for i in `seq 1 9`; do
                     x="`echo \"scale=1;${i}/10\" | bc`"
                     sleep $x
                     read x <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
@@ -641,7 +641,7 @@ function reduceGovernorJitter()
                     fi
                 fi
                 # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel several times
-                for i in `seq 1 10`; do
+                for i in `seq 1 9`; do
                     x="`echo \"scale=1;${i}/10\" | bc`"
                     sleep $x
                     read x <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
@@ -1206,50 +1206,50 @@ function getSchedulerValues()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "89 0 36 512 0"
+                                echo "88 0 36 512 0"
                                 ;;
                             gs* )
-                                echo "97 0 36 516 0"
+                                echo "88 0 36 512 0"
                                 ;;
                             sdm8* )
-                                echo "89 0 34 510 0"
+                                echo "88 0 34 510 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "89 0 34 510 0"
+                                echo "88 0 34 510 0"
                                 ;;
                             mt68* )
-                                echo "89 0 36 516 0"
+                                echo "88 0 36 516 0"
                                 ;;
                             mt67[7-9]? )
-                                echo "89 0 36 516 0"
+                                echo "88 0 36 516 0"
                                 ;;
                             * )
-                                echo "89 0 36 516 0"
+                                echo "88 0 36 516 0"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "89 0 36 512 0"
+                                echo "88 0 36 512 0"
                                 ;;
                             gs* )
-                                echo "97 0 36 516 0"
+                                echo "88 0 36 512 0"
                                 ;;
                             sdm8* )
-                                echo "89 0 34 510 0"
+                                echo "88 0 34 510 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "89 0 34 510 0"
+                                echo "88 0 34 510 0"
                                 ;;
                             mt68* )
-                                echo "89 0 36 516 0"
+                                echo "88 0 36 516 0"
                                 ;;
                             mt67[7-9]? )
                                 echo "89 0 36 516 0"
                                 ;;
                             * )
-                                echo "89 0 36 516 0"
+                                echo "88 0 36 516 0"
                                 ;;
                         esac
                         ;;
@@ -1259,7 +1259,7 @@ function getSchedulerValues()
                                 echo "76 0 32 500 0"
                                 ;;
                             gs* )
-                                echo "95 0 36 512 0"
+                                echo "76 0 32 500 0"
                                 ;;
                             sdm8* )
                                 echo "79 0 34 510 0"
@@ -1316,7 +1316,7 @@ function getSchedulerValues()
                 
             "kyber" )
                 #  read_lat_nsec write_lat_nsec
-                echo "500001 500001"
+                echo "1000001 1000001"
                 ;;
                 
             "noop" | "none" | * )
@@ -1336,7 +1336,7 @@ function getSchedulerNrRequests()
         
         case "$1" in
             "mq-deadline" | "kyber" | "bfq" )
-                echo "2029"
+                echo "2031"
                 ;;
                 
             "none" )
@@ -1386,22 +1386,22 @@ function getSchedulerNrRequests()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* | gs* )
-                                echo "86159"
+                                echo "86153"
                                 ;;
                             sdm8* )
-                                echo "86159"
+                                echo "86153"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86159"
+                                echo "86153"
                                 ;;
                             mt68* )
-                                echo "86159"
+                                echo "86153"
                                 ;;
                             mt67[7-9]? )
-                                echo "86159"
+                                echo "86153"
                                 ;;
                             * )
-                                echo "86159"
+                                echo "86153"
                                 ;;
                         esac
                         ;;
@@ -1595,10 +1595,10 @@ function reduceIoJitter()
                         # For Tensor devices (5.10 Kernels)
                         if [ "$sched" = "mq-deadline" ]; then
                             if [ -w "/sys/block/$i/queue/iosched/async_depth" ]; then
-                                echo '38' >"/sys/block/$i/queue/iosched/async_depth"
+                                echo '35' >"/sys/block/$i/queue/iosched/async_depth"
                             fi
                             if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
-                                echo '1000000' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                echo '6903148' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                             fi
                         fi
                         
@@ -1909,6 +1909,10 @@ function reduceEffectJitter()
                 if [ -n "$val"  -a  "$val" = "true" ]; then
                     "$resetprop_command" ro.audio.spatializer_enabled false
                 fi
+                # Stop Tensor device's AOC daemon for reducing significant jitter
+                if [ "`getprop init.svc.aocd`" = "running" ]; then
+                    setprop ctl.stop aocd
+                fi
                 reloadAudioserver
             else
                 return 2
@@ -1921,6 +1925,9 @@ function reduceEffectJitter()
                 val="`getprop ro.audio.spatializer_enabled`"
                 if [ -n "$val"  -a  "$val" = "false" ]; then
                     "$resetprop_command" ro.audio.spatializer_enabled true
+                fi
+                if [ "`getprop init.svc.aocd`" = "stopped" ]; then
+                    setprop ctl.start aocd
                 fi
                 reloadAudioserver
             else
@@ -1935,6 +1942,12 @@ function reduceEffectJitter()
             else
                 echo "  Effects framework: enabled"
             fi
+            
+            val="`getprop init.svc.aocd`"
+            if [ -n "$val"  ]; then
+                echo "  Effects AOC server: $val"
+            fi
+            
         fi
         
         return 0
@@ -1990,9 +2003,49 @@ function reduceWifiJitter ()
             fi
             val="`settings get secure adaptive_connectivity_enabled`"
             if [ -n "$val"  -a  "$val" = "0" ]; then
-                echo "  Wifi adaptive connectivity (if >A11): disabled"
+                echo "  Wifi adaptive connectivity: disabled"
             else
-                echo "  Wifi adaptive connectivity (if >A11): enabled"
+                echo "  Wifi adaptive connectivity: enabled"
+            fi
+        fi
+
+    else
+        return 1
+    fi
+}
+
+function reduceBatteryJitter ()
+{
+    if [ $# -eq 2 ]; then
+        local flag="$1"
+        local printStatus="$2"
+
+        if [ $flag -gt 0 ]; then
+        
+            # Reducing battery jitters
+            settings put global adaptive_battery_management_enabled 0 1>"/dev/null" 2>&1
+            settings put secure adaptive_charging_enabled 0 1>"/dev/null" 2>&1
+            
+        elif [ $flag -lt 0 ]; then
+        
+            # Revert battery jitters
+            settings delete global adaptive_battery_management_enabled 1>"/dev/null" 2>&1
+            settings delete secure adaptive_charging_enabled 1>"/dev/null" 2>&1
+        
+        fi
+        
+        if [ $printStatus -gt 0 ]; then
+            local val="`settings get global adaptive_battery_management_enabled`"
+            if [ -n "$val"  -a  "$val" = "0" ]; then
+                echo "  Battery adaptive management: disabled"
+            else
+                echo "  Battery adaptive management: enabled"
+            fi
+            val="`settings get secure adaptive_charging_enabled`"
+            if [ -n "$val"  -a  "$val" = "0" ]; then
+                echo "  Battery adaptive charging: disabled"
+            else
+                echo "  Battery adaptive charging: enabled"
             fi
         fi
 

@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.4.8
+# Version: 2.5.0
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -17,11 +17,11 @@ fi
 
 function usage()
 {
-      echo "Usage: ${0%/*} [--selinux|++selinux][--thermal|++thermal][--doze|++doze][---governor|++governor][--logd][++logd][--camera|++camera][--io [scheduler [light | m-light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--effect|++effect][--status][--help]" 1>&2
+      echo "Usage: ${0%/*} [--selinux|++selinux][--thermal|++thermal][--doze|++doze][---governor|++governor][--logd][++logd][--camera|++camera][--io [scheduler [light | m-light | medium | boost]] | ++io][--vm|++vm][--wifi|++wifi][--all|++all][--battery|++battery][--effect|++effect][--status][--help]" 1>&2
       echo -n "\nNote 1: each \"--\" prefixed option except \"--status\" and \"--help\" options is an enabler for its corresponding jitter reducer," 1>&2
       echo -n " conversely each \"++\" prefixed option is an disabler for its corresponding jitter reducer." 1>&2
-      echo -n " \"--all\" option is an alias of all \"--\" prefixed options except \"--effect\", \"--status\" and \"--help\" options," 1>&2
-      echo      " and also \"++all\" option is an alias of all \"++\" prefixed options except \"++effect\"." 1>&2
+      echo -n " \"--all\" option is an alias of all \"--\" prefixed options except \"--effect\", \"--battery\", \"--status\" and \"--help\" option," 1>&2
+      echo      " and also \"++all\" option is an alias of all \"++\" prefixed options except \"++effect\" and \"++battery\" option." 1>&2
       echo -n "\nNote 2: \"scheduler\" specifys an I/O scheduler for I/O block devices " 1>&2
       echo -n "(typically \"deadline\", \"cfq\" or \"noop\", but you may specify \"*\" for automatical best selection), " 1>&2
       echo -n "and has optional four modes \"light\" (for warmer tone), \"m-light\" (for slightly warmer tone)," 1>&2
@@ -41,6 +41,7 @@ toneMode="medium"
 vmFlag=0
 wifiFlag=0
 wifiNoRestart=0
+batteryFlag=0
 effectFlag=0
 printStatus=0
 
@@ -191,6 +192,14 @@ else
                 wifiNoRestart=0
                 shift
                 ;;
+            "-b" | "--battery" )
+                batteryFlag=1
+                shift
+                ;;
+            "+b" | "++battery" )
+                batteryFlag=-1
+                shift
+                ;;
             "-e" | "--effect" )
                 effectFlag=1
                 shift
@@ -221,9 +230,9 @@ fi
 . "$MYDIR/jitter-reducer-functions.shlib"
 
 reduceSelinuxJitter $selinuxFlag $printStatus
+reduceGovernorJitter $governorFlag $printStatus
 reduceThermalJitter $thermalFlag $printStatus
 reduceDozeJitter $dozeFlag $printStatus
-reduceGovernorJitter $governorFlag $printStatus
 reduceLogdJitter $logdFlag $printStatus
 reduceCameraJitter $cameraFlag $printStatus
 reduceIoJitter "$ioFlag" "$ioScheduler" "$toneMode" "$printStatus"
@@ -233,6 +242,7 @@ if [ $wifiNoRestart -gt 0 ]; then
 else
     reduceWifiJitter $wifiFlag "Restart" $printStatus
 fi
+reduceBatteryJitter $batteryFlag $printStatus
 reduceEffectJitter $effectFlag $printStatus
 
 if [ $? -eq 2 ]; then
