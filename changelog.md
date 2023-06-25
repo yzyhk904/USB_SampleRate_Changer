@@ -1,5 +1,9 @@
 ## Change logs
 
+# v2.7.3
+* Fixed "extras/jitter-reducer.sh" to change "performance" governor of GPU without fail
+* Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter on Tensor devices
+
 # v2.7.2
 * Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter, especially for Tensor devices
 * Fixed a bug for Magisk 26.x
