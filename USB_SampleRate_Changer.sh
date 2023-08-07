@@ -276,6 +276,7 @@ case "$policyMode" in
     "offload-hifi-playback" )
         case "`getprop ro.board.platform`" in
             mt* )
+                echo "    Warning: ${0##*/} changed to \"--bypass-offload-safer\" mode because of the hardware offloading driver's restrictions" 1>&2
                 template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
                 ;;
             gs* )
