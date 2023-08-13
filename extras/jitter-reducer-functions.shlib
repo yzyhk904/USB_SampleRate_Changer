@@ -1208,41 +1208,16 @@ function getSchedulerValues()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "88 0 36 512 0"
+                                echo "89 0 36 516 0"
                                 ;;
                             gs* )
-                                echo "88 0 36 516 0"
+                                echo "89 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "88 0 34 510 0"
+                                echo "89 0 34 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "88 0 34 510 0"
-                                ;;
-                            mt68* )
-                                echo "88 0 36 516 0"
-                                ;;
-                            mt67[7-9]? )
-                                echo "88 0 36 516 0"
-                                ;;
-                            * )
-                                echo "88 0 36 516 0"
-                                ;;
-                        esac
-                        ;;
-                    "boost" )
-                        case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* )
-                                echo "88 0 36 512 0"
-                                ;;
-                            gs* )
-                                echo "88 0 36 516 0"
-                                ;;
-                            sdm8* )
-                                echo "88 0 34 510 0"
-                                ;;
-                            sdm* | msm* | sd* | exynos* )
-                                echo "88 0 34 510 0"
+                                echo "89 0 34 516 0"
                                 ;;
                             mt68* )
                                 echo "88 0 36 516 0"
@@ -1251,7 +1226,32 @@ function getSchedulerValues()
                                 echo "89 0 36 516 0"
                                 ;;
                             * )
+                                echo "89 0 36 516 0"
+                                ;;
+                        esac
+                        ;;
+                    "boost" )
+                        case "`getSocModelName`" in
+                            sdm8[5-9]* | sdm9* )
+                                echo "89 0 36 516 0"
+                                ;;
+                            gs* )
+                                echo "89 0 36 516 0"
+                                ;;
+                            sdm8* )
+                                echo "89 0 34 516 0"
+                                ;;
+                            sdm* | msm* | sd* | exynos* )
+                                echo "89 0 34 516 0"
+                                ;;
+                            mt68* )
                                 echo "88 0 36 516 0"
+                                ;;
+                            mt67[7-9]? )
+                                echo "89 0 36 516 0"
+                                ;;
+                            * )
+                                echo "89 0 36 516 0"
                                 ;;
                         esac
                         ;;
@@ -1387,45 +1387,51 @@ function getSchedulerNrRequests()
                         ;;
                     "exp" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* | gs* )
+                            sdm8[5-9]* | sdm9* )
+                                echo "86163"
+                                ;;
+                            gs* )
                                 echo "86153"
                                 ;;
                             sdm8* )
-                                echo "86151"
+                                echo "86163"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86153"
+                                echo "86163"
                                 ;;
                             mt68* )
                                 echo "86153"
                                 ;;
                             mt67[7-9]? )
-                                echo "86153"
+                                echo "86163"
                                 ;;
                             * )
-                                echo "86153"
+                                echo "86163"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sdm8[5-9]* | sdm9* | gs* )
+                            sdm8[5-9]* | sdm9* )
+                                echo "86163"
+                                ;;
+                            gs* )
                                 echo "86153"
                                 ;;
                             sdm8* )
-                                echo "86151"
+                                echo "86163"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86153"
+                                echo "86163"
                                 ;;
                             mt68* )
                                 echo "86153"
                                 ;;
                             mt67[7-9]? )
-                                echo "86153"
+                                echo "86163"
                                 ;;
                             * )
-                                echo "86153"
+                                echo "86163"
                                 ;;
                         esac
                         ;;
