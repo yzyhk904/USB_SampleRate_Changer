@@ -1,5 +1,9 @@
 ## Change logs
 
+# v2.8.0
+* Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter on most devices
+* Added "Usage_Samples" to easily execute every script with its typical parameters on file explorers with some sh script execution capability like "mixplorer"
+
 # v2.7.3
 * Fixed "extras/jitter-reducer.sh" to change "performance" governor of GPU without fail
 * Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter on Tensor devices
