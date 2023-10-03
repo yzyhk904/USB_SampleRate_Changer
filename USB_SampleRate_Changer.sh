@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.8.0
+# Version: 2.8.1
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -221,7 +221,7 @@ esac
 # Force the bluetooth HAL to be "bluetooth_qti"
 if "$forceBluetoothQti"; then
     BT_module="bluetooth_qti"
-    if [ ! -r "/vendor/lib64/hw/audio.bluetooth_qti.default.so"  &&  ! -r "/vendor/lib/hw/audio.bluetooth_qti.default.so" ]; then
+    if [ ! -r "/vendor/lib64/hw/audio.bluetooth_qti.default.so"  -a  ! -r "/vendor/lib/hw/audio.bluetooth_qti.default.so" ]; then
             echo "    Warning: ${0##*/} detected no \"bluetooth_qti\" audio HAL module on this device" 1>&2
     fi
 fi

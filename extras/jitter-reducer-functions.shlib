@@ -1148,7 +1148,7 @@ function getSchedulerParams()
                 ;;
             "cfq" )
                 echo "back_seek_penalty fifo_expire_async fifo_expire_sync group_idle low_latency quantum slice_async slice_async_rq \
-                    slice_idle slice_sync target_latency"
+                    slice_async_us slice_idle slice_sync target_latency"
                 ;;
             "kyber" )
                 echo "read_lat_nsec write_lat_nsec"
@@ -1208,16 +1208,16 @@ function getSchedulerValues()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "92 0 36 516 0"
+                                echo "95 0 36 516 0"
                                 ;;
                             gs* )
-                                echo "92 0 36 516 0"
+                                echo "96 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "92 0 34 516 0"
+                                echo "96 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "92 0 34 516 0"
+                                echo "96 0 34 516 0"
                                 ;;
                             mt68* )
                                 echo "92 0 36 516 0"
@@ -1233,16 +1233,16 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "92 0 36 516 0"
+                                echo "95 0 36 516 0"
                                 ;;
                             gs* )
-                                echo "92 0 36 516 0"
+                                echo "96 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "92 0 34 516 0"
+                                echo "96 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "92 0 34 516 0"
+                                echo "96 0 34 516 0"
                                 ;;
                             mt68* )
                                 echo "92 0 36 516 0"
@@ -1285,31 +1285,31 @@ function getSchedulerValues()
                 
             "cfq" )
                 #   back_seek_penalty fifo_expire_async fifo_expire_sync group_idle low_latency quantum slice_async slice_async_rq
-                #       slice_idle slice_sync target_latency
+                #       slice_async_us slice_idle slice_sync target_latency
                 case "$2" in
                     "light" )
-                        echo "1 3 3 0 1 1 3 34 0 3 3"
+                        echo "1 3 3 0 1 1 3 34 3000 0 3 3"
                         ;;
                     "m-light" )
-                        echo "1 3 3 0 1 1 3 46 0 3 3"
+                        echo "1 3 3 0 1 1 3 46 3000 0 3 3"
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sdm* | mt68* | gs* )
-                                echo "1 2 2 0 1 1 2 59 0 2 1"
+                            sdm* | mt68* | gs* | sd* | exynos* )
+                                echo "1 2 2 0 1 1 2 59 1541 0 2 1"
                                 ;;
                             * )
-                                echo "1 3 3 0 1 1 3 59 0 3 3"
+                                echo "1 3 3 0 1 1 3 59 3000 0 3 3"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
-                            sdm* | mt68* | gs* )
-                                echo "1 3 3 0 1 1 3 51 0 3 3"
+                            sdm* | mt68* | gs* | sd* | exynos* )
+                                echo "1 3 3 0 1 1 3 51 3000 0 3 3"
                                 ;;
                             * )
-                                echo "1 3 3 0 1 1 3 51 0 3 3"
+                                echo "1 3 3 0 1 1 3 51 3000 0 3 3"
                                 ;;
                         esac
                         ;;
@@ -1388,13 +1388,13 @@ function getSchedulerNrRequests()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "86163"
+                                echo "86171"
                                 ;;
                             gs* )
-                                echo "86153"
+                                echo "86163"
                                 ;;
                             sdm8* )
-                                echo "86163"
+                                echo "86171"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "86163"
@@ -1413,13 +1413,13 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "86163"
+                                echo "86171"
                                 ;;
                             gs* )
-                                echo "86153"
+                                echo "86163"
                                 ;;
                             sdm8* )
-                                echo "86163"
+                                echo "86171"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "86163"
@@ -1485,10 +1485,10 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "86161"
+                                echo "86163"
                                 ;;
                             * )
-                                echo "86161"
+                                echo "86163"
                                 ;;
                         esac
                         ;;
@@ -1603,10 +1603,10 @@ function reduceIoJitter()
                         # For Tensor devices (5.10 Kernels)
                         if [ "$sched" = "mq-deadline" ]; then
                             if [ -w "/sys/block/$i/queue/iosched/async_depth" ]; then
-                                echo '35' >"/sys/block/$i/queue/iosched/async_depth"
+                                echo '38' >"/sys/block/$i/queue/iosched/async_depth"
                             fi
                             if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
-                                echo '6903148' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                echo '6903156' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                             fi
                         fi
                         

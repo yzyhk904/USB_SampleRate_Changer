@@ -1,5 +1,10 @@
 ## Change logs
 
+# v2.8.1
+* Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter on Tensor devices
+* Fixed a bug for "--force-bluetooth-qti" option
+* Tuned "extras/jitter-reducer.sh" for reducing CFQ I/O scheduling jitter on Qcomm devices
+
 # v2.8.0
 * Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter on most devices
 * Added "Usage_Samples" to easily execute every script with its typical parameters on file explorers with some sh script execution capability like "mixplorer"
