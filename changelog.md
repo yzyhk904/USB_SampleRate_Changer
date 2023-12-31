@@ -1,5 +1,8 @@
 ## Change logs
 
+# v2.8.2
+* Fixed for Pixel 8's
+
 # v2.8.1
 * Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter on Tensor devices
 * Fixed a bug for "--force-bluetooth-qti" option

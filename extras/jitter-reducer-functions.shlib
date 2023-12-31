@@ -1010,6 +1010,10 @@ function getSocModelName()
                 echo "$modelName"
                 return 0
                 ;;
+            zuma )
+                echo "gs301"
+                return 0
+                ;;
             * )
                 case "`getprop ro.boot.hardware`" in
                     qcom )
@@ -1394,7 +1398,7 @@ function getSchedulerNrRequests()
                                 echo "86163"
                                 ;;
                             sdm8* )
-                                echo "86171"
+                                echo "86167"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "86163"
@@ -1419,7 +1423,7 @@ function getSchedulerNrRequests()
                                 echo "86163"
                                 ;;
                             sdm8* )
-                                echo "86171"
+                                echo "86167"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "86163"

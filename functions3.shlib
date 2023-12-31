@@ -203,7 +203,7 @@ function makeConfigFile()
             
         elif [ -e "/vendor/lib64/hw/audio.bluetooth.default.so" ]; then
             case "`getprop ro.board.platform`" in
-                gs* )
+                gs* | zuma )
                     # temporally for Tensor devices
                     bltHal="bypass-safer"
                     ;;

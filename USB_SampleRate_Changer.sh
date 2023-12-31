@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.8.1
+# Version: 2.8.2
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -260,6 +260,12 @@ elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -
                 echo     " (upto 96kHz lock)" 1>&2
             fi
         ;;
+        zuma )
+            if [ $sRate -gt 192000 ]; then
+                echo -n "    Warning: ${0##*/} canot change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
+                echo     " (upto 192kHz lock)" 1>&2
+            fi
+        ;;
         * )
             if [ $sRate -gt 384000 ]; then
                 echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
@@ -279,7 +285,7 @@ case "$policyMode" in
                 echo "    Warning: ${0##*/} changed to \"--bypass-offload-safer\" mode because of the hardware offloading driver's restrictions" 1>&2
                 template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
                 ;;
-            gs* )
+            gs* | zuma )
                 template="$MYDIR/templates/offload_hifi_playback_tensor_template.xml"
                 ;;
             * )
@@ -298,7 +304,7 @@ case "$policyMode" in
             mt* )
                 template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
                 ;;
-            gs* )
+            gs* | zuma )
                 template="$MYDIR/templates/bypass_offload_safer_tensor_template.xml"
                 # template="$MYDIR/templates/bypass_offload_safer_tensor_template2.xml"
                 ;;
