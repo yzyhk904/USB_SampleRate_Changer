@@ -254,7 +254,7 @@ if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"
     fi
 elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" ]; then
     case "`getprop ro.board.platform`" in
-        mt* | exynos* | gs* )
+        mt* | exynos* | gs* | "zuma" )
             if [ $sRate -gt 96000 ]; then
                 echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
                 echo     " (upto 96kHz lock)" 1>&2
