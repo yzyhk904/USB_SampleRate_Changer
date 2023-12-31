@@ -279,7 +279,7 @@ case "$policyMode" in
                 echo "    Warning: ${0##*/} changed to \"--bypass-offload-safer\" mode because of the hardware offloading driver's restrictions" 1>&2
                 template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
                 ;;
-            gs* )
+            gs* | "zuma" )
                 template="$MYDIR/templates/offload_hifi_playback_tensor_template.xml"
                 ;;
             * )
@@ -298,7 +298,7 @@ case "$policyMode" in
             mt* )
                 template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
                 ;;
-            gs* )
+            gs* | "zuma" )
                 template="$MYDIR/templates/bypass_offload_safer_tensor_template.xml"
                 # template="$MYDIR/templates/bypass_offload_safer_tensor_template2.xml"
                 ;;
