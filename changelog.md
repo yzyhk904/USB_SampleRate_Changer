@@ -2,6 +2,7 @@
 
 # v2.8.2
 * Fixed for Pixel 8's
+* Fixed Usage samples for executing on KernelSU ("exec su" to "su" for correct expansion of shell variables)
 
 # v2.8.1
 * Tuned "extras/jitter-reducer.sh" for reducing I/O scheduling jitter on Tensor devices

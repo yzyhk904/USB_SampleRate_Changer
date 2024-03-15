@@ -1,4 +1,4 @@
 #!/system/bin/sh
 
 MODDIR=${0%/*/*}
-exec su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh --reset"
+su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh --reset"
