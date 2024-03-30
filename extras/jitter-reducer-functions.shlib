@@ -168,8 +168,8 @@ function reduceThermalJitter()
                 fi
             elif [ "`getprop init.svc.vendor.thermal-engine`" = "running" ]; then
                 setprop ctl.stop vendor.thermal-engine
-            elif [ "`getprop init.svc.thermal-engine`" = "stopping" ]; then
-                local pid="`getprop init.svc_debug_pid.thermal-engine`"
+            elif [ "`getprop init.svc.vendor.thermal-engine`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.vendor.thermal-engine`"
                 if [ -n "$pid" ]; then
                     kill -HUP $pid 1>"/dev/null" 2>&1
                 fi
@@ -1646,7 +1646,10 @@ function reduceIoJitter()
                         sleep 0.05
                     fi
                     
-                    if validScheduler "/sys/block/$i/queue/scheduler" "cfq"; then
+                    if [ "`getprop ro.build.product`" = "jfltexx" ] && validScheduler "/sys/block/$i/queue/scheduler" "deadline"; then
+                        echo 'deadline' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    elif validScheduler "/sys/block/$i/queue/scheduler" "cfq"; then
                         echo 'cfq' >"/sys/block/$i/queue/scheduler"
                         sleep 0.05
                     elif validScheduler "/sys/block/$i/queue/scheduler" "bfq"; then

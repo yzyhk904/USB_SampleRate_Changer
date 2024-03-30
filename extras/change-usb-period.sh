@@ -1,13 +1,13 @@
 #!/system/bin/sh
 
-period_us=2500
+period_us=2250
 
 resetFlag=0
 
 function usage()
 {
     echo "Usage: ${0##*/} [--help] [--status] [--reset] [period_usec]" 1>&2
-    echo "  (default: 2500 usec)" 1>&2
+    echo "  (default: 2250 usec)" 1>&2
 }
 
 function which_resetprop_command()
@@ -141,6 +141,14 @@ if [ -n "$resetprop_command" ]; then
         "$resetprop_command" --delete vendor.audio.usb.out.period_count 1>"/dev/null" 2>&1
         "$resetprop_command" --delete vendor.audio_hal.period_multiplier 1>"/dev/null" 2>&1
     else
+        # Workaround for recent Pixel Firmwares (not to reboot when resetprop'ing)
+        "$resetprop_command" --delete ro.audio.usb.period_us 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete vendor.audio.usb.perio 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete vendor.audio.usb.out.period_us 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete vendor.audio.usb.out.period_count 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete vendor.audio_hal.period_multiplier 1>"/dev/null" 2>&1
+        # End of workaround
+
         "$resetprop_command" "ro.audio.usb.period_us" "$period_us" 1>"/dev/null" 2>&1
         "$resetprop_command" "vendor.audio.usb.perio" "$period_us" 1>"/dev/null" 2>&1
         "$resetprop_command" "vendor.audio.usb.out.period_us" "$period_us" 1>"/dev/null" 2>&1

@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.8.2
+# Version: 2.8.3
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -254,13 +254,13 @@ if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"
     fi
 elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" ]; then
     case "`getprop ro.board.platform`" in
-        mt* | exynos* | gs* )
+        mt* | exynos* | gs10? )
             if [ $sRate -gt 96000 ]; then
                 echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
                 echo     " (upto 96kHz lock)" 1>&2
             fi
         ;;
-        zuma )
+       gs* | zuma )
             if [ $sRate -gt 192000 ]; then
                 echo -n "    Warning: ${0##*/} canot change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
                 echo     " (upto 192kHz lock)" 1>&2

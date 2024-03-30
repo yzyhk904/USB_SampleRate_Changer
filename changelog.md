@@ -1,5 +1,12 @@
 ## Change logs
 
+# v2.8.3
+* Fixed io-scheduler reverting (++io option) for Galaxy S4 (A12)
+* Fixed thermal-jitter-reducer in "extras/jitter-reducer.sh" (killing vendor.thermal-engine)
+* Fixed Pixel7's default USB sample rate limiter (96kHz -> 192kHz) for adapting to a recent change
+* Added a workaround for recent Pixel Firmwares (not to reboot when superuser resetprop'ing over props modified through system.prop of a magisk module)
+* Reorganized "Usage Samples"
+
 # v2.8.2
 * Fixed for Pixel 8's
 * Fixed Usage samples for executing on KernelSU ("exec su" to "su" for correct expansion of shell variables)

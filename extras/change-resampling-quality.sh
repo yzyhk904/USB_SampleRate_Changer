@@ -6,8 +6,9 @@
 #   DYN_MEDIUM_QUALITY(6):                          84dB                            16                          100
 #   DYN_LOW_QUALITY(5):                               80dB                              8                          100
 #   This script's default:                                    160dB                          480                            91
-#   Recommended for Android 12:                     167dB                          368                          106 (options: --bypass --cheat)
-#   Recommended for 1:1 ratio pass through:     194dB                          480                          100
+#   Recommended for low perf A12+:                167dB                          368                          106 (options: --bypass --cheat)
+#   Recommended for Android 12+:                  179dB                          408                            99 (options:  --cheat)
+#   Recommended for 1:1 ratio bit perfect:        194dB                          520                          100
 #
 
 stopBand=160
@@ -243,6 +244,15 @@ if [ -n "$resetprop_command" ]; then
         "$resetprop_command" --delete ro.audio.resampler.psd.cutoff_percent 1>/dev/null 2>&1
         "$resetprop_command" --delete ro.audio.resampler.psd.tbwcheat 1>/dev/null 2>&1
     else
+        # Workaround for recent Pixel Firmwares (not to reboot when resetprop'ing)
+        "$resetprop_command" --delete af.resampler.quality 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete ro.audio.resampler.psd.enable_at_samplerate 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete ro.audio.resampler.psd.stopband 1>"/dev/null" 2>&1
+        "$resetprop_command" --delete ro.audio.resampler.psd.halflength 1>/dev/null 2>&1
+        "$resetprop_command" --delete ro.audio.resampler.psd.cutoff_percent 1>/dev/null 2>&1
+        "$resetprop_command" --delete ro.audio.resampler.psd.tbwcheat 1>/dev/null 2>&1
+        # En of workaround
+        
         "$resetprop_command" af.resampler.quality 7 1>"/dev/null" 2>&1
         if [ $bypassFlag -gt 0 ]; then
             "$resetprop_command" ro.audio.resampler.psd.enable_at_samplerate 48000 1>"/dev/null" 2>&1
