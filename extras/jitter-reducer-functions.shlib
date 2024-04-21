@@ -1924,10 +1924,18 @@ function reduceEffectJitter()
         if [ $flag -gt 0 ]; then
             resetprop_command="`which_resetprop_command`"
             if [ -n "$resetprop_command" ]; then
+                # Workaround for recent Pixel Firmwares (not to reboot when resetprop'ing)
+                "$resetprop_command" --delete ro.audio.ignore_effects 1>"/dev/null" 2>&1
+                # End of workaround
+                
                 "$resetprop_command" ro.audio.ignore_effects true
                 # support for Tensor devices, etc.
                 val="`getprop ro.audio.spatializer_enabled`"
                 if [ -n "$val"  -a  "$val" = "true" ]; then
+                    # Workaround for recent Pixel Firmwares (not to reboot when resetprop'ing)
+                    "$resetprop_command" --delete ro.audio.spatializer_enabled 1>"/dev/null" 2>&1
+                    # End of workaround
+                    
                     "$resetprop_command" ro.audio.spatializer_enabled false
                 fi
                 # Stop Tensor device's AOC daemon for reducing significant jitter
@@ -1945,6 +1953,10 @@ function reduceEffectJitter()
                 # support for Tensor devices, etc.
                 val="`getprop ro.audio.spatializer_enabled`"
                 if [ -n "$val"  -a  "$val" = "false" ]; then
+                    # Workaround for recent Pixel Firmwares (not to reboot when resetprop'ing)
+                    "$resetprop_command" --delete ro.audio.spatializer_enabled 1>"/dev/null" 2>&1
+                    # End of workaround
+                    
                     "$resetprop_command" ro.audio.spatializer_enabled true
                 fi
                 if [ "`getprop init.svc.aocd`" = "stopped" ]; then
