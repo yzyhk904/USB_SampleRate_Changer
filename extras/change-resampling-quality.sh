@@ -1,14 +1,22 @@
 #!/system/bin/sh
 
-# AOSP standard values+others:          Stop_Band_Attenuation   Half_Filter_Length   Cut_Off_Percent (% of Nyquist freq.)
-#   DYN_HIGH_QUALITY(7):                               98dB                            32                         100
-#   AOSP default:                                               90dB                            32                          100
-#   DYN_MEDIUM_QUALITY(6):                          84dB                            16                          100
+#  Items                                             Stop_Band_Attenuation   Half_Filter_Length     Cut_Off_Percent or Stop_Band_Cheat (% of Nyquist freq.)
+# -- AOSP standard parameters --
 #   DYN_LOW_QUALITY(5):                               80dB                              8                          100
-#   This script's default:                                    160dB                          480                            91
-#   Recommended for low perf A12+:                167dB                          368                          106 (options: --bypass --cheat)
-#   Recommended for Android 12+:                  179dB                          408                            99 (options:  --cheat)
-#   Recommended for 1:1 ratio bit perfect:        194dB                          520                          100
+#   DYN_MEDIUM_QUALITY(6):                          84dB                            16                          100
+#   AOSP default (>=48kHz):                             90dB                            32                          100   (options: --bypass)
+#   DYN_HIGH_QUALITY(7):                              98dB                             32                         100
+#
+#  -- Recommended parameters --
+#   This script's default (for old Androids):          160dB                          480                            91
+#   For low perf Android 12+ (in general):         167dB                          368                          106   (options: --bypass --cheat)
+#   For Android 12+ (in general):                      179dB                          408                            99   (options:  --cheat)
+#   For bit perfect when 1:1 ratio:                     194dB                          520                          100
+#
+#  -- My mock series --
+#   Mock DAC-A over-sampling:                        150dB                            48                          109   (options: --bypass --cheat)
+#   Mock DAC-B over-sampling:                        118dB                            40                            96
+#   Mock mastering filter:                                 159dB                           240                            99   (options: --cheat)
 #
 
 stopBand=160

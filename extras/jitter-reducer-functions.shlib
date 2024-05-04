@@ -46,7 +46,12 @@ function reduceSelinuxJitter()
         if [ $flag -gt 0 ]; then
             setenforce 0
         elif [ $flag -lt 0 ]; then
-            setenforce 1
+            if [ "`getprop ro.build.product`" = "jfltexx"  -a   "`getprop ro.system.build.version.release`" -ge "12" ]; then
+                echo "Warning: ignored trying to change Selinux mode" 1>&2
+            else
+                setenforce 1
+            fi
+            
         fi
         
         if [ $printStatus -gt 0 ]; then
@@ -609,7 +614,11 @@ function reduceGovernorJitter()
             # GPU's
             if [ -w "/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor" ]; then
                 # Default GPU governor for old Qcomm GPU's
-                echo 'ondemand' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+                if [ "`getprop ro.build.product`" = "jfltexx"  -a   "`getprop ro.system.build.version.release`" -ge "12" ]; then
+                    echo 'performance' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+                else
+                    echo 'ondemand' >"/sys/class/kgsl/kgsl-3d0/pwrscale/trustzone/governor"
+                fi
                 if [ -r "/sys/class/kgsl/kgsl-3d0/num_pwrlevels"  -a  -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be minimum
                     local x="4"
@@ -1218,10 +1227,10 @@ function getSchedulerValues()
                                 echo "96 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "96 0 36 516 0"
+                                echo "98 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "96 0 34 516 0"
+                                echo "98 0 34 516 0"
                                 ;;
                             mt68* )
                                 echo "92 0 36 516 0"
@@ -1243,10 +1252,10 @@ function getSchedulerValues()
                                 echo "96 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "96 0 36 516 0"
+                                echo "98 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "96 0 34 516 0"
+                                echo "98 0 34 516 0"
                                 ;;
                             mt68* )
                                 echo "92 0 36 516 0"
@@ -1392,72 +1401,72 @@ function getSchedulerNrRequests()
                     "exp" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "86171"
+                                echo "86170"
                                 ;;
                             gs* )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             sdm8* )
-                                echo "86167"
+                                echo "86171"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86163"
+                                echo "86172"
                                 ;;
                             mt68* )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             mt67[7-9]? )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             * )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                         esac
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* )
-                                echo "86171"
+                                echo "86170"
                                 ;;
                             gs* )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             sdm8* )
-                                echo "86167"
+                                echo "86171"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86163"
+                                echo "86172"
                                 ;;
                             mt68* )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             mt67[7-9]? )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             * )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                         esac
                         ;;
                     "medium" | * )
                         case "`getSocModelName`" in
                             sdm8[5-9]* | sdm9* | gs* )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             sdm8* )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             mt68* )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             mt67[6-9]? )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                             * )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                         esac
                         ;;
@@ -1489,10 +1498,10 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sdm* | msm* | sd* | exynos* | gs* )
-                                echo "86163"
+                                echo "86172"
                                 ;;
                             * )
-                                echo "86163"
+                                echo "86164"
                                 ;;
                         esac
                         ;;
@@ -1586,7 +1595,7 @@ function reduceIoJitter()
                         vals="`getSchedulerValues \"$sched\" \"$toneMode\"`"
                         nr_requests="`getSchedulerNrRequests \"$sched\" \"$toneMode\"`"
                         echo "$sched" >"/sys/block/$i/queue/scheduler"
-                        echo '16960' >"/sys/block/$i/queue/read_ahead_kb"
+                        echo '17000' >"/sys/block/$i/queue/read_ahead_kb"
                         echo '0' >"/sys/block/$i/queue/iostats"
                         echo '0' >"/sys/block/$i/queue/add_random"
                         echo '2' >"/sys/block/$i/queue/rq_affinity"
@@ -1681,7 +1690,12 @@ function reduceIoJitter()
                             echo '64' >"/sys/block/$i/queue/nr_requests"
                             ;;
                         * )
-                            echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+                            if [ "`getprop ro.build.product`" = "jfltexx"  -a   "`getprop ro.system.build.version.release`" -ge "12" ]; then
+                                echo '512' >"/sys/block/$i/queue/read_ahead_kb"
+                            else
+                                echo '128' >"/sys/block/$i/queue/read_ahead_kb"
+                            fi
+                            
                             echo '128' >"/sys/block/$i/queue/nr_requests"
                             ;;
                     esac

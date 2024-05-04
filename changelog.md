@@ -1,5 +1,11 @@
 ## Change logs
 
+# v2.8.4
+* Changed read ahead buffer sizes from 16960 kB to 17000 kB to reduce I/O jitter
+* Adjusted NrRequests of I/O scheduling
+* Adjusted "extras/jitter-reducer.sh" for Galaxy S4 (A12)
+* Added mock equipment filters (in-DAC over-sampling filters and a mastering tool resampler) in "Usage Samples/Resampling"
+
 # v2.8.3
 * Fixed io-scheduler reverting (++io option) for Galaxy S4 (A12)
 * Fixed thermal-jitter-reducer in "extras/jitter-reducer.sh" (killing vendor.thermal-engine)
