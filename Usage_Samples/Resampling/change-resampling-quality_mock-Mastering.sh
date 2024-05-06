@@ -6,4 +6,4 @@
 #
 
 MODDIR=${0%/*/*/*}
-su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh --bypass --cheat 159 240 99"
+su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh --cheat 159 240 99"
