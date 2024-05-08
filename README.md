@@ -82,13 +82,14 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | My mock equipment parameters: | - | - | - | - |
     | 150 | 80 | | 109 | Mock DAC-A filter (Fast roll-off N-fold over-sampling) |
     | 120 | 80 | 97 | | Mock DAC-B filter (Fast roll-off N-fold over-sampling) |
-    | 98 | 80 | | 99 | Mock DAC-C filter (Fast roll-off N-fold over-sampling) |
+    | 100 | 80 | | 104 | Mock DAC-C filter (Fast roll-off N-fold over-sampling) |
     | 159 | 240 | | 99 | Mock Mastering tool filter |
     | External examples: | - | - | - | - |
     | 100 | 29 | (91) | 109 | AK4493 (Sharp roll-off N-fold over-sampling) |
     | 150 | 42 | (91) | 109 | AK4191EQ (Sharp roll-off N-fold over-sampling) |
     | 120 | 35 | (97) | 110 | ESS 9038PRO (Fast roll-off N-fold over-sampling) |
     | 50 ~ 118 | 34 | 96 | (398) | ESS 9039PRO (Fast roll-off N-fold over-sampling) |
+    | 110 | 40 | (96) | 109 | CX43131 (Fast roll-off N-fold over-sampling) |
     | 98 | 130 | 98.5 | | MacOS Leopard (guess) |
     | 160 | 240 | | 100 | iZotope, No-Alias (guess) |
     | 98 | 64 | | 100 | SoX HQ linear phase (guess) |
