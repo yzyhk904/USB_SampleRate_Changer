@@ -2,7 +2,9 @@
 #
 # My mock AK4191EQ-ish in-DAC N-fold Over-sampling filer (sharp roll-off type) when larger than or equal to 48kHz frequency up-sampling
 #
-# Try to use this from 44.1kHz to 706kHz (16x) or 354kHz (8x) up-sampling for comparing difference between mock series and 179dB_408_100.
+#   Characteristics: light in background aliasing noise, heavy in pre-echo and ringing, and heavy in intermodulation
+#
+# Try to use this for investigating differences of N-fold over-sampling among mock series and 179dB_408_99 after setting from 44.1kHz to 706kHz (16x) or 354kHz (8x) in 32bit depth up-sampling
 #
 
 MODDIR=${0%/*/*/*}
