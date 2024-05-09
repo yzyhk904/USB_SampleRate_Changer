@@ -1227,10 +1227,10 @@ function getSchedulerValues()
                                 echo "96 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "98 0 36 516 0"
+                                echo "95 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "98 0 34 516 0"
+                                echo "95 0 34 516 0"
                                 ;;
                             mt68* )
                                 echo "92 0 36 516 0"
@@ -1252,10 +1252,10 @@ function getSchedulerValues()
                                 echo "96 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "98 0 36 516 0"
+                                echo "95 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "98 0 34 516 0"
+                                echo "95 0 34 516 0"
                                 ;;
                             mt68* )
                                 echo "92 0 36 516 0"
@@ -1407,7 +1407,7 @@ function getSchedulerNrRequests()
                                 echo "86164"
                                 ;;
                             sdm8* )
-                                echo "86171"
+                                echo "86172"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "86172"
@@ -1432,7 +1432,7 @@ function getSchedulerNrRequests()
                                 echo "86164"
                                 ;;
                             sdm8* )
-                                echo "86171"
+                                echo "86172"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "86172"
