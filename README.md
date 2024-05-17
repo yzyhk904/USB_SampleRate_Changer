@@ -61,10 +61,10 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - changes the USB audio data transfer period to a specified value in usec (default: 2250usec). With "--status" option, this script outputs the current period without changing the period. With "--reset" option, this script reverts the period to the original (5000usec). The best value is usuall around 2250usec (or 3250usec), but 20375usec (or 2250usec) for POCO F3 and 3875usec for low performance old devices. Since the value directly affects the jitter of a PLL in a USB DAC, this script may improve the audio quality of the DAC frighteningly.
 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/change_resampling_quality.sh [--help] [--status] [--reset] [--bypass] [--cheat] [stop_band_dB [half_filter_length [cut_off_percent]]]`
-    - changes the resampling quality of the OS mixer (AudioFlinger). "--help" and "--status" options specify printing above usage and the status of AudioFlinger's resampling configuration without configuration changes, respectively. With "--reset" option, this script clears previous settings. "--bypass" option specifies to apply this configuration change except toward less than 48kHz (excluding 48kHz itself) frequencies. "--cheat" option specifies to switch the mode of third argument "cut_off_percent" (if specified) from "cut off" (i.e., at -3dB point, and also the middle point of a transition band) to "transition band width cheat" (i.e., the start point of a stop band). "stop_band_dB", "half_filter_length" and "cut off percent" specify a stop band attenuation in dB, the number of input data needed before the current point (optional) and a cut off (or a transition band width cheat) percent of the Nyquist frequency (optional), respectively. AOSP standard values are 90dB and 32 (cut off: 100%), but this script's default values are 160dB and 480 (cut off: 91%) as mastering quality values, i.e., no resampling distortion in a real sense (even though the 160dB targeted attenuation is not accomplished in the AOSP implementation).
+    - changes the resampling quality of the OS mixer (AudioFlinger). "--help" and "--status" options specify printing above usage and the status of AudioFlinger's resampling configuration without configuration changes, respectively. With "--reset" option, this script clears previous settings. "--bypass" option specifies to apply this configuration change except toward less than 48kHz (excluding 48kHz itself) frequencies. "--cheat" option specifies to switch the mode of third argument "cut_off_percent" (if specified) from "cut off" (i.e., at -3dB point, and also the middle point of a transition band) to "transition band width cheat" (i.e., the start point of a stop band). "stop_band_dB", "half_filter_length" and "cut off percent" specify a stop band attenuation in dB, the number of input data needed before the current point (optional) and a cut off (or a transition band width cheat) percent of the Nyquist frequency (optional), respectively. AOSP standard values are 90dB and 32 (cut off: 100%), but this script's default values are 179dB and 408 (cheat or stop band: 99%) as mastering quality values, i.e., no resampling distortion in a real sense (even though the 179dB targeted attenuation is not accomplished in the AOSP implementation).
     - Note: the resampler of the Android OS mixer is a pure Kaiser windowed Sinc interpolator (a 16 bit integer polyphase FIR filter and a 32bit one) that has 127 fixed phase sets of FIR coefficients generated from specified parameters and a variable phase set of FIR coeffcients linearly interpolated from other phase sets. So 2<sup>&#177;n</sup> (phases) type up-sampling and down-sampling are very precise.
     - Remark: the Android OS mixer always apply resampling even to 1:1 ratio pass-through (actually digital low-pass filtering), e.g., 44.1kHz to 44.1kHz pass-though. To be bit-perfect pass-through, you need to consider parameters carefully for making a Kaiser window to be one pulse under 16bit, 24bit or 32bit precision. With "--bypass" option, 1:1 ratio resampling from 44.1kHz & 16bit data to 44.1kHz 16bit one keeps bit-perfect (but not to 44.1kHz 24bit or 32bit one). I recommend using 194dB 520 (cut off: 100%) when both of input and output have the same samplerate (i.e., digital low-pass filtering). The half filter length 520 can make an effective jitter buffer and reduce jitter to a certain extent. However this resampling makes audibly large aliasing distortion for none 1:1 ratio resampling under Android 11 (except latest) or earlier because of an aliasing processing bug. For this reason, I also don't recommend specifying "cut off" and "cheat" around and over the Nyquist frequency under Android 11 or earlier. But actually on latest bug-free Android devices, the best general purpose setting (for variable sampling rate input/output) may be 179dB 408 (cheat: 99%).
-    - Appendix (Resampling Parameter Examples) :
+    - Appendix A (Resampling Parameter Examples) :
     
     
     | Stop band attenuation (dB) | Half filter length | Cut-off (%) | Stop band (%) | Memo |
@@ -91,9 +91,20 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 50 ~ 118 | 34 | 96 | (398) | ESS 9039PRO (Fast roll-off N-fold over-sampling) |
     | 110 | 40 | (96) | 109 | CX43131 (Fast roll-off N-fold over-sampling) |
     | 98 | 130 | 98.5 | | MacOS Leopard (guess) |
-    | 160 | 240 | | 100 | iZotope, No-Alias (guess) |
-    | 98 | 64 | | 100 | SoX HQ linear phase (guess) |
-    | 170 | 520 | | 100 | SoX VHQ linear phase (guess) |
+    | 159 | 240 | | 99 | iZotope, No-Alias (guess) |
+    | 100 | 64 | | 99 | SoX HQ linear phase (guess) |
+    | 170 | 520 | | 99 | SoX VHQ linear phase (guess) |
+
+    - Appendix B (Characteristics of my mock DAC's) :
+    
+    
+    | Name | Bakcground opaqueness (aliasing noise) | Pre-echo and ringing | Glitter (intermodulation) | Memo |
+    | ---: | ---: | ---: | ---: | ---- |
+    | DAC-A | light | heavy | heavy | imitating AK4491EQ Sharp roll-off |
+    | DAC-B | medium | medium | light | imitating ESS9039PRO Fast roll-off |
+    | DAC-C | heavy | light | medium | SoX HQ quality (linear phase) + some |
+    | Mastering tool | slight | slight | light | imitating iZotope (no alias) |
+    | Recommended parameters | almost none | almost none | light | for general purpose |
 
 * Tips 2: "jitter-reducer.sh" in "extras" folder is an interactive tool derived from ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitter distortions in all digital audio outputs relating to SELinux mode, thermal controls, doze (battery saving while idling), CPU&GPU governors, logd servers (to interface to logcat or the like), camera server, I/O scheduling, virtual memory, wifi suspension, battery management and the audio effects framework (to interface to equalizers, virtualizers, visualizers, echo cancelers, automatic gain controls, etc.). In my opinion, jitter distortions reduction is the very key to ultimate hifi audio quality.
 
