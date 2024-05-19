@@ -65,7 +65,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - Note: the resampler of the Android OS mixer is a pure Kaiser windowed Sinc interpolator (a 16 bit integer polyphase FIR filter and a 32bit one) that has 127 fixed phase sets of FIR coefficients generated from specified parameters and a variable phase set of FIR coeffcients linearly interpolated from other phase sets. So 2<sup>&#177;n</sup> (phases) type up-sampling and down-sampling are very precise.
     - Remark: the Android OS mixer always apply resampling even to 1:1 ratio pass-through (actually digital low-pass filtering), e.g., 44.1kHz to 44.1kHz pass-though. To be bit-perfect pass-through, you need to consider parameters carefully for making a Kaiser window to be one pulse under 16bit, 24bit or 32bit precision. With "--bypass" option, 1:1 ratio resampling from 44.1kHz & 16bit data to 44.1kHz 16bit one keeps bit-perfect (but not to 44.1kHz 24bit or 32bit one). I recommend using 194dB 520 (cut off: 100%) when both of input and output have the same samplerate (i.e., digital low-pass filtering). The half filter length 520 can make an effective jitter buffer and reduce jitter to a certain extent. However this resampling makes audibly large aliasing distortion for none 1:1 ratio resampling under Android 11 (except latest) or earlier because of an aliasing processing bug. For this reason, I also don't recommend specifying "cut off" and "cheat" around and over the Nyquist frequency under Android 11 or earlier. But actually on latest bug-free Android devices, the best general purpose setting (for variable sampling rate input/output) may be 179dB 408 (cheat: 99%).
 
-    - Appendix A (Resampling Parameter Examples) :
+    - Appendix A. Examples of Re-sampling Parameters :
     
     
     | Stop band attenuation (dB) | Half filter length | Cut-off (%) | Stop band (%) | Memo |
@@ -77,7 +77,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 98 | 32 | 100 | | HIGH Quality |
     | Recommended parameters: | - | - | - | - |
     | 160 | 480 | 91 | | This scrips's default, esp. for A11 and earlier |
-    | 167 | 368 | | 106 | Low performance devices of A12 and later |
+    | 165 | 360 | | 104 | Low performance devices of A12 and later |
     | 179 | 408 | | 99 | General purpose for A12 and later |
     | 194 | 520 | 100 | | bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bit depth) |
     | My mock equipment parameters: | - | - | - | - |
@@ -96,16 +96,17 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 100 | 64 | | 99 | SoX HQ linear phase (guess) |
     | 170 | 520 | | 99 | SoX VHQ linear phase (guess) |
 
-    - Appendix B (Characteristics of my mock DAC's) :
+    - Appendix B. Characteristics of my mock DAC's :
     
     
     | Name | Bakcground opaqueness (aliasing noise) | Pre-echo and ringing | Glitter (intermodulation) | Memo |
     | ---: | ---: | ---: | ---: | ---- |
     | DAC-A | light | heavy | heavy | imitating AK4491EQ Sharp roll-off |
     | DAC-B | medium | medium | light | imitating ESS9039PRO Fast roll-off |
-    | DAC-C | heavy | light | medium | SoX HQ quality (linear phase) + some |
+    | DAC-C | heavy | light | medium | SoX HQ quality (linear phase) + better |
     | Mastering tool | slight | slight | light | imitating iZotope (no alias) |
-    | Recommended parameters | almost none | almost none | light | for general purpose |
+    | Recommended parameters | almost none | almost none | light | general purpose |
+    | Recommended parameters | very slight | very slight | medium | for low performance devices |
 
 * Tips 2: "jitter-reducer.sh" in "extras" folder is an interactive tool derived from ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitter distortions in all digital audio outputs relating to SELinux mode, thermal controls, doze (battery saving while idling), CPU&GPU governors, logd servers (to interface to logcat or the like), camera server, I/O scheduling, virtual memory, wifi suspension, battery management and the audio effects framework (to interface to equalizers, virtualizers, visualizers, echo cancelers, automatic gain controls, etc.). In my opinion, jitter distortions reduction is the very key to ultimate hifi audio quality.
 
