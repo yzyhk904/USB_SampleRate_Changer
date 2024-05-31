@@ -100,7 +100,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - Appendix B. Characteristics of my mock DAC's :
     
     
-    | Name | Bakcground opaqueness (aliasing noise) | Pre-echo and ringing | Mellowness (intermodulation) | Memo |
+    | Name | Background opaqueness (aliasing noise) | Pre-echo and ringing | Mellowness (intermodulation) | Memo |
     | ---: | ---: | ---: | ---: | ---- |
     | DAC-A | light | heavy | heavy | imitating AK4491EQ Sharp roll-off |
     | DAC-B | medium | medium | light | imitating ESS9039PRO Fast roll-off |
