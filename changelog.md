@@ -1,7 +1,8 @@
 ## Change logs
 
 #v2.8.5
-# Changed dirty_ratio and dirty_background_ration to be 100 to reduce jitter
+* Changed dirty_ratio and dirty_background_ration to be 100 to reduce jitter
+* Changed adjustSoC_mq for A14 and later clover not to round I/O parameters
 
 # v2.8.4
 * Changed read ahead buffer sizes from 16960 kB to 17000 kB to reduce I/O jitter

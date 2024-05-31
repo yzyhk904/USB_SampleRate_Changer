@@ -76,7 +76,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 84 | 16 | 100 | | MED Quality |
     | 98 | 32 | 100 | | HIGH Quality |
     | Recommended parameters: | - | - | - | - |
-    | 160 | 480 | 91 | | This scrips's default, esp. for A11 and earlier |
+    | 159 | 480 | 92 | | Old devices of A11 and earlier |
     | 165 | 360 | | 104 | Low performance devices of A12 and later |
     | 179 | 408 | | 99 | General purpose for A12 and later |
     | 194 | 520 | 100 | | bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bit depth) |
@@ -96,10 +96,11 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 100 | 64 | | 99 | SoX HQ linear phase (guess) |
     | 170 | 520 | | 99 | SoX VHQ linear phase (guess) |
 
+
     - Appendix B. Characteristics of my mock DAC's :
     
     
-    | Name | Bakcground opaqueness (aliasing noise) | Pre-echo and ringing | Glitter (intermodulation) | Memo |
+    | Name | Bakcground opaqueness (aliasing noise) | Pre-echo and ringing | Mellowness (intermodulation) | Memo |
     | ---: | ---: | ---: | ---: | ---- |
     | DAC-A | light | heavy | heavy | imitating AK4491EQ Sharp roll-off |
     | DAC-B | medium | medium | light | imitating ESS9039PRO Fast roll-off |
@@ -107,6 +108,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | Mastering tool | slight | slight | light | imitating iZotope (no alias) |
     | Recommended parameters | almost none | almost none | light | general purpose |
     | Recommended parameters | very slight | very slight | medium | for low performance devices |
+    | Recommended parameters | slight | almost none | almost none | for old devices |
 
 * Tips 2: "jitter-reducer.sh" in "extras" folder is an interactive tool derived from ["Hifi Maximizer"](https://github.com/yzyhk904/hifi-maximizer-mod) which could reduce jitter distortions in all digital audio outputs relating to SELinux mode, thermal controls, doze (battery saving while idling), CPU&GPU governors, logd servers (to interface to logcat or the like), camera server, I/O scheduling, virtual memory, wifi suspension, battery management and the audio effects framework (to interface to equalizers, virtualizers, visualizers, echo cancelers, automatic gain controls, etc.). In my opinion, jitter distortions reduction is the very key to ultimate hifi audio quality.
 
