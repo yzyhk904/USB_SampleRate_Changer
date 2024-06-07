@@ -78,7 +78,8 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | Recommended parameters: | - | - | - | - |
     | 159 | 480 | 92 | | Old devices of A11 and earlier |
     | 165 | 360 | | 104 | Low performance devices of A12 and later |
-    | 179 | 408 | | 99 | General purpose for A12 and later |
+    | 179 | 408 | | 99 | General purpose on A12 and later |
+    | 179 | 520 | 94 | | for DAC's under $30 and LDAC BT devices both having large non-linear amp. distortion |
     | 194 | 520 | 100 | | bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bit depth) |
     | My mock equipment parameters: | - | - | - | - |
     | 150 | 80 | | 109 | Mock DAC-A filter (Fast roll-off N-fold over-sampling) |
@@ -106,7 +107,8 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | DAC-B | medium | medium | light | imitating ESS9039PRO Fast roll-off |
     | DAC-C | heavy | light | medium | SoX HQ quality (linear phase) + better |
     | Mastering tool | slight | slight | light | imitating iZotope (no alias) |
-    | Recommended parameters | almost none | almost none | light | general purpose |
+    | Recommended parameters | almost none | almost none | light | for general purpose |
+    | Recommended parameters | almost none | almost none | very slight | for DAC's under $30 and LDAC BT devices |
     | Recommended parameters | very slight | very slight | medium | for low performance devices |
     | Recommended parameters | slight | almost none | almost none | for old devices |
 
