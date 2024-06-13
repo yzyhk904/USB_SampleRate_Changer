@@ -8,9 +8,9 @@
 #   DYN_HIGH_QUALITY(7):                              98dB                             32                         100
 #
 #  -- Recommended parameters --
-#   This script's default (for old Androids):          160dB                          480                            91
-#   For low perf Android 12+ (in general):         167dB                          368                          106   (options: --bypass --cheat)
-#   For Android 12+ (in general):                      179dB                          408                            99   (options:  --cheat)
+#   This script's old default (for old Androids):    159dB                          480                            92
+#   For low perf Android 12+ (in general):         165dB                          360                          104   (options: --bypass --cheat)
+#   For Android 12+ (in general; new default):   179dB                          408                            99   (options:  --cheat)
 #   For bit perfect when 1:1 ratio:                     194dB                          520                          100
 #
 #  -- My mock series --
@@ -19,13 +19,20 @@
 #   Mock mastering filter:                                 159dB                           240                            99   (options: --cheat)
 #
 
-stopBand=160
-filterLength=480
-cutOffPercent=91
+if [ $# -ge 1 ]; then
+    stopBand=159
+    filterLength=480
+    cutOffPercent=92
+    cheatFlag=0
+else
+    stopBand=179
+    filterLength=408
+    cutOffPercent=99
+    cheatFlag=1
+fi
 
 resetFlag=0
 bypassFlag=0
-cheatFlag=0
 
 function usage()
 {
@@ -144,9 +151,13 @@ while [ $# -gt 0 ]; do
             bypassFlag=1
             shift
             ;;
+        "-bh" | "--bypass-hires" )
+            bypassFlag=2
+            shift
+            ;;
         "-c" | "--cheat" )
             cheatFlag=1
-            cutOffPercent=100
+            cutOffPercent=99
             shift
             ;;
         "-h" | "--help" | -* )
@@ -259,10 +270,12 @@ if [ -n "$resetprop_command" ]; then
         "$resetprop_command" --delete ro.audio.resampler.psd.halflength 1>/dev/null 2>&1
         "$resetprop_command" --delete ro.audio.resampler.psd.cutoff_percent 1>/dev/null 2>&1
         "$resetprop_command" --delete ro.audio.resampler.psd.tbwcheat 1>/dev/null 2>&1
-        # En of workaround
+        # End of workaround
         
         "$resetprop_command" af.resampler.quality 7 1>"/dev/null" 2>&1
-        if [ $bypassFlag -gt 0 ]; then
+        if [ $bypassFlag -gt 1 ]; then
+            "$resetprop_command" ro.audio.resampler.psd.enable_at_samplerate 96000 1>"/dev/null" 2>&1
+        elif [ $bypassFlag -gt 0 ]; then
             "$resetprop_command" ro.audio.resampler.psd.enable_at_samplerate 48000 1>"/dev/null" 2>&1
         else
             "$resetprop_command" ro.audio.resampler.psd.enable_at_samplerate 44100 1>"/dev/null" 2>&1
