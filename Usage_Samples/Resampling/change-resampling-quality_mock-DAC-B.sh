@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# My mock ESS9039PRO-ish in-DAC N-fold Over-sampling filer (fast roll-off type)
+# My mock ES9039PRO-ish in-DAC N-fold Over-sampling filer (fast roll-off type)
 #
 #   Characteristics: medium in background aliasing noise, medium in pre-echo and ringing, and light in intermodulation
 #
