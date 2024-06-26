@@ -79,7 +79,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 159 | 480 | 92 | | Old devices of A11 and earlier |
     | 165 | 360 | | 104 | Low performance devices of A12 and later |
     | 179 | 408 | | 99 | General purpose on A12 and later |
-    | 179 | 520 | 94 | | for LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
+    | 179 | 520 | 94, 93, ... , 87 | | for LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
     | 179 | 520 | 44 | | the same as above but for only 96 kHz & 24 bits Hires. tracks |
     | 194 | 520 | 100 | | bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bits depth) |
     | My mock equipment parameters: | - | - | - | - |
@@ -90,8 +90,8 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | External examples: | - | - | - | - |
     | 100 | 29 | (91) | 109 | AK4493 (Sharp roll-off N-fold over-sampling) |
     | 150 | 42 | (91) | 109 | AK4191EQ (Sharp roll-off N-fold over-sampling) |
-    | 120 | 35 | (97) | 110 | ESS 9038PRO (Fast roll-off N-fold over-sampling) |
-    | 50 ~ 118 | 34 | 96 | (398) | ESS 9039PRO (Fast roll-off N-fold over-sampling) |
+    | 120 | 35 | (97) | 110 | ES9038PRO (Fast roll-off N-fold over-sampling) |
+    | vary 50 ~ 118 | 34 | 96 | (398) | ES9039PRO (Fast roll-off N-fold over-sampling) |
     | 110 | 40 | (96) | 109 | CX43131 (Fast roll-off N-fold over-sampling) |
     | 98 | 130 | 98.5 | | MacOS Leopard (guess) |
     | 159 | 240 | | 99 | iZotope, No-Alias (guess) |
@@ -105,7 +105,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | Name | Background opaqueness (aliasing noise) | Pre-echo and ringing | Mellowness (intermodulation) | Memo |
     | ---: | ---: | ---: | ---: | ---- |
     | DAC-A | light | heavy | heavy | imitating AK4491EQ Sharp roll-off |
-    | DAC-B | medium | medium | light | imitating ESS9039PRO Fast roll-off |
+    | DAC-B | medium | medium | light | imitating ES9039PRO Fast roll-off |
     | DAC-C | heavy | light | medium | SoX HQ quality (linear phase) + better |
     | Mastering tool | slight | slight | light | imitating iZotope (no alias) |
     | Recommended parameters | almost none | almost none | light | for general purpose |
