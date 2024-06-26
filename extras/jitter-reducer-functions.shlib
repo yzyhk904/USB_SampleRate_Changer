@@ -20,7 +20,7 @@ function searchDefaultCpuGovernor()
     local gov=""
     local i
     for i in `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors`; do
-        if [ "$i" = "sched_pixel"  -o  "$i" = "schedutil" ]; then
+        if [ "$i" = "walt"  -o  "$i" = "sched_pixel"  -o  "$i" = "schedutil" ]; then
             gov="$i"
             break;
         elif [ ! "$gov" = "schedplus" ]; then
@@ -506,6 +506,24 @@ function isMtkGpuFreqFixed()
     fi
 }
 
+function validGpuGovernor()
+{
+    if [ $# -eq 2  -a  -r "$1" ]; then
+        local lst
+        local gov="$2"
+        local i
+        lst="`cat <\"$1\"`"
+        for i in $lst; do
+            if [ "$i" = "$gov" ]; then
+                return 0
+            fi
+        done
+        return 1
+    else
+        return 1
+    fi
+}
+
 function reduceGovernorJitter()
 {
     if [ $# -eq 2 ]; then
@@ -553,8 +571,11 @@ function reduceGovernorJitter()
                 fi
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
                 # For Qcomm GPU's
-                echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
-                sleep 0.1
+                if validGpuGovernor "/sys/class/kgsl/kgsl-3d0/devfreq/available_governors" "performance"; then
+                    # Check whether "performance" governor exists or not because some Qcomm recent GPU's don't have the governor
+                    echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                    sleep 0.1
+                fi
                 if [ -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be maximum
                     read x <"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
@@ -563,15 +584,17 @@ function reduceGovernorJitter()
                     fi
                 fi
                 # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel several times
-                for i in `seq 1 9`; do
-                    x="`echo \"scale=1;${i}/10\" | bc`"
-                    sleep $x
-                    read x <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
-                    if [ "$x" = "performance" ]; then
-                        break
-                    fi
-                    echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
-                done
+                if validGpuGovernor "/sys/class/kgsl/kgsl-3d0/devfreq/available_governors" "performance"; then
+                    for i in `seq 1 9`; do
+                        x="`echo \"scale=1;${i}/10\" | bc`"
+                        sleep $x
+                        read x <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                        if [ "$x" = "performance" ]; then
+                            break
+                        fi
+                        echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
+                    done
+                fi
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Maximum fixed frequency setting for MediaTek GPU's
                 local freq="`getMtkGpuFreqKhz \"max\"`"
@@ -1095,10 +1118,10 @@ function adjustForSoC_mq()
                 ;;
             * )
                 if [ "`getprop ro.build.product`" = "clover"  -a  "`getprop ro.build.version.release`" -eq "13" ]; then
-                    # Round off (<5) and up (>=5); for Nyx and SouthWest kernels of only A13
-                    echo "`expr  '(' '(' $1 + 5 ')' / 10 ')' '*' 10`"
-                elif [ "`getprop ro.build.product`" = "clover"  -a  "`getprop ro.build.version.release`" -ge "14" ]; then
-                    # Not Round for A14 and later
+                    # Round off (<7) and up (>=7); for Nyx and SouthWest kernels of only A13
+                    echo "`expr  '(' '(' $1 + 3 ')' / 10 ')' '*' 10`"
+               elif [ "`getprop ro.build.product`" = "clover"  -a  "`getprop ro.build.version.release`" -ge "14" ]; then
+                    # Not Round for A14 and later (1000Hz kernels)
                     echo "$1"
                 else
                     adjustForSoC "$1"
@@ -1233,7 +1256,7 @@ function getSchedulerValues()
                                 echo "94 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "95 0 34 516 0"
+                                echo "97 0 36 515 0"
                                 ;;
                             mt68* )
                                 echo "96 0 36 516 0"
@@ -1608,8 +1631,13 @@ function reduceIoJitter()
                         sleep 0.05
                     fi
                     
+                    local kerVersion="`uname -r`"
+                    kerVersion=${kerVersion%%.*}
                     if [ "`getprop ro.build.product`" = "jfltexx" ] && validScheduler "/sys/block/$i/queue/scheduler" "deadline"; then
                         echo 'deadline' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    elif [ "$kerVersion" -ge 6 ] && validScheduler "/sys/block/$i/queue/scheduler" "mq-deadline"; then
+                        echo 'mq-deadline' >"/sys/block/$i/queue/scheduler"
                         sleep 0.05
                     elif validScheduler "/sys/block/$i/queue/scheduler" "cfq"; then
                         echo 'cfq' >"/sys/block/$i/queue/scheduler"
