@@ -1,6 +1,6 @@
 ## Change logs
 
-#v2.8.5
+# v2.8.5
 * Changed dirty_ratio and dirty_background_ration to be 100 to reduce jitter
 * Changed adjustSoC_mq for A14 and later clover not to round I/O parameters
 * Adjusted cfq I/O parameters for SDM69x devices
