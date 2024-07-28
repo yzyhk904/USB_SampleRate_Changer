@@ -79,10 +79,10 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 159 | 480 | 92 | | Old devices of A11 and earlier |
     | 165 | 360 | | 104 | Low performance devices of A12 and later |
     | 179 | 408 | | 99 | General purpose on A12 and later |
-    | 179 | 520 | 95,94,93 | | for LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
-    | 194 | 520 | 87,86,85 | | the same as above but for only 48 kHz & 16 bits and 48 kHz & 24 bits tracks |
-    | 194 | 520 | 44,43 | | the same as above but for only 96 kHz & 24 bits Hires. tracks |
-    | 194 | 520 | 100 | | bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bits depth) |
+    | 194 | 520 | 87,86,85 | | For LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
+    | 179 | 520 | 95,94,93 | | The same as above but for only 44.1 kHz & 16 bits and 44.1 kHz & 24 bits tracks |
+    | 194 | 520 | 44,43 | | The same as above but for only 96 kHz & 24 bits Hires. tracks |
+    | 194 | 520 | 100 | | Bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bits depth) |
     | My mock equipment parameters: | - | - | - | - |
     | 150 | 80 | | 109 | Mock DAC-A filter (Fast roll-off N-fold over-sampling) |
     | 120 | 80 | 97 | | Mock DAC-B filter (Fast roll-off N-fold over-sampling) |
