@@ -36,13 +36,11 @@ function reloadAudioServers()
             done
         fi
         
-        if [ $# -gt 0  -a  "$1" = "all" ]; then
-            local audioHal
-            audioHal="$(getprop |sed -nE 's/.*init\.svc\.(.*audio-hal[^]]*).*/\1/p')"
-            setprop ctl.restart "$audioHal" 1>"/dev/null" 2>&1
+        if [ $# -gt 0  -a  "$1" = "all"  -a  -n "`getprop init.svc.vendor.audio-hal`" ]; then
+            setprop ctl.restart "vendor.audio-hal" 1>"/dev/null" 2>&1
             sleep 0.2
-            if [ "`getprop init.svc.${audioHal}`" != "running" ]; then
-                kill "`getprop init.svc_debug_pid.${audioHal}`" 1>"/dev/null" 2>&1
+            if [ "`getprop init.svc.vendor.audio-hal`" != "running" ]; then
+                kill "`getprop init.svc_debug_pid.vendor.audio-hal`" 1>"/dev/null" 2>&1
             fi
         fi
         

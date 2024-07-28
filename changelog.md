@@ -1,10 +1,14 @@
 ## Change logs
 
+# v2.8.6
+* Changed the default Bluetooth sample rate of "safer" templates from 44.1 kHz to 48 kHz for Am@zon music SD (Opus 48 kHz & 192 kbps vbr stereo) tracks
+* Adjusted jitter optimizations and others for YTM's format change from AAC (141; 44.1 kHz & 256 kbps cbr stereo) to Opus (774; 48 kHz & 256 kbps vbr stereo)
+
 # v2.8.5
 * Changed dirty_ratio and dirty_background_ration to be 100 to reduce jitter
 * Changed adjustSoC_mq for A14 and later clover not to round I/O parameters
 * Adjusted cfq I/O parameters for SDM69x devices
-* Added a new resampler script specially tuned for DAC's under $30 and LDAC BT devices both having large non-linear amp. distortion in "Usage Samples/Resampling"
+* Added a new resampler script specially tuned for LDAC BT and DAC's under $30 devices both having large non-linear amp. distortion in "Usage Samples/Resampling"
 
 # v2.8.4
 * Changed read ahead buffer sizes from 16960 kB to 17000 kB to reduce I/O jitter
