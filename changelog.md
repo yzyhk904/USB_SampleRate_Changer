@@ -1,5 +1,8 @@
 ## Change logs
 
+# v2.8.7
+* Added a workaround for Pineapple devices for no using the AOSP bluetooth module temporary
+
 # v2.8.6
 * Changed the default Bluetooth sample rate of "safer" templates from 44.1 kHz to 48 kHz for Am@zon music SD (Opus 48 kHz & 192 kbps vbr stereo) tracks
 * Adjusted jitter optimizations and others for YTM's format change from AAC (141; 44.1 kHz & 256 kbps cbr stereo) to Opus (774; 48 kHz & 256 kbps vbr stereo)

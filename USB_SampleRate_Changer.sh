@@ -211,11 +211,16 @@ fi
 
 case "$policyMode" in
     "legacy" | "safe" | "safest" )
-            BT_module="a2dp"
-            ;;
+        BT_module="a2dp"
+        ;;
     * )
+        if [ "`getprop ro.board.platform`" = "pineapple"  -a  -r "/vendor/lib64/hw/audio.bluetooth_qti.default.so" ]; then
+            # A workaround for Pineapple devices for no using the AOSP bluetooth module temporary
+            BT_module="bluetooth_qti"
+        else
             BT_module="bluetooth"
-            ;;
+        fi
+        ;;
 esac
 
 # Force the bluetooth HAL to be "bluetooth_qti"
