@@ -2,6 +2,7 @@
 
 # v2.8.7
 * Added a workaround for Pineapple devices for no using the AOSP bluetooth module temporary
+* Added a support for Tensor G4 (zuma pro)
 
 # v2.8.6
 * Changed the default Bluetooth sample rate of "safer" templates from 44.1 kHz to 48 kHz for Am@zon music SD (Opus 48 kHz & 192 kbps vbr stereo) tracks
