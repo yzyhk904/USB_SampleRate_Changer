@@ -1042,7 +1042,7 @@ function getSocModelName()
                 echo "$modelName"
                 return 0
                 ;;
-            zuma )
+            zuma* )
                 echo "gs301"
                 return 0
                 ;;
