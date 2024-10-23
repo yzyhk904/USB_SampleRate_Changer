@@ -1,7 +1,7 @@
 ## Change logs
 
 # v3.0.0
-* Added 7.0 audio configuration policy supports
+* Added 7.0 audio policy configuration supports
 * Added automatic max. sample rate detection (for USB devices) supports
 
 # v2.8.7
