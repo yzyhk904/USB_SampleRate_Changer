@@ -168,6 +168,16 @@ function removeGenFile()
     return 1
 }
 
+# Does this device support the 7.0 audio policy configuration
+function IsSeventhAudio()
+{
+    if [ -z "`ls /vendor/lib{,64}/hw/android.hardware.audio@7.?-impl*.so 2>/dev/null`" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 # Get the active audio policy configuration fille from the audioserever
 function getActivePolicyFile()
 {
@@ -200,15 +210,7 @@ function makeConfigFile()
             esac
             
         elif [ -e "/vendor/lib64/hw/audio.bluetooth.default.so" ]; then
-            case "`getprop ro.board.platform`" in
-                gs* | zuma )
-                    # temporally for Tensor devices
-                    bltHal="bypass-safer"
-                    ;;
-                * )
-                    bltHal="bypass-safer"
-                    ;;
-                esac
+            bltHal="bypass-safer"
         elif [ "`getprop ro.bluetooth.a2dp_offload.supported`" = "true" ]; then
             bltHal="offload"
         else

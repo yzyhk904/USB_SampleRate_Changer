@@ -13,10 +13,10 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
   - Options
     - `--reset`(without arguments): resets its previous execution results.
     - `--drc`: enables DRC (Dynamic Range Control, i.e., compression, typically sticking to all audio outputs on Qcomm devices) for the purpose of comparison to this script's usual DRC-less audio quality (not effective for --usb-only mode). No DRC unless this option. Please unplug your headphones or earphones before executing a command for propagating this effect.
-    - `--bypass-offload`: changes an audio policy configuration file for bypassing USB & Bluetooth hardware offloading (worse in audio quality) and using a non- hardware offloading USB & Bluetooth audio driver (better in audio quality; A small jitter USB driver and an AOSP Bluetooth driver without unnecessary resampling) while a 3.5 mm jack and an internal speaker use a hardware offloading driver.
+    - `--bypass-offload`: changes an audio policy configuration file for bypassing USB & Bluetooth hardware offloading (worse in audio quality) and using a non- hardware offloading USB & Bluetooth audio driver (better in audio quality; A small jitter USB driver and an AOSP Bluetooth driver without unnecessary resampling) while a 3.5 mm jack and an internal speaker use a hardware offloading driver with specified samplerate and audio format but non- hardware offloading drives detect them automatically.
     - `--bypass-offload-safer`: changes an audio policy configuration file for bypassing USB & Bluetooth hardware offloading (worse in audio quality) and using a non- hardware offloading USB & Bluetooth audio driver (better in audio quality) while a 3.5 mm jack and an internal speaker use a hardware offloading driver keeping the same settings (48 kHz & 16bit/24 bits).
     - `--offload`: changes an audio policy configuration file for USB & Bluetooth hardware offloading (worse in audio quality; a large jitter USB driver and a Bluetooth driver forcing unnecessary resampling, i.e., typically 44.1 kHz -> 48 kHz -> 44.1 kHz double resampling). 
-    - `--offload-hifi-playback`: changes an audio policy configuration file for USB hardware offloading including a USB audio "hifi_playback" mixer (worse in audio quality; fixed at 192 kHz/96 kHz 32 bits mode typically) while disabling a2dp hardware offloading (better in audio quality). 
+    - `--offload-hifi-playback`: changes an audio policy configuration file for USB hardware offloading including a USB audio "hifi_playback" mixer (worse in audio quality; its samplerate and audio format are automatically detected (for 7.0 audio implementations) or fixed at 192 kHz/96 kHz 32 bits mode otherwise) while disabling a2dp hardware offloading (better in audio quality).
     - `--offload-direct`: changes an audio policy configuration file for USB & Bluetooth hardware offloading (worse in audio quality) with "direct_pcm" and "compressed_offload" modes for 3.5 mm jack, bluetooth and USB audio output bypassing mixers. Added for comparing usual mixer modes to direct modes on Qcomm devices with&without DRC, especially to bluetooth audio "direct_pcm" mode with&without DRC.
     - `--legacy`: changes an audio policy configuration file for a Bluetooth audio legacy HAL (<em>/system/{lib,lib64}/hw/audio.a2dp.default.so</em>).
     - `--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps considerably traditional settings for an internal speaker and others.
@@ -79,6 +79,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 159 | 480 | 92 | | Old devices of A11 and earlier |
     | 165 | 360 | | 104 | Low performance devices of A12 and later |
     | 179 | 408 | | 99 | General purpose on A12 and later |
+    | 194 | 520 | | 98 | Ultra Hi-Fi for very high performance devices |
     | 194 | 520 | 85,86,87 | | For LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
     | 179 | 520 | 93,94,95 | | The same as above but for only 44.1 kHz & 16 bits and 44.1 kHz & 24 bits tracks |
     | 194 | 520 | 43,44 | | The same as above but for only 96 kHz & 24 bits Hires. tracks |
@@ -110,7 +111,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | DAC-B | medium | medium | light | imitating ES9039PRO Fast roll-off |
     | DAC-C | heavy | light | medium | SoX HQ quality (linear phase) + better |
     | Mastering tool | slight | slight | light | imitating iZotope (no alias) |
-    | Recommended parameters | almost none | almost none | light | for general purpose |
+    | Recommended parameters | almost none | almost none | light | Ultra Hi-Fi |
     | Recommended parameters | almost none | almost none | very slight | for LDAC bluetooth earphones and DAC's under $30 |
     | Recommended parameters | very slight | very slight | medium | for low performance devices |
     | Recommended parameters | slight | almost none | almost none | for old devices |

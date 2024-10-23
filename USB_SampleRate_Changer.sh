@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 2.8.7
+# Version: 3.0.0
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -18,6 +18,8 @@ fi
 # Default values
 policyMode="auto"
 resetMode="false"
+testMode="false"
+testTemplate="$MYDIR/templates/test_template.xml"
 DRC_enabled="false"
 USB_module="usb"
 BT_module="bluetooth"
@@ -82,6 +84,25 @@ while [ $# -gt 0 ]; do
         "-r" | "--reset" )
             resetMode="true"
             shift
+            ;;
+        "--test" )
+            testMode="true"
+            shift
+            ;;
+        "--test-template" )
+            # This option takes one argument specifying a template file path whether it is absolute or relative to the template folder
+            shift
+            if [ $# -gt 0 ]; then
+                case "$1" in
+                    /* )
+                        testTemplate="$1"
+                        ;;
+                    * )
+                        testTemplate="$MYDIR/templates/$1"
+                        ;;
+                esac
+                shift
+            fi
             ;;
         "-h" | "--help" | -* )
             echo -n "Usage: ${0##*/} [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-direct]" 1>&2
@@ -253,11 +274,12 @@ or your bluetooth device cannot output sound!" 1>&2
     fi
 fi
 
-if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \)  -a  $sRate -gt 96000 ]; then
+if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \
+             -o  "$policyMode" = "bypass-offload" \)  -a  $sRate -gt 96000 ]; then
     if [ ! -e "/data/adb/modules/usb-samplerate-unlocker" ]; then
         echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
     fi
-elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" ]; then
+elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-direct" ]; then
     case "`getprop ro.board.platform`" in
         mt* | exynos* | gs10? )
             if [ $sRate -gt 96000 ]; then
@@ -265,7 +287,7 @@ elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -
                 echo     " (upto 96kHz lock)" 1>&2
             fi
         ;;
-       gs* | zuma )
+       gs* | zuma* )
             if [ $sRate -gt 192000 ]; then
                 echo -n "    Warning: ${0##*/} canot change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
                 echo     " (upto 192kHz lock)" 1>&2
@@ -280,69 +302,96 @@ elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -
     esac
 fi
 
-case "$policyMode" in
-    "offload" )
-        template="$MYDIR/templates/offload_template.xml"
-        ;;
-    "offload-hifi-playback" )
-        case "`getprop ro.board.platform`" in
-            mt* )
-                echo "    Warning: ${0##*/} changed to \"--bypass-offload-safer\" mode because of the hardware offloading driver's restrictions" 1>&2
-                template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
-                ;;
-            gs* | zuma )
-                template="$MYDIR/templates/offload_hifi_playback_tensor_template.xml"
-                ;;
-            * )
-                template="$MYDIR/templates/offload_hifi_playback_template.xml"
-                ;;
-        esac
-        ;;
-    "offload-direct" )
-        template="$MYDIR/templates/offload_direct_template.xml"
-        ;;
-    "bypass" )
-        template="$MYDIR/templates/bypass_offload_template.xml"
-        ;;
-    "bypass-safer" )
-        case "`getprop ro.board.platform`" in
-            mt* )
-                template="$MYDIR/templates/bypass_offload_safer_mtk_template.xml"
-                ;;
-            gs* | zuma )
-                template="$MYDIR/templates/bypass_offload_safer_tensor_template.xml"
-                # template="$MYDIR/templates/bypass_offload_safer_tensor_template2.xml"
-                ;;
-            * )
-                template="$MYDIR/templates/bypass_offload_safer_template.xml"
-                ;;
-        esac
-        ;;
-    "legacy" )
-        template="$MYDIR/templates/legacy_template.xml"
-        ;;
-    "usb" )
-        template="$MYDIR/templates/usb_only_template.xml"
-        if [ -r "/vendor/etc/usb_audio_policy_configuration.xml" ]; then
-            overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
-        elif [ -r "/vendor/etc/usbv2_audio_policy_configuration.xml"  -a  -r "/vendor/lib64/hw/audio.usbv2.default.so" ]; then
-            overlayTarget="/vendor/etc/usbv2_audio_policy_configuration.xml"
-            USB_module="usbv2"
-        else
-            echo "target USB configuration file (\"/vendor/etc/usb_audio_policy_configuration.xml\") not found!" 1>&2 
-            exit 1
-        fi
-        ;;
-    "safe" )
-        template="$MYDIR/templates/safe_template.xml"
-        ;;
-    "safest" )
-        template="$MYDIR/templates/safest_template.xml"
-        ;;
-     * )
-        template="$MYDIR/templates/safe_template.xml"
-        ;;
-esac
+if IsSeventhAudio; then
+    case "$policyMode" in
+        "offload" )
+            template="$MYDIR/templates/offload_template.xml"
+            ;;
+        "offload-hifi-playback" )
+            template="$MYDIR/templates/offload_hifi_playback_template.xml"
+            ;;
+        "offload-direct" )
+            template="$MYDIR/templates/offload_direct_template.xml"
+            ;;
+        "bypass" )
+            template="$MYDIR/templates/bypass_offload_template.xml"
+            ;;
+        "bypass-safer" | * )
+            case "`getprop ro.board.platform`" in
+                gs* | zuma* )
+                    USB_module="usbv2"
+                    template="$MYDIR/templates/bypass_offload_safer_tensor_template.xml"
+                    ;;
+                * )
+                    template="$MYDIR/templates/bypass_offload_safer_template.xml"
+                    ;;
+            esac
+            ;;
+    esac
+else
+    case "$policyMode" in
+        "offload" )
+            template="$MYDIR/templates/Old/offload_template.xml"
+            ;;
+        "offload-hifi-playback" )
+            case "`getprop ro.board.platform`" in
+                mt* )
+                    echo "    Warning: ${0##*/} changed to \"--bypass-offload-safer\" mode because of the hardware offloading driver's restrictions" 1>&2
+                    template="$MYDIR/templates/Old/bypass_offload_safer_mtk_template.xml"
+                    ;;
+                * )
+                    template="$MYDIR/templates/Old/offload_hifi_playback_template.xml"
+                    ;;
+            esac
+            ;;
+        "offload-direct" )
+            template="$MYDIR/templates/Old/offload_direct_template.xml"
+            ;;
+        "bypass" )
+            template="$MYDIR/templates/Old/bypass_offload_template.xml"
+            ;;
+        "bypass-safer" )
+            case "`getprop ro.board.platform`" in
+                mt* )
+                    template="$MYDIR/templates/Old/bypass_offload_safer_mtk_template.xml"
+                    ;;
+                * )
+                    template="$MYDIR/templates/Old/bypass_offload_safer_template.xml"
+                    ;;
+            esac
+            ;;
+        "legacy" )
+            template="$MYDIR/templates/Old/legacy_template.xml"
+            ;;
+        "usb" )
+            template="$MYDIR/templates/Old/usb_only_template.xml"
+            if [ -r "/vendor/etc/usb_audio_policy_configuration.xml" ]; then
+                overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
+            elif [ -r "/vendor/etc/usbv2_audio_policy_configuration.xml"  -a  -r "/vendor/lib64/hw/audio.usbv2.default.so" ]; then
+                overlayTarget="/vendor/etc/usbv2_audio_policy_configuration.xml"
+                USB_module="usbv2"
+            else
+                echo "target USB configuration file (\"/vendor/etc/usb_audio_policy_configuration.xml\") not found!" 1>&2 
+                exit 1
+            fi
+            ;;
+        "safe" )
+            template="$MYDIR/templates/Old/safe_template.xml"
+            ;;
+        "safest" )
+            template="$MYDIR/templates/Old/safest_template.xml"
+            ;;
+         * )
+            template="$MYDIR/templates/Old/safe_template.xml"
+            ;;
+    esac
+fi
+
+# Test template mode
+if "$testMode"; then
+    template="$testTemplate"
+fi
+# Test template mode End
 
 if [ -r "$template" ]; then
 
@@ -389,7 +438,7 @@ if [ -r "$template" ]; then
     
 else
 
-    echo "a template USB configuration file not found!" 1>&2 
+    echo "an audio configuration template file (\"$template\") not found!" 1>&2 
     exit 1
     
 fi
