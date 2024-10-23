@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Ultra Hi-fi mastering quality re-sampling filter (for high performance devices)
+# Ultra Hi-Fi mastering quality re-sampling filter (for very high performance devices)
 #
 #   Characteristics: almost none in background aliasing noise, almost none in pre-echo and ringing, and light in intermodulation
 #
