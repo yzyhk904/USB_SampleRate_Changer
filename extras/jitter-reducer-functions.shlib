@@ -1421,7 +1421,7 @@ function getSchedulerNrRequests()
                                 echo "86164"
                                 ;;
                             sdm8* )
-                                echo "86173"
+                                echo "86174"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "86172"

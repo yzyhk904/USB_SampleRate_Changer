@@ -11,7 +11,10 @@ case "`getprop ro.board.platform`" in
     * )
         if [ ! -e "/vendor/lib64/hw/audio.bluetooth.default.so" ]; then
             # for old devices (under Android 10; various configurations)
-            Args="48k 16"
+            Args="--safest-auto"
+        elif [ "`getprop persist.bluetooth.bluetooth_audio_hal.disabled`" = "true" ]; then
+            # for legacy configuration devices (using "a2dp" legacy Bluetooth module)
+            Args="--safest-auto"
         elif [ "`getprop ro.hardware.lights`" = "qcom"  -o  "`getprop ro.hardware`" = "qcom" ]; then
             # for Qcom devices (Internal speaker: 384kHz 32bit; the USB HAL & the BT HAL driver: automatic max. detection for even non-HiRes. tracks)
             Args="--bypass-offload 384k 32"

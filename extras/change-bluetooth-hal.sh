@@ -29,11 +29,11 @@ function reloadAudioserver()
         if [ "`getprop sys.boot_completed`" = "1"  -a  -n "`getprop init.svc.audioserver`" ]; then
             break
         fi
-        sleep 0.9
+        sleep 1
     done
 
     if [ -n "`getprop init.svc.audioserver`" ]; then
-
+    
         setprop ctl.restart audioserver
         sleep 0.2
         if [ "`getprop init.svc.audioserver`" != "running" ]; then
@@ -52,13 +52,19 @@ function reloadAudioserver()
                 fi
             done
         fi
-        return 0
+        
+        if [ $# -gt 0  -a  "$1" = "all"  -a  -n "`getprop init.svc.vendor.audio-hal`" ]; then
+            setprop ctl.restart "vendor.audio-hal" 1>"/dev/null" 2>&1
+            sleep 0.2
+            if [ "`getprop init.svc.vendor.audio-hal`" != "running" ]; then
+                kill "`getprop init.svc_debug_pid.vendor.audio-hal`" 1>"/dev/null" 2>&1
+            fi
+        fi
         
     else
         echo "audioserver is not found!" 1>&2 
         return 1
     fi
-
 }
 
 function BluetoothHalStatus()
