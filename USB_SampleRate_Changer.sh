@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 3.0.0
+# Version: 3.0.1
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -61,6 +61,10 @@ while [ $# -gt 0 ]; do
             policyMode="safest"
             shift
             ;;
+        "-ssa" | "--safest-auto" )
+            policyMode="safest-auto"
+            shift
+            ;;
         "-u" | "--usb-only" )
             policyMode="usb"
             shift
@@ -106,7 +110,7 @@ while [ $# -gt 0 ]; do
             ;;
         "-h" | "--help" | -* )
             echo -n "Usage: ${0##*/} [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-direct]" 1>&2
-            echo    "[--legacy][--safe][--safest][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]" 1>&2
+            echo    "[--legacy][--safe][--safest][--safest-auto][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]" 1>&2
             echo -n "\nNote: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz Qcomm offload lock)" 1>&2
             echo     " if you specify greater than 96kHz or 384kHz (in case of Qcomm offload)." 1>&2
             exit 0
@@ -220,10 +224,12 @@ if [ -r "$MYDIR/.config" ]; then
     . "$MYDIR/.config"
 fi
 
-if [ -n "$PolicyFile" ];then
-    overlayTarget="$PolicyFile"
+if [ -z "$PolicyFile"  -o  "$PolicyFile" = "N/A" ]; then
+    # Very recent devices, e.g., Pixel 9 series
+    echo "Recent AIDL only devices are not supported!" 1>&2 
+    exit 1
 else
-    overlayTarget="/vendor/etc/audio_policy_configuration.xml"
+    overlayTarget="$PolicyFile"
 fi
 
 if [ "$policyMode" = "auto"  -a  -n "$BluetoothHal" ];then
@@ -231,7 +237,7 @@ if [ "$policyMode" = "auto"  -a  -n "$BluetoothHal" ];then
 fi
 
 case "$policyMode" in
-    "legacy" | "safe" | "safest" )
+    "legacy" | "safe" | "safest" | "safest-auto" )
         BT_module="a2dp"
         ;;
     * )
@@ -276,8 +282,8 @@ fi
 
 if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \
              -o  "$policyMode" = "bypass-offload" \)  -a  $sRate -gt 96000 ]; then
-    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker" ]; then
-        echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\"" 1>&2
+    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker"  -a  ! -e "/data/adb/modules/audio-samplerate-changer" ]; then
+        echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\" or \"audio-samplerate-changer\"" 1>&2
     fi
 elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-direct" ]; then
     case "`getprop ro.board.platform`" in
@@ -316,7 +322,7 @@ if IsSeventhAudio; then
         "bypass" )
             template="$MYDIR/templates/bypass_offload_template.xml"
             ;;
-        "bypass-safer" | * )
+        "bypass-safer" )
             case "`getprop ro.board.platform`" in
                 gs* | zuma* )
                     USB_module="usbv2"
@@ -326,6 +332,32 @@ if IsSeventhAudio; then
                     template="$MYDIR/templates/bypass_offload_safer_template.xml"
                     ;;
             esac
+            ;;
+        "legacy" )
+            template="$MYDIR/templates/Old/legacy_template.xml"
+            ;;
+        "safe" )
+            template="$MYDIR/templates/bypass_offload_safer_template.xml"
+            ;;
+        "safest-auto" )
+            template="$MYDIR/templates/bypass_offload_template.xml"
+            sRate="48000"
+            aFormat="AUDIO_FORMAT_PCM_16_BIT"
+            ;;
+        "usb" )
+            template="$MYDIR/templates/Old/usb_only_template.xml"
+            if [ -r "/vendor/etc/usb_audio_policy_configuration.xml" ]; then
+                overlayTarget="/vendor/etc/usb_audio_policy_configuration.xml"
+            elif [ -r "/vendor/etc/usbv2_audio_policy_configuration.xml"  -a  -r "/vendor/lib64/hw/audio.usbv2.default.so" ]; then
+                overlayTarget="/vendor/etc/usbv2_audio_policy_configuration.xml"
+                USB_module="usbv2"
+            else
+                echo "target USB configuration file (\"/vendor/etc/usb_audio_policy_configuration.xml\") not found!" 1>&2 
+                exit 1
+            fi
+            ;;
+        "safest" | * )
+            template="$MYDIR/templates/Old/safest_template.xml"
             ;;
     esac
 else
@@ -381,6 +413,9 @@ else
         "safest" )
             template="$MYDIR/templates/Old/safest_template.xml"
             ;;
+        "safest-auto" )
+            template="$MYDIR/templates/Old/safest_auto_template.xml"
+            ;;
          * )
             template="$MYDIR/templates/Old/safe_template.xml"
             ;;
@@ -399,8 +434,9 @@ if [ -r "$template" ]; then
     if [ "$USB_module" = "usb"  -a  ! -r "/vendor/lib64/hw/audio.usb.default.so"  -a  -r "/vendor/lib64/hw/audio.usbv2.default.so" ]; then
         USB_module="usbv2"
     fi
-    sed -e "s/%DRC_ENABLED%/$DRC_enabled/" -e "s/%USB_MODULE%/$USB_module/" -e "s/%BT_MODULE%/$BT_module/" \
-            -e "s/%SAMPLING_RATE%/$sRate/" -e "s/%AUDIO_FORMAT%/$aFormat/" "$template" >"$genfile"
+    sed   -e "s|%DRC_ENABLED%|$DRC_enabled|" -e "s|%USB_MODULE%|$USB_module|" -e "s|%BT_MODULE%|$BT_module|" \
+            -e "s|%SAMPLING_RATE%|$sRate|" -e "s|%AUDIO_FORMAT%|$aFormat|" \
+            -e "s|%VOLUME_FILE%|$VolumeFile|" -e "s|%DEFAULT_VOLUME_FILE%|$DefaultVolumeFile|" "$template" >"$genfile"
 
     if [ $? -eq 0 ]; then
     

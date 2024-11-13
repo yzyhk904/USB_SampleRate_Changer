@@ -321,8 +321,8 @@
 
     <!-- Volume section -->
 
-    <xi:include href="/vendor/etc/audio_policy_volumes.xml"/>
-    <xi:include href="/vendor/etc/default_volume_tables.xml"/>
+    <xi:include href="%VOLUME_FILE%"/>
+    <xi:include href="%DEFAULT_VOLUME_FILE%"/>
 
     <!-- End of Volume section -->
 </audioPolicyConfiguration>

@@ -171,7 +171,12 @@ function removeGenFile()
 # Does this device support the 7.0 audio policy configuration
 function IsSeventhAudio()
 {
-    if [ -z "`ls /vendor/lib{,64}/hw/android.hardware.audio@7.?-impl*.so 2>/dev/null`" ]; then
+    # Busybox cannot execute "/vendor/lib{,64}" expansion properly unlike mksh, so manually expanded
+    if [ -z "`ls /vendor/lib64/android.hardware.audio@7.?.so 2>/dev/null`"  -a  -z "`ls /vendor/lib/android.hardware.audio@7.?.so 2>/dev/null`" ] && \
+       [ -z "`ls /system/lib64/android.hardware.audio@7.?.so 2>/dev/null`"  -a  -z "`ls /system/lib/android.hardware.audio@7.?.so 2>/dev/null`" ]; then
+        return 1
+    elif [ "`getprop ro.build.product`" = "jfltexx" ]; then
+        # Galaxy S4 has a bug for the 7.0 audio policy configuration
         return 1
     else
         return 0
@@ -186,15 +191,47 @@ function getActivePolicyFile()
             print $3
         }' 
 }
-  
+
+# Extract the file name of an audio_policy_volumes.xml
+function getVolumeFile()
+{
+    if [ $# -gt 0  -a  -r "$1" ]; then
+        grep -m 1 -e '<xi:include[[:space:]]*href[[:space:]]*=[[:space:]]*".*audio_policy_volumes.*\.xml"' "$1" | awk -F '"' '{ print $2 }'
+    else
+        return 1
+    fi
+}
+
+# Extract the file name of a default_volume_tables.xml
+function getDefaultVolumeFile()
+{
+    if [ $# -gt 0  -a  -r "$1" ]; then
+        grep -m 1 -e '<xi:include[[:space:]]*href[[:space:]]*=[[:space:]]*".*default_volume_tables.*\.xml"' "$1" | awk -F '"' '{ print $2 }'
+    else
+        return 1
+    fi
+}
+
 # Make a configuration file for this script
 function makeConfigFile()
 {
     if [ $# -eq 1 ]; then
     
         local policyFile="`getActivePolicyFile`"
-        if [ ! -e "$policyFile" ]; then
-            policyFile="/vendor/etc/audio_policy_configuration.xml"
+        local volumeFile=""
+        local defaultVolumeFile=""
+        if [ -z "$policyFile"  -o  ! -r "$policyFile" ]; then
+            policyFile="N/A"
+        else
+            volumeFile="`getVolumeFile \"$policyFile\"`"
+            defaultVolumeFile="`getDefaultVolumeFile \"$policyFile\"`"
+        fi
+        
+        if [ -z "$volumeFile" ]; then
+            volumeFile="/vendor/etc/audio_policy_volumes.xml"
+        fi
+        if [ -z "$defaultVolumeFile" ]; then
+            defaultVolumeFile="/vendor/etc/default_volume_tables.xml"
         fi
         
         local bltHal
@@ -233,6 +270,8 @@ function makeConfigFile()
         cat <<_EOT_ > "$1"
 PolicyFile="$policyFile"
 BluetoothHal="$bltHal"
+VolumeFile="$volumeFile"
+DefaultVolumeFile="$defaultVolumeFile"
 _EOT_
 
         return 0

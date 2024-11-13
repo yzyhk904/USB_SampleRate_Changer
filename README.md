@@ -6,7 +6,7 @@ Additionally, this script disables DRC (Dynamic Range Control, i.e., a kind of c
 <br/>
 Finally, the Android OS mixer (AudioFlinger) always apply resampling even to 1:1 ratio pass-through (e.g., 44.1kHz to 44.1kHz resampling with Kaiser windowed digital low-pass filtering; a resampler is consiting of an interpolator to the analogue space (limited analogue values needed only for the following sampler are computed) with an anti-aliasing low-pass filter and a digital sampler by a specified output frequency from the anlogue space to the digital one. The output frequency can be the same as the input one), so you need to be careful for resampling parameters even when resampling is not needed (see the description of "extras/change-resampling-quality.sh" below).
 
-* Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-drect][--legacy][--safe][-safest][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
+* Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-drect][--legacy][--safe][--safest][--safest-auto][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
 
 if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth (or 32bit float) to which you want to change, respectively. Their default values are `44k` (sample rate: 44.1 kHz) and `32` (bit depth: 32 bits (signed integer)) except both safe and safest mode internal outputs (default values: 48 kHz, 32 or 16 bits).
 
@@ -21,6 +21,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - `--legacy`: changes an audio policy configuration file for a Bluetooth audio legacy HAL (<em>/system/{lib,lib64}/hw/audio.a2dp.default.so</em>).
     - `--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps considerably traditional settings for an internal speaker and others.
     - `--safest`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps most traditional settings for an internal speaker and others.
+    - `--safest-auto`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps most traditional settings for an internal speaker and others with automatic max. samplerate detection for USB devices.
     - `--usb-only`: changes a USB audio policy configuration file only.
     - `--force-bluetooth-qti`: forces to use "bluetooth_qti" bluetooth module (Qcomm's legacy one) instead of usual ones.
 

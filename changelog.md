@@ -1,5 +1,9 @@
 ## Change logs
 
+# v3.0.1
+* Added "--safest-auto" mode for automatic max. USB samplerate detection for old devices
+* Fixed to adjust volume curve table links in an audio policy configuration template dynamically for avoiding miss-linking
+
 # v3.0.0
 * Added 7.0 audio policy configuration supports
 * Added automatic max. sample rate detection (for USB devices) supports
