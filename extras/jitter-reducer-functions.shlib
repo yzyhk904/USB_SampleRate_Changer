@@ -1257,13 +1257,13 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sm[6-8]* )
-                                echo "107 0 36 516 0"
+                                echo "112 0 36 516 0"
                                 ;;
                             sdm8[5-9]* | sdm9* )
                                 echo "107 0 36 516 0"
                                 ;;
                             gs* )
-                                echo "107 0 36 516 0"
+                                echo "112 0 36 516 0"
                                 ;;
                             sdm8* )
                                 echo "107 0 36 516 0"
@@ -1602,13 +1602,13 @@ function reduceIoJitter()
                             fi
                         fi
                         
-                        # For Tensor devices (5.10 Kernels)
+                        # For Tensor devices (5.10 Kernels) and other 6.1 Kernels
                         if [ "$sched" = "mq-deadline" ]; then
                             if [ -w "/sys/block/$i/queue/iosched/async_depth" ]; then
-                                echo '38' >"/sys/block/$i/queue/iosched/async_depth"
+                                echo '37' >"/sys/block/$i/queue/iosched/async_depth"
                             fi
                             if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
-                                echo '6903156' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                echo '6903164' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                             fi
                         fi
                         
@@ -1767,17 +1767,13 @@ function reduceVmJitter()
             
         elif [ $flag -lt 0 ]; then
         
-             if [ -e "/dev/block/zram0" ]; then
-                echo '100' >"/proc/sys/vm/swappiness"
-            else
-                echo '60' >"/proc/sys/vm/swappiness"
-            fi
+            echo '60' >"/proc/sys/vm/swappiness"
             if [ -w "/proc/sys/vm/direct_swappiness" ]; then
                 echo '60' >"/proc/sys/vm/direct_swappiness"
             fi
             echo '20' >"/proc/sys/vm/dirty_ratio"
             if [ -w "/proc/sys/vm/dirty_background_ratio" ]; then
-                echo '5' >"/proc/sys/vm/dirty_background_ratio"
+                echo '10' >"/proc/sys/vm/dirty_background_ratio"
             elif [ -w "/proc/sys/vm/dirty_background_ratio_nosys" ]; then
                 echo '10' >"/proc/sys/vm/dirty_background_ratio_nosys"
             fi
