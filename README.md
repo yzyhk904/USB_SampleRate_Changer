@@ -81,8 +81,8 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 165 | 360 | | 104 | Low performance devices of A12 and later |
     | 179 | 408 | | 99 | General purpose on A12 and later |
     | 194 | 520 | | 98 | Ultra Hi-Fi for very high performance devices |
-    | 194 | 520 | 85,86,87 | | For LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
-    | 179 | 520 | 93,94,95 | | The same as above but for only 44.1 kHz & 16 bits and 44.1 kHz & 24 bits tracks |
+    | 194 | 520 | 84 ~ 87 | | For LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
+    | 179 | 520 | 92 ~ 95 | | The same as above but for only 44.1 kHz & 16 bits and 44.1 kHz & 24 bits tracks |
     | 194 | 520 | 43,44 | | The same as above but for only 96 kHz & 24 bits Hires. tracks |
     | 194 | 520 | 100 | | Bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bits depth) |
     | My mock equipment parameters: | - | - | - | - |

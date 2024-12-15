@@ -1,5 +1,8 @@
 ## Change logs
 
+# v3.0.2
+* Added an exception for Asius Zenfone 9 to change its Bluetooth HAL form "bluetooth"  to "bluetooth_qti"
+
 # v3.0.1
 * Added "--safest-auto" mode for automatic max. USB samplerate detection for old devices
 * Fixed to adjust volume curve table links in an audio policy configuration template dynamically for avoiding miss-linking

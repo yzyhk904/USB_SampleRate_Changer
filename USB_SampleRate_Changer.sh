@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 3.0.1
+# Version: 3.0.2
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -243,6 +243,9 @@ case "$policyMode" in
     * )
         if [ "`getprop ro.board.platform`" = "pineapple"  -a  -r "/vendor/lib64/hw/audio.bluetooth_qti.default.so" ]; then
             # A workaround for Pineapple devices for no using the AOSP bluetooth module temporary
+            BT_module="bluetooth_qti"
+        elif [ "`getprop ro.product.board`" = "taro" -a  -r "/vendor/lib64/hw/audio.bluetooth_qti.default.so" ]; then
+            # An exception for Asus Zenfone 9
             BT_module="bluetooth_qti"
         else
             BT_module="bluetooth"
