@@ -2,6 +2,7 @@
 
 # v3.0.2
 * Added an exception for Asius Zenfone 9 to change its Bluetooth HAL form "bluetooth"  to "bluetooth_qti"
+* Added a cheapies-48kHz-cheapest resampler
 
 # v3.0.1
 * Added "--safest-auto" mode for automatic max. USB samplerate detection for old devices
