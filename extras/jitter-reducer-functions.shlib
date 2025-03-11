@@ -1257,7 +1257,10 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sm[6-8]* )
-                                echo "117 0 36 516 0"
+                                # for the stock kernel
+                                echo "119 0 36 516 0"
+                                # for the ISIS kernel
+                                # echo "117 0 36 516 0"
                                 ;;
                             sdm8[5-9]* | sdm9* )
                                 echo "107 0 36 516 0"

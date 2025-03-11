@@ -3,6 +3,7 @@
 # v3.0.4
 * Fixed Wired Headset Mic to be enabled
 * Tuned POCO F6 for the ISIS kernel
+* Tuned POCO F6 for the stock kernel again
 
 # v3.0.3
 * Added a script which enables "DRC" with max samplerate detection
