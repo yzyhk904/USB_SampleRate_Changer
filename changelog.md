@@ -1,9 +1,15 @@
 ## Change logs
 
+# v3.0.5
+* Tuned for POCO F3 and other "kona" board devices by adjusteding their core control parameters
+* Fixed disabling thermal core control for phones with big:1, mid:4 and little:3 CPU cores, e.g., POCO F6
+* Improved and fixed GPU boosting for recent Qcomm and Mtk SoC's
+
 # v3.0.4
 * Fixed Wired Headset Mic to be enabled
 * Tuned for POCO F6 (optimized for the ISIS kernel)
 * Tuned for POCO F6 (optimized for the stock kernel, but not for the ISIS kernel)
+* Fixed for InfiR kernel about VM tunables
 
 # v3.0.3
 * Added a script which enables "DRC" with max samplerate detection
