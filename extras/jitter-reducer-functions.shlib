@@ -20,7 +20,7 @@ function searchDefaultCpuGovernor()
     local gov=""
     local i
     for i in `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors`; do
-        if [ "$i" = "walt"  -o  "$i" = "sched_pixel"  -o  "$i" = "schedutil" ]; then
+        if [ "$i" = "walt"  -o  "$i" = "sugov_ext"  -o  "$i" = "sched_pixel"  -o  "$i" = "schedutil" ]; then
             gov="$i"
             break;
         elif [ ! "$gov" = "schedplus" ]; then
@@ -80,17 +80,48 @@ function reduceThermalJitter()
                 if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
                     if [ -w "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
                         # SD850 or higher type core control
+                        local ncpu_remained=7
+                        
                         echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
                         echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/min_cpus"
+                        echo '55'  > "/sys/devices/system/cpu/cpu7/core_ctl/busy_down_thres"
+                        echo '0'  > "/sys/devices/system/cpu/cpu7/core_ctl/busy_up_thres"
+                        echo '2900'  > "/sys/devices/system/cpu/cpu7/core_ctl/offline_delay_ms"
                         echo '0'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
-                        if [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                        if [ -w "/sys/devices/system/cpu/cpu3/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu3/core_ctl/enable"
+                            # min_cpus cannot be set to be 4, so 3
+                            echo '3'  > "/sys/devices/system/cpu/cpu3/core_ctl/min_cpus"
+                            echo '55 55 55'  > "/sys/devices/system/cpu/cpu3/core_ctl/busy_down_thres"
+                            echo '0 0 0'  > "/sys/devices/system/cpu/cpu3/core_ctl/busy_up_thres"
+                            echo '2900'  > "/sys/devices/system/cpu/cpu3/core_ctl/offline_delay_ms"
+                            echo '0'  > "/sys/devices/system/cpu/cpu3/core_ctl/enable"
+                            ncpu_remained=3
+                        elif [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
                             echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
                             echo '3'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
+                            echo '55 55 55'  > "/sys/devices/system/cpu/cpu4/core_ctl/busy_down_thres"
+                            echo '0 0 0'  > "/sys/devices/system/cpu/cpu4/core_ctl/busy_up_thres"
+                            echo '2900'  > "/sys/devices/system/cpu/cpu4/core_ctl/offline_delay_ms"
                             echo '0'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
+                            ncpu_remained=4
                         fi
                         if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
                             echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
-                            echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo "$ncpu_remained"  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo '55 55 55 55'  > "/sys/devices/system/cpu/cpu0/core_ctl/busy_down_thres"
+                            echo '0 0 0 0'  > "/sys/devices/system/cpu/cpu0/core_ctl/busy_up_thres"
+                            echo '2900'  > "/sys/devices/system/cpu/cpu0/core_ctl/offline_delay_ms"
+                            echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        fi
+                    elif [ -w "/sys/devices/system/cpu/cpu6/core_ctl/enable" ]; then
+                        # Dimensity type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu6/core_ctl/enable"
+                        echo '2'  > "/sys/devices/system/cpu/cpu6/core_ctl/min_cpus"
+                        echo '0'  > "/sys/devices/system/cpu/cpu6/core_ctl/enable"
+                        if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                            echo '6'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
                             echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
                         fi
                     elif [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
@@ -147,6 +178,25 @@ function reduceThermalJitter()
                     kill -HUP $pid 1>"/dev/null" 2>&1
                 fi
             fi
+            
+            # Stop MTK thermald and thermal_core
+            if [ "`getprop init.svc.thermald`" = "running" ]; then
+                setprop ctl.stop thermald
+            elif [ "`getprop init.svc.thermald`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.thermald`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+            if [ "`getprop init.svc.thermal_core`" = "running" ]; then
+                setprop ctl.stop thermal_core
+            elif [ "`getprop init.svc.thermal_core`" = "stopping" ]; then
+                local pid="`getprop init.svc_debug_pid.thermal_core`"
+                if [ -n "$pid" ]; then
+                    kill -HUP $pid 1>"/dev/null" 2>&1
+                fi
+            fi
+
             # Stop the mi_thermald server
             if [ "`getprop init.svc.mi_thermald`" = "running" ]; then
                 setprop ctl.stop mi_thermald
@@ -196,17 +246,41 @@ function reduceThermalJitter()
                 IFS="-" read st en <"/sys/devices/system/cpu/present"
                 if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
                     if [ -w "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
+                        local ncpu_remained=7
                         # SD850 or higher type core control
                         echo '1'  > "/sys/devices/system/cpu/cpu7/core_ctl/enable"
                         echo '0'  > "/sys/devices/system/cpu/cpu7/core_ctl/min_cpus"
-                        if [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
+                        echo '30'  > "/sys/devices/system/cpu/cpu7/core_ctl/busy_down_thres"
+                        echo '60'  > "/sys/devices/system/cpu/cpu7/core_ctl/busy_up_thres"
+                        echo '100'  > "/sys/devices/system/cpu/cpu7/core_ctl/offline_delay_ms"
+                        if [ -w "/sys/devices/system/cpu/cpu3/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu3/core_ctl/enable"
+                            echo '3'  > "/sys/devices/system/cpu/cpu3/core_ctl/min_cpus"
+                            echo '30 30 30'  > "/sys/devices/system/cpu/cpu3/core_ctl/busy_down_thres"
+                            echo '60 60 60'  > "/sys/devices/system/cpu/cpu3/core_ctl/busy_up_thres"
+                            echo '100'  > "/sys/devices/system/cpu/cpu3/core_ctl/offline_delay_ms"
+                            ncpu_remained=3
+                        elif [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
                             echo '1'  > "/sys/devices/system/cpu/cpu4/core_ctl/enable"
                             echo '2'  > "/sys/devices/system/cpu/cpu4/core_ctl/min_cpus"
+                            echo '30 30 30'  > "/sys/devices/system/cpu/cpu4/core_ctl/busy_down_thres"
+                            echo '60 60 60'  > "/sys/devices/system/cpu/cpu4/core_ctl/busy_up_thres"
+                            echo '100'  > "/sys/devices/system/cpu/cpu4/core_ctl/offline_delay_ms"
+                            ncpu_remained=4
                         fi
                         if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
                             echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
-                            echo '4'  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo "$ncpu_remained"  > "/sys/devices/system/cpu/cpu0/core_ctl/min_cpus"
+                            echo '0 0 0 0'  > "/sys/devices/system/cpu/cpu0/core_ctl/busy_down_thres"
+                            echo '0 0 0 0'  > "/sys/devices/system/cpu/cpu0/core_ctl/busy_up_thres"
+                            echo '100'  > "/sys/devices/system/cpu/cpu0/core_ctl/offline_delay_ms"
                             echo '0'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
+                        fi
+                    elif [ -w "/sys/devices/system/cpu/cpu6/core_ctl/enable" ]; then
+                        # Dimensity type core control
+                        echo '1'  > "/sys/devices/system/cpu/cpu6/core_ctl/enable"
+                        if [ -w "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
+                            echo '1'  > "/sys/devices/system/cpu/cpu0/core_ctl/enable"
                         fi
                     elif [ -w "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
                         # SD840 or lower type core control
@@ -236,6 +310,13 @@ function reduceThermalJitter()
                 setprop ctl.start thermal
             elif [ "`getprop init.svc.vendor.thermal`" = "stopped" ]; then
                 setprop ctl.start vendor.thermal
+            fi
+            # Start the MTK thermald and thermal_core server
+            if [ "`getprop init.svc.thermald`" = "stopped" ]; then
+                setprop ctl.start thermald
+            fi
+            if [ "`getprop init.svc.thermal_core`" = "stopped" ]; then
+                setprop ctl.start thermal_core
             fi
             # Start the mi_thermald server
             if [ "`getprop init.svc.mi_thermald`" = "stopped" ]; then
@@ -279,6 +360,8 @@ function reduceThermalJitter()
                 if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
                     if [ -r "/sys/devices/system/cpu/cpu7/core_ctl/enable" ]; then
                         read ctl_enabled <"/sys/devices/system/cpu/cpu7/core_ctl/enable"
+                    elif [ -r "/sys/devices/system/cpu/cpu6/core_ctl/enable" ]; then
+                        read ctl_enabled <"/sys/devices/system/cpu/cpu6/core_ctl/enable"
                     elif [ -r "/sys/devices/system/cpu/cpu4/core_ctl/enable" ]; then
                         read ctl_enabled <"/sys/devices/system/cpu/cpu4/core_ctl/enable"
                     elif [ -r "/sys/devices/system/cpu/cpu0/core_ctl/enable" ]; then
@@ -297,6 +380,14 @@ function reduceThermalJitter()
                 found=1
             elif [ -n "`getprop init.svc.vendor.thermal`" ]; then
                 echo "  Thermal server: `getprop init.svc.vendor.thermal`"
+                found=1
+            fi
+            if [ -n "`getprop init.svc.thermald`" ]; then
+                echo "  Thermal MTK thermald: `getprop init.svc.thermald`"
+                found=1
+            fi
+            if [ -n "`getprop init.svc.thermal_core`" ]; then
+                echo "  Thermal MTK thermal_core: `getprop init.svc.thermal_core`"
                 found=1
             fi
             if [ -n "`getprop init.svc.mi_thermald`" ]; then
@@ -446,6 +537,36 @@ function getMtkGpuFreqKhz()
             return 1
         fi
         
+    elif [ -r "/proc/gpufreqv2/gpu_working_opp_table"  -a  "$isMax" -eq 1 ]; then
+        local x1 x2 x3 x4 freq="" IFS=" ,"
+        
+        read x1 x2 x3 x4 <"/proc/gpufreqv2/gpu_working_opp_table"
+        freq="$x3"
+        
+        if [ -n "$freq" ]; then
+            echo "$freq"
+            return 0
+        else
+            return 1
+        fi
+        
+    elif [ -r "/proc/gpufreqv2/gpufreq_status" ]; then
+        local x1 x2 x3 x4 x5 x6 x7 freq="" IFS=" ,"
+       
+       { 
+            read
+            read x1 x2 x3 x4 x5 x6
+            freq="$x5"
+            
+            if [ -n "$freq" ]; then
+                echo "$freq"
+                return 0
+            else
+                return 1
+            fi
+        } <"/proc/gpufreqv2/gpufreq_status"
+        return 0
+
     else
         return 1
     fi
@@ -501,6 +622,14 @@ function isMtkGpuFreqFixed()
         else
             return 1
         fi
+    elif [ -r "/proc/gpufreqv2/fix_target_opp_index" ]; then
+        local x1 x2 x3 x4 x5 x6
+        read x1 x2 x3 x4 x5 x6 <"/proc/gpufreqv2/fix_target_opp_index"
+        if [ "$x6" = "disabled" ]; then
+            return 1
+        else
+            return 0
+        fi
     else
         return 1
     fi
@@ -524,17 +653,33 @@ function validGpuGovernor()
     fi
 }
 
+function getGpuBusmonPath()
+{
+    local x
+    
+    if [ -e "/sys/class/devfreq/soc:qcom,kgsl-busmon" ]; then
+        x="/sys/class/devfreq/soc:qcom,kgsl-busmon"
+    elif [ -e "/sys/class/devfreq/kgsl-busmon" ]; then
+        x="/sys/class/devfreq/kgsl-busmon"
+     else
+        x=""
+     fi
+     echo "$x"
+     return 0
+}
+
 function reduceGovernorJitter()
 {
     if [ $# -eq 2 ]; then
         local flag="$1"
         local printStatus="$2"
+        local x
 
         if [ $flag -gt 0 ]; then
         
             # CPU governor
             # prevent CPU offline stuck by forcing online between double  governor writing 
-            local i st en x
+            local i st en
             IFS="-" read st en <"/sys/devices/system/cpu/present"
             if [ -n "$st"  -a  -n "$en"  -a "$st" -ge 0  -a  "$en" -ge 0 ]; then
                 for i in `seq $st $en`; do
@@ -576,11 +721,25 @@ function reduceGovernorJitter()
                     echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
                     sleep 0.1
                 fi
+                if [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/min_freq" ]; then
+                    # Set the min freq
+                    read x <"/sys/class/kgsl/kgsl-3d0/devfreq/max_freq"
+                    if [ "$x" -ne 0 ]; then
+                        echo "$x" >"/sys/class/kgsl/kgsl-3d0/devfreq/min_freq"
+                    fi
+                fi
                 if [ -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be maximum
                     read x <"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
                     if [ "$x" -ne 0 ]; then
                         echo "0" >"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    fi
+                fi
+                if [ -w "/sys/class/kgsl/kgsl-3d0/default_pwrlevel" ]; then
+                    # Set the default power level to be maximum
+                    read x <"/sys/class/kgsl/kgsl-3d0/default_pwrlevel"
+                    if [ "$x" -ne 0 ]; then
+                        echo "0" >"/sys/class/kgsl/kgsl-3d0/default_pwrlevel"
                     fi
                 fi
                 # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel several times
@@ -595,17 +754,41 @@ function reduceGovernorJitter()
                         echo 'performance' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
                     done
                 fi
+                if [ -w "/sys/class/kgsl/kgsl-3d0/throttling" ]; then
+                        echo "0" >"/sys/class/kgsl/kgsl-3d0/throttling"
+                fi
+                if [ -w "/sys/class/devfreq/soc:qcom,gpubw/min_freq" ]; then
+                    # Set the min freq
+                    read x <"/sys/class/devfreq/soc:qcom,gpubw/max_freq"
+                    if [ "$x" -ne 0 ]; then
+                        echo "$x" >"/sys/class/devfreq/soc:qcom,gpubw/min_freq"
+                    fi
+                fi
+                local busmon="`getGpuBusmonPath`"
+                if [ -w "${busmon}/min_freq" ]; then
+                    # Set the min freq
+                    read x <"${busmon}/max_freq"
+                    if [ "$x" -ne 0 ]; then
+                        echo "$x" >"${busmon}/min_freq"
+                    fi
+                    echo "performance" >"${busmon}/governor"
+                fi
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Maximum fixed frequency setting for MediaTek GPU's
                 local freq="`getMtkGpuFreqKhz \"max\"`"
                 if [ -n "$freq" ]; then
                     echo "$freq" >"/proc/gpufreq/gpufreq_opp_freq"
                 fi
-            elif [ -w "/sys/devices/platform/1c500000.mali/scaling_min_freq" ]; then
+            elif [ -w "/proc/gpufreqv2/fix_target_opp_index" ]; then
+                # Maximum fixed frequency (index 0) setting for MediaTek GPU's
+                echo "0" >"/proc/gpufreqv2/fix_target_opp_index"
+            elif [ -w "/sys/devices/platform/1c500000.mali/hint_min_freq" ]; then
                 # Maximum fixed frequency setting for Tensor GPU's
+                # This makes audio quality poor really, so is avoided
                 local freq="`getTensorGpuFreqKhz \"max\"`"
                 if [ -n "$freq" ]; then
-                    echo "$freq" >"/sys/devices/platform/1c500000.mali/scaling_min_freq"
+                    #echo "$freq" >"/sys/devices/platform/1c500000.mali/hint_min_freq"
+                    :
                 fi
             fi
             
@@ -656,12 +839,13 @@ function reduceGovernorJitter()
                     fi
                 fi
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
+                local x
                 # Default GPU governor for Qcomm GPU's
                 echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
                 sleep 0.1
                 if [ -r "/sys/class/kgsl/kgsl-3d0/num_pwrlevels"  -a  -w "/sys/class/kgsl/kgsl-3d0/min_pwrlevel" ]; then
                     # Set the min power level to be minimum
-                    local x="6"
+                    x="6"
                     local tmp
                     read x <"/sys/class/kgsl/kgsl-3d0/num_pwrlevels"
                     x="`expr $x - 1`"
@@ -672,6 +856,17 @@ function reduceGovernorJitter()
                         fi
                     fi
                 fi
+                if [ -r "/sys/class/kgsl/kgsl-3d0/min_pwrlevel"  -a  -w "/sys/class/kgsl/kgsl-3d0/default_pwrlevel" ]; then
+                    read x <"/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+                    if [ -n "$x" ]; then
+                        echo "$x" >"/sys/class/kgsl/kgsl-3d0/default_pwrlevel"
+                    fi
+                fi
+                if [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/min_freq" ]; then
+                    # Set the min freq to the lowest
+                    echo "0" >"/sys/class/kgsl/kgsl-3d0/devfreq/min_freq"
+                fi
+
                 # For some Qcomm GPU's, because they revert the governor after setting min_pwrlevel several times
                 for i in `seq 1 9`; do
                     x="`echo \"scale=1;${i}/10\" | bc`"
@@ -682,14 +877,29 @@ function reduceGovernorJitter()
                     fi
                     echo 'msm-adreno-tz' >"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
                 done
+                if [ -w "/sys/class/kgsl/kgsl-3d0/throttling" ]; then
+                        echo "1" >"/sys/class/kgsl/kgsl-3d0/throttling"
+                fi
+                if [ -w "/sys/class/devfreq/soc:qcom,gpubw/min_freq" ]; then
+                    echo "0" >"/sys/class/devfreq/soc:qcom,gpubw/min_freq"
+                fi
+                local busmon="`getGpuBusmonPath`"
+                if [ -w "${busmon}/min_freq" ]; then
+                    # Set the min freq
+                    echo "0" >"${busmon}/min_freq"
+                    echo "gpubw_mon" >"${busmon}/governor"
+                fi
             elif [ -w "/proc/gpufreq/gpufreq_opp_freq" ]; then
                 # Variable frequency setting for MediaTek GPU's
                 echo '0' >"/proc/gpufreq/gpufreq_opp_freq"
-            elif [ -w "/sys/devices/platform/1c500000.mali/scaling_min_freq" ]; then
-                # Minimum fixed frequency setting for Tensor GPU's
+            elif [ -w "/proc/gpufreqv2/fix_target_opp_index" ]; then
+                # Variable frequency (index -1) setting for MediaTek GPU's
+                echo "-1" >"/proc/gpufreqv2/fix_target_opp_index"
+            elif [ -w "/sys/devices/platform/1c500000.mali/hint_min_freq" ]; then
+                # Variable frequency setting for Tensor GPU's
                 local freq="`getTensorGpuFreqKhz \"min\"`"
                 if [ -n "$freq" ]; then
-                    echo "$freq" >"/sys/devices/platform/1c500000.mali/scaling_min_freq"
+                    echo "$freq" >"/sys/devices/platform/1c500000.mali/hint_min_freq"
                 fi
             fi
             
@@ -707,9 +917,9 @@ function reduceGovernorJitter()
                     else
                         pf="no"
                     fi
-                    echo "  Governor CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor` (wq psave: $pf)"
+                    echo "  Gov. CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor` (wq psave: $pf)"
                 else
-                    echo "  Governor CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`"
+                    echo "  Gov. CPU: `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`"
                 fi
             fi
             
@@ -720,46 +930,51 @@ function reduceGovernorJitter()
                 if [ "$gov" = "performance" ]; then
                     freq="`getQcomGpuFreq \"max\"`"
                     freq="`expr $freq / 1000000`MHz"
-                    echo "  Governor GPU: performance (fixed: $freq)"
+                    echo "  Gov. GPU: performance (fixed: $freq)"
                 else
                     freq="`getQcomGpuFreq \"typical\"`"
                     freq="`expr $freq / 1000000`Mhz"
-                    echo "  Governor GPU: $gov (typical: $freq)"
+                    echo "  Gov. GPU: $gov (typ.: $freq)"
                 fi
             elif [ -w "/sys/class/kgsl/kgsl-3d0/devfreq/governor" ]; then
                 # For Qcomm GPU Governor
-                local freq gov
+                local freq gov def_pwrl
                 read gov <"/sys/class/kgsl/kgsl-3d0/devfreq/governor"
-                if [ "$gov" = "performance" ]; then
+                if [ -r "/sys/class/kgsl/kgsl-3d0/default_pwrlevel" ]; then
+                    read def_pwrl <"/sys/class/kgsl/kgsl-3d0/default_pwrlevel"
+                else
+                    def_pwrl="1"
+                fi
+                if [ "$gov" = "performance"  -o  "$def_pwrl" -eq 0 ]; then
                     freq="`getQcomGpuFreq \"max\"`"
                     freq="`expr $freq / 1000000`MHz"
-                    echo "  Governor GPU: performance (fixed: $freq)"
+                    echo "  Gov. GPU: $gov (fixed: $freq)"
                 else
                     freq="`getQcomGpuFreq \"typical\"`"
                     freq="`expr $freq / 1000000`MHz"
-                    echo "  Governor GPU: $gov (typical: $freq)"
+                    echo "  Gov. GPU: $gov (typ.: $freq)"
                 fi
-            elif [ -r "/proc/gpufreq/gpufreq_opp_freq" ]; then
+            elif [ -r "/proc/gpufreq/gpufreq_opp_freq"  -o  -r "/proc/gpufreqv2/gpu_working_opp_table" ]; then
                 # For getting MediaTek GPU settings
                 local freq
                 if isMtkGpuFreqFixed; then
                     freq="`getMtkGpuFreqKhz \"max\"`"
                     freq="`expr $freq / 1000`MHz"
-                    echo "  Governor GPU: max freq (fixed: $freq)"
+                    echo "  Gov. GPU: max freq (fixed: $freq)"
                 else
                     freq="`getMtkGpuFreqKhz \"typical\"`"
                     freq="`expr $freq / 1000`MHz"
-                    echo "  Governor GPU: variable freq (typical: $freq)"
+                    echo "  Gov. GPU: variable freq (typ.: $freq)"
                 fi
             elif [ -r "/sys/devices/platform/1c500000.mali/cur_freq" ]; then
                 # Get the current Tensor GPU frequency
                 local freq="`getTensorGpuFreqKhz`"
                 if [ "$freq" = "`getTensorGpuFreqKhz \"max\"`" ]; then
                     freq="`expr $freq / 1000`MHz"
-                    echo "  Governor GPU: max freq (fixed: $freq)"
+                    echo "  Gov. GPU: max freq (fixed: $freq)"
                 else
                     freq="`expr $freq / 1000`MHz"
-                    echo "  Governor GPU: variable freq (typical: $freq)"
+                    echo "  Gov. GPU: variable freq (typ.: $freq)"
                 fi
             fi
         fi
@@ -1257,31 +1472,28 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sm[6-8]* )
-                                # for the stock kernel
-                                echo "119 0 36 516 0"
-                                # for the ISIS kernel
-                                # echo "117 0 36 516 0"
+                                echo "127 0 36 516 0"
                                 ;;
                             sdm8[5-9]* | sdm9* )
-                                echo "107 0 36 516 0"
+                                echo "127 0 36 516 0"
                                 ;;
                             gs* )
-                                echo "112 0 36 516 0"
+                                echo "127 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "107 0 36 516 0"
+                                echo "127 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "107 0 38 517 0"
+                                echo "127 0 38 517 0"
                                 ;;
                             mt68* )
-                                echo "107 0 36 516 0"
+                                echo "127 0 36 516 0"
                                 ;;
                             mt67[7-9]? )
-                                echo "107 0 36 516 0"
+                                echo "127 0 36 516 0"
                                 ;;
                             * )
-                                echo "107 0 36 516 0"
+                                echo "127 0 36 516 0"
                                 ;;
                         esac
                         ;;
@@ -1368,7 +1580,20 @@ function getSchedulerNrRequests()
         
         case "$1" in
             "mq-deadline" | "kyber" | "bfq" )
-                echo "2031"
+                case "`getSocModelName`" in
+                    sm[6-8]* )
+                        echo "2047"
+                        ;;
+                    gs* )
+                        echo "2047"
+                        ;;
+                    mt68* )
+                        echo "2047"
+                        ;;
+                    * )
+                        echo "2031"
+                        ;;
+                esac
                 ;;
                 
             "none" )
@@ -1417,26 +1642,29 @@ function getSchedulerNrRequests()
                         ;;
                     "boost" )
                         case "`getSocModelName`" in
-                            sm[6-8]* | sdm8[5-9]* | sdm9* )
-                                echo "86170"
+                            sm[6-8]* )
+                                echo "86179"
+                                ;;
+                            sdm8[5-9]* | sdm9* )
+                                echo "86179"
                                 ;;
                             gs* )
-                                echo "86164"
+                                echo "86179"
                                 ;;
                             sdm8* )
-                                echo "86174"
+                                echo "86179"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86172"
+                                echo "86179"
                                 ;;
                             mt68* )
-                                echo "86174"
+                                echo "86179"
                                 ;;
                             mt67[7-9]? )
-                                echo "86172"
+                                echo "86179"
                                 ;;
                             * )
-                                echo "86172"
+                                echo "86179"
                                 ;;
                         esac
                         ;;
@@ -1601,17 +1829,43 @@ function reduceIoJitter()
                             if [ "$sched" = "none" ]; then
                                 echo "31" >"/sys/block/$i/queue/nr_requests"
                             else
-                                echo "2031" >"/sys/block/$i/queue/nr_requests"
+                                echo "2047" >"/sys/block/$i/queue/nr_requests"
                             fi
                         fi
                         
-                        # For Tensor devices (5.10 Kernels) and other 6.1 Kernels
+                        # For 5.10 or later Kernels
                         if [ "$sched" = "mq-deadline" ]; then
                             if [ -w "/sys/block/$i/queue/iosched/async_depth" ]; then
-                                echo '37' >"/sys/block/$i/queue/iosched/async_depth"
+                                case "`getSocModelName`" in
+                                    sm[6-8]* )
+                                        echo '33' >"/sys/block/$i/queue/iosched/async_depth"
+                                        ;;
+                                    gs* )
+                                        echo '33' >"/sys/block/$i/queue/iosched/async_depth"
+                                        ;;
+                                    mt68* )
+                                        echo '33' >"/sys/block/$i/queue/iosched/async_depth"
+                                        ;;
+                                    * )
+                                        echo '37' >"/sys/block/$i/queue/iosched/async_depth"
+                                        ;;
+                                esac
                             fi
                             if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
-                                echo '6903164' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                case "`getSocModelName`" in
+                                    sm[6-8]* )
+                                        echo '6903164' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                        ;;
+                                    gs* )
+                                        echo '6903160' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                        ;;
+                                    * )
+                                        echo '6903164' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                        ;;
+                                esac
+                            elif [ -w "/sys/block/$i/queue/iosched/aging_expire" ]; then
+                                # for MTK Dimensity
+                                echo '6903164' >"/sys/block/$i/queue/iosched/aging_expire"
                             fi
                         fi
                         
@@ -1653,6 +1907,10 @@ function reduceIoJitter()
                         echo 'deadline' >"/sys/block/$i/queue/scheduler"
                         sleep 0.05
                     elif [ "$kerVersion" -ge 6 ] && validScheduler "/sys/block/$i/queue/scheduler" "mq-deadline"; then
+                        echo 'mq-deadline' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    elif [ "`getprop ro.soc.manufacturer`" = "Mediatek"  -a  "$kerVersion" -eq 5 ] \
+                          && validScheduler "/sys/block/$i/queue/scheduler" "mq-deadline"; then
                         echo 'mq-deadline' >"/sys/block/$i/queue/scheduler"
                         sleep 0.05
                     elif validScheduler "/sys/block/$i/queue/scheduler" "cfq"; then
@@ -1744,11 +2002,15 @@ function reduceVmJitter()
 
         if [ $flag -gt 0 ]; then
         
-            echo '0' >"/proc/sys/vm/swappiness"
+            if [ -w "/proc/sys/vm/swappiness" ]; then
+                echo '0' >"/proc/sys/vm/swappiness"
+            fi
             if [ -w "/proc/sys/vm/direct_swappiness" ]; then
                 echo '0' >"/proc/sys/vm/direct_swappiness"
             fi
-            echo '100' >"/proc/sys/vm/dirty_ratio"
+            if [ -w "/proc/sys/vm/dirty_ratio" ]; then
+                echo '100' >"/proc/sys/vm/dirty_ratio"
+            fi
             if [ -w "/proc/sys/vm/dirty_background_ratio" ]; then
                 echo '100' >"/proc/sys/vm/dirty_background_ratio"
             elif [ -w "/proc/sys/vm/dirty_background_ratio_nosys" ]; then
@@ -1770,11 +2032,15 @@ function reduceVmJitter()
             
         elif [ $flag -lt 0 ]; then
         
-            echo '60' >"/proc/sys/vm/swappiness"
+            if [ -w "/proc/sys/vm/swappiness" ]; then
+                echo '60' >"/proc/sys/vm/swappiness"
+            fi
             if [ -w "/proc/sys/vm/direct_swappiness" ]; then
                 echo '60' >"/proc/sys/vm/direct_swappiness"
             fi
-            echo '20' >"/proc/sys/vm/dirty_ratio"
+            if [ -w "/proc/sys/vm/dirty_ratio" ]; then
+                echo '20' >"/proc/sys/vm/dirty_ratio"
+            fi
             if [ -w "/proc/sys/vm/dirty_background_ratio" ]; then
                 echo '10' >"/proc/sys/vm/dirty_background_ratio"
             elif [ -w "/proc/sys/vm/dirty_background_ratio_nosys" ]; then
@@ -1800,9 +2066,11 @@ function reduceVmJitter()
         if [ $printStatus -gt 0 ]; then
             # I don't know the reason, but "read val <'/proc/sys/vm/swappiness'", etc. cannot get its whole value (only first one character)
             local val
-            val="`cat /proc/sys/vm/swappiness`"
-            if [ -n "$val" ]; then
-                echo "  VM swappiness: $val"
+            if [ -r "/proc/sys/vm/swappiness" ]; then
+                val="`cat /proc/sys/vm/swappiness`"
+                if [ -n "$val" ]; then
+                    echo "  VM swappiness: $val"
+                fi
             fi
             if [ -r "/proc/sys/vm/direct_swappiness" ]; then
                 val="`cat /proc/sys/vm/direct_swappiness`"
@@ -1810,9 +2078,11 @@ function reduceVmJitter()
                     echo "  VM direct_swappiness: $val"
                 fi
             fi
-            val="`cat /proc/sys/vm/dirty_ratio`"
-            if [ -n "$val" ]; then
-                echo "  VM dirty ratio: $val"
+            if [ -r "/proc/sys/vm/dirty_ratio" ]; then
+                val="`cat /proc/sys/vm/dirty_ratio`"
+                if [ -n "$val" ]; then
+                    echo "  VM dirty ratio: $val"
+                fi
             fi
             if [ -r "/proc/sys/vm/dirty_background_ratio" ]; then
                 val="`cat /proc/sys/vm/dirty_background_ratio`"

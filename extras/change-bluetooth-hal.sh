@@ -69,7 +69,7 @@ function reloadAudioserver()
 
 function BluetoothHalStatus()
 {
-    if [ "`getprop persist.bluetooth.system_audio_hal.enabled`" = 1 ]; then
+    if [ "`getprop persist.bluetooth.system_audio_hal.enabled`" = 1  -o  "`getprop persist.bluetooth.system_audio_hal.enabled`" = "true" ]; then
         echo "sysbta (\"sysbta\" HAL) : enabled" 1>&2
         
     else
