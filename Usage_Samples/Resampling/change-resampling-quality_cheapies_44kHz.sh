@@ -3,7 +3,7 @@
 # For LDAC earphones and DAC's under $30 having large non-linear distortion
 #
 #  If you feel your LDAC earphones or "cheapie" DAC wouldn't become to sound good at all, 
-#  try replacing "93" (below) with "92", "94" or "95" for appropriately cutting off ultrasonic noise causing intermodulation.
+#  try replacing "92" (below) with "91", "93" or "94" for appropriately cutting off ultrasonic noise causing intermodulation.
 #
 #   Characteristics: almost none in background aliasing noise, almost none in pre-echo and ringing, and very slight in intermodulation
 #
@@ -11,4 +11,4 @@
 #
 
 MODDIR=${0%/*/*/*}
-su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh 194 520 93"
+su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh 194 520 92"

@@ -3,7 +3,7 @@
 # For LDAC earphones and DAC's under $30 having large non-linear distortion when replaying 48 kHz & 16 and 24 bits tracks (possibly 44.1 kHz ones)
 #
 #  If you feel your LDAC earphones or internal speakers wouldn't become to sound good at all, 
-#  try replacing "84" (below) with "85", "86"  or "87" for appropriately cutting off ultrasonic noise causing intermodulation.
+#  try replacing "83" (below) with "84", "85"  or "86" for appropriately cutting off ultrasonic noise causing intermodulation.
 #
 #   Characteristics: almost none in background aliasing noise, almost none in pre-echo and ringing, and very slight in intermodulation
 #
@@ -11,4 +11,4 @@
 #
 
 MODDIR=${0%/*/*/*}
-su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh 194 520 84"
+su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh 194 520 83"

@@ -3,7 +3,7 @@
 # For LDAC earphones and DAC's under $30 having large non-linear distortion when replaying 96 kHz & 24 bits Hires. tracks
 #
 #  If you feel your LDAC earphones or "cheapie" DAC wouldn't become to sound good at all, 
-#  try replacing "43" (below) with "44" for appropriately cutting off ultrasonic noise causing intermodulation.
+#  try replacing "42" (below) with "43" for appropriately cutting off ultrasonic noise causing intermodulation.
 #
 #   Characteristics: almost none in background aliasing noise, almost none in pre-echo and ringing, and very slight in intermodulation
 #
@@ -11,4 +11,4 @@
 #
 
 MODDIR=${0%/*/*/*}
-su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh --bypass-hires 194 520 43"
+su -c "/system/bin/sh ${MODDIR}/extras/change-resampling-quality.sh --bypass-hires 194 520 42"
