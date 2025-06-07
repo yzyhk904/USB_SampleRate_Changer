@@ -1,5 +1,9 @@
 ## Change logs
 
+# v3.0.6
+* Tuned I/O scheduler tunables for Snapdragon, Dimensity and Tensor devices to reduce jitter
+* Added additional usage samples
+
 # v3.0.5
 * Tuned for POCO F3 and other "kona" board devices by adjusteding their core control parameters
 * Fixed disabling thermal core control for phones with big:1, mid:4 and little:3 CPU cores, e.g., POCO F6

@@ -27,7 +27,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
 
     - For typical example, `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh` automatically investigates your device and determines the audio policy configuration type ("offload" (including USB & Bluetooth), "bypass-offload-safer" ("offload" except USB & Bluetooth), "legacy" ("offload" except USB & Bluetooth but using a legacy Bluetooth module "a2dp"), "safe" (for non-offloading devices using the "a2dp") and "safest" (for old devices). And this sets the sample rate and the bit depth of your device to be 44.1 kHz and 32 bits except internal ouputs of "bypass-offload-safer", "safe" and "safest" modes. If you want to set another sample rate and bit depth, please specify specific values.
 
-    - I recommend using `sManager` (Script Manager) or the like for easiness (at boot automatic execution, saving many combinations of script options and parameters as aliases, and so on. If your device doesn't allow to install it, try to use `mixplorer` (select and execute in its three dot menu) with "Usage Samples". Or try `adb install --bypass-low-target-sdk-block sManager-package-name.apk` command on PC to force sManager installation.
+    - I recommend using `sManager` (Script Manager) or the like for easiness (at boot automatic execution, saving many combinations of script options and parameters as aliases, and so on. If your device doesn't allow to install it, try to use `mixplorer` (select and execute in its three dot menu) with "Usage Samples" (if you execute them by `su` on "KernelSU-Next", select "nethunter.root" app profile template for`mixplorer`). Or try `adb install --bypass-low-target-sdk-block sManager-package-name.apk` command on PC to force sManager installation.
 
     - When using a USB DAC, please disconnect the DAC from the USB socket of an Android device once after your execute this script every time, for ensuring the changed audio configuration to be effective completely on the device.
 
@@ -81,9 +81,9 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 165 | 360 | | 104 | Low performance devices of A12 and later |
     | 179 | 408 | | 99 | General purpose on A12 and later |
     | 194 | 520 | | 98 | Ultra Hi-Fi for very high performance devices |
-    | 194 | 520 | 84 ~ 87 | | For LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
-    | 179 | 520 | 92 ~ 95 | | The same as above but for only 44.1 kHz & 16 bits and 44.1 kHz & 24 bits tracks |
-    | 194 | 520 | 43,44 | | The same as above but for only 96 kHz & 24 bits Hires. tracks |
+    | 194 | 520 | 83 ~ 86 | | For LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
+    | 179 | 520 | 91 ~ 94 | | The same as above but for only 44.1 kHz & 16 bits and 44.1 kHz & 24 bits tracks |
+    | 194 | 520 | 42,43 | | The same as above but for only 96 kHz & 24 bits Hires. tracks |
     | 194 | 520 | 100 | | Bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bits depth) |
     | My mock equipment parameters: | - | - | - | - |
     | 150 | 80 | | 109 | Mock DAC-A filter (Fast roll-off N-fold over-sampling) |
@@ -96,6 +96,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 120 | 35 | (97) | 110 | ES9038PRO (Fast roll-off N-fold over-sampling) |
     | vary 50 ~ 118 | 34 | 96 | (398) | ES9039PRO (Fast roll-off N-fold over-sampling) |
     | 110 | 40 | (96) | 109 | CS43131 (Fast roll-off N-fold over-sampling) |
+    | 110 | 40 | (96) | 109 | CS43198 (Fast roll-off N-fold over-sampling) |
     | 98 | 130 | 98.5 | | MacOS Leopard (guess) |
     | 159 | 240 | | 99 | iZotope, No-Alias (guess) |
     | 100 | 64 | | 99 | SoX HQ linear phase (guess) |
