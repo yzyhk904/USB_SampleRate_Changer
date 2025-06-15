@@ -1,5 +1,10 @@
 ## Change logs
 
+# v3.07
+* Adjusted for dumpsys audioFlinger on A16 Pixles
+* Tuned I/O scheduling parameters for POCO F6
+* Stop AOCXD daemon on Tensor devices
+
 # v3.0.6
 * Tuned I/O scheduler tunables for Snapdragon, Dimensity and Tensor devices to reduce jitter
 * Added additional usage samples
