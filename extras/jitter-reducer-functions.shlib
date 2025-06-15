@@ -1472,7 +1472,7 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sm[6-8]* )
-                                echo "133 0 36 516 0"
+                                echo "135 0 36 516 0"
                                 ;;
                             sdm8[5-9]* | sdm9* )
                                 echo "133 0 36 516 0"
@@ -1838,7 +1838,7 @@ function reduceIoJitter()
                             if [ -w "/sys/block/$i/queue/iosched/async_depth" ]; then
                                 case "`getSocModelName`" in
                                     sm[6-8]* )
-                                        echo '32' >"/sys/block/$i/queue/iosched/async_depth"
+                                        echo '33' >"/sys/block/$i/queue/iosched/async_depth"
                                         ;;
                                     gs* )
                                         echo '32' >"/sys/block/$i/queue/iosched/async_depth"
@@ -1854,7 +1854,7 @@ function reduceIoJitter()
                             if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
                                 case "`getSocModelName`" in
                                     sm[6-8]* )
-                                        echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                        echo '6903144' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                                         ;;
                                     gs* )
                                         echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"
@@ -2219,6 +2219,10 @@ function reduceEffectJitter()
                 if [ "`getprop init.svc.aocd`" = "running" ]; then
                     setprop ctl.stop aocd
                 fi
+                # Stop Tensor device's AOCX daemon for reducing significant jitter
+                if [ "`getprop init.svc.aocxd`" = "running" ]; then
+                    setprop ctl.stop aocxd
+                fi
                 reloadAudioserver
             else
                 return 2
@@ -2239,6 +2243,9 @@ function reduceEffectJitter()
                 if [ "`getprop init.svc.aocd`" = "stopped" ]; then
                     setprop ctl.start aocd
                 fi
+                if [ "`getprop init.svc.aocxd`" = "stopped" ]; then
+                    setprop ctl.start aocxd
+                fi
                 reloadAudioserver
             else
                 return 2
@@ -2256,6 +2263,10 @@ function reduceEffectJitter()
             val="`getprop init.svc.aocd`"
             if [ -n "$val"  ]; then
                 echo "  Effects AOC server: $val"
+            fi
+            val="`getprop init.svc.aocxd`"
+            if [ -n "$val"  ]; then
+                echo "  Effects AOCX server: $val"
             fi
             
         fi
