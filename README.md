@@ -4,7 +4,7 @@ This is not a Magisk module but a collection of root shell scripts using Magisk 
 <br/>
 Additionally, this script disables DRC (Dynamic Range Control, i.e., a kind of compression) if DRC has been enabled on a stock firmware. For example, smart phones and tablets whose SoC's have an SDM??? or SM???? model number usually enable DRC on all audio outputs, but those whose SoC's have an MT???? model number don't enable DRC on any audio output. (Note: some custom ROM's (not stocks and GSI's) intendedly invert or change the DRC mode on context, then this script cannot disable DRC)<br/>
 <br/>
-Finally, the Android OS mixer (AudioFlinger) recently changed its behavior so as to always bypass its resampling if both of its input and output have the same sampling frequency. So the resampling doesn't distort sound, but does remove the effect easing jitter by the buffer fitting its filter length.
+Finally, the Android OS mixer (AudioFlinger) recently changed its behavior so as to always bypass its resampling (or virtual analog low-pass filtering involved by sinc function interpolation) if the sampling frequency of its input is equal to that of its output. So the resampling doesn't distort sound, but does remove an effect easing jitter by buffering satisfying its filter length.
 
 * Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-drect][--legacy][--safe][--safest][--safest-auto][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
 
@@ -33,7 +33,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
 
 * Don't forget to install another magisk module of mine ["Audio jitter silencer"](https://github.com/Magisk-Modules-Alt-Repo/audio-jitter-silencer) with this tool and uninstall "Digital Wellbeing" app (for reducing very large jitters which this tool cannot reduce as itself)!
 
-* This script and following ones in "extras" folder have been tested on LineageOS and crDroid ROM's, and phh GSI's (Android 10 ~ 13, Qualcomm & MediaTek SoC, and Arm32 & Arm64 combinations).
+* This script and following ones in "extras" folder have been tested on LineageOS and crDroid ROM's, and phh GSI's (Android 10 ~ 16, Qualcomm & MediaTek SoC, and Arm32 & Arm64 combinations).
 
 * Note 1: "USB_SampleRate_Changer.sh" requires unlocking the USB audio class driver's limitation (upto 96 kHz (USB HAL) lock, 384 kHz offload lock for Qcomm devices or 96 kHz offload lock for MTK (actually only bypass to the USB HAL driver) and Tensor devices) if you want to specify greater than 96 kHz or 384 kHz (in case of Qcomm USB hardware offloading, i.e., maybe hardware offload tunneling to the ALSA driver). See my companion magisk module ["usb-samplerate-unlocker"](https://github.com/Magisk-Modules-Alt-Repo/usb-samplerate-unlocker) for non- hardware offload drivers and Tensor specific offload drivers (only supprting 44.1, 48, 96 and 192 kHz with 24 and 32 bits (signed integer) depth). Although you specify a high sample rate for this script execution, you cannot connect your device to a USB DAC with the sample rate unless the USB DAC supports the sample rate (the USB driver will limit the connecting sample rate down to its maximum sample rate).
 
@@ -64,7 +64,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
   - Usage:  `sh /sdcard/USB_SampleRate_Changer/extras/change_resampling_quality.sh [--help] [--status] [--reset] [--bypass] [--cheat] [stop_band_dB [half_filter_length [cut_off_percent]]]`
     - changes the resampling quality of the OS mixer (AudioFlinger). "--help" and "--status" options specify printing above usage and the status of AudioFlinger's resampling configuration without configuration changes, respectively. With "--reset" option, this script clears previous settings. "--bypass" option specifies to apply this configuration change except toward less than 48 kHz (excluding 48 kHz itself) frequencies. "--cheat" option specifies to switch the mode of third argument "cut_off_percent" (if specified) from "cut off" (i.e., at -3dB point, and also the middle point of a transition band) to "transition band width cheat" (i.e., the start point of a stop band). "stop_band_dB", "half_filter_length" and "cut off percent" specify a stop band attenuation in dB, the number of input data needed before the current point (optional) and a cut off (or a transition band width cheat) percent of the Nyquist frequency (optional), respectively. AOSP standard values are 90 dB and 32 (cut off: 100%), but this script's default values are 179 dB and 408 (cheat or stop band: 99%) as mastering quality values, i.e., no resampling distortion in a real sense (even though the 179dB targeted attenuation is not accomplished in the AOSP implementation).
     - Note: the resampler of the Android OS mixer is a pure Kaiser windowed Sinc interpolator (a 16 bit integer polyphase FIR filter and a 32 bits one) that has 127 fixed phase sets of FIR coefficients generated from specified parameters and a variable phase set of FIR coeffcients linearly interpolated from other phase sets. So 2<sup>&#177;n</sup> (phases) type up-sampling and down-sampling are very precise.
-    - Remark: the Android OS mixer recently changed to always bypass resampling if both of its input and output have the same sampling frequency.
+    - Remark: the Android OS mixer recently changed its behavior so as to always bypass its resampling (or virtual analog low-pass filtering involved by sinc function interpolation) if the sampling frequency of its input is equal to that of its output.
 
     - Appendix A. Examples of Re-sampling Parameters :
     
@@ -84,7 +84,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     | 194 | 520 | 83 ~ 86 | | For LDAC bluetooth earphones and DAC's under $30 both having large amp. non-linearity |
     | 179 | 520 | 91 ~ 94 | | The same as above but for only 44.1 kHz & 16 bits and 44.1 kHz & 24 bits tracks |
     | 194 | 520 | 42,43 | | The same as above but for only 96 kHz & 24 bits Hires. tracks |
-    | 194 | 520 | 100 | | Bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bits depth) |
+    | 194 | 520 | 100 | | Bit-perfect when 1:1 resampling (ideal low-pass filtering for 32 bits depth; obsoleted) |
     | My mock equipment parameters: | - | - | - | - |
     | 150 | 80 | | 109 | Mock DAC-A filter (Fast roll-off N-fold over-sampling) |
     | 120 | 80 | 97 | | Mock DAC-B filter (Fast roll-off N-fold over-sampling) |

@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 3.0.6
+# Version: 3.0.9
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -20,6 +20,8 @@ policyMode="auto"
 resetMode="false"
 testMode="false"
 testTemplate="$MYDIR/templates/test_template.xml"
+amzmMode="false"
+amzmTemplate="$MYDIR/templates/bypass_offload_safer_amzm_template.xml"
 DRC_enabled="false"
 USB_module="usb"
 BT_module="bluetooth"
@@ -87,6 +89,10 @@ while [ $# -gt 0 ]; do
             ;;
         "-r" | "--reset" )
             resetMode="true"
+            shift
+            ;;
+        "--amzm" )
+            amzmMode="true"
             shift
             ;;
         "--test" )
@@ -285,7 +291,8 @@ fi
 
 if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \
              -o  "$policyMode" = "bypass-offload" \)  -a  $sRate -gt 96000 ]; then
-    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker"  -a  ! -e "/data/adb/modules/audio-samplerate-changer" ]; then
+    if [ ! -e "/data/adb/modules/usb-samplerate-unlocker"  -a  ! -e "/data/adb/modules/audio-samplerate-changer" \
+            -a ! -e "/data/adb/modules/hifi-maximizer-mod" ]; then
         echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\" or \"audio-samplerate-changer\"" 1>&2
     fi
 elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-direct" ]; then
@@ -329,7 +336,8 @@ if IsSeventhAudio; then
             case "`getprop ro.board.platform`" in
                 gs* | zuma* )
                     USB_module="usbv2"
-                    template="$MYDIR/templates/bypass_offload_safer_tensor_template.xml"
+                    #template="$MYDIR/templates/bypass_offload_safer_tensor_template.xml"
+                    template="$MYDIR/templates/bypass_offload_safer_template.xml"
                     ;;
                 * )
                     template="$MYDIR/templates/bypass_offload_safer_template.xml"
@@ -424,6 +432,12 @@ else
             ;;
     esac
 fi
+
+# Am@zon Music template mode
+if "$amzmMode"; then
+    template="$amzmTemplate"
+fi
+# Am@zon Music template mode End
 
 # Test template mode
 if "$testMode"; then

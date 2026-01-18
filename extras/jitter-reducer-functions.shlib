@@ -1472,28 +1472,28 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sm[6-8]* )
-                                echo "135 0 36 516 0"
+                                echo "138 0 36 516 0"
                                 ;;
                             sdm8[5-9]* | sdm9* )
-                                echo "133 0 36 516 0"
+                                echo "138 0 36 516 0"
                                 ;;
                             gs* )
-                                echo "133 0 36 516 0"
+                                echo "138 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "133 0 36 516 0"
+                                echo "138 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "133 0 38 517 0"
                                 ;;
                             mt68* )
-                                echo "134 0 36 516 0"
+                                echo "139 0 36 516 0"
                                 ;;
                             mt67[7-9]? )
-                                echo "133 0 36 516 0"
+                                echo "139 0 36 516 0"
                                 ;;
                             * )
-                                echo "133 0 36 516 0"
+                                echo "139 0 36 516 0"
                                 ;;
                         esac
                         ;;
@@ -1652,7 +1652,7 @@ function getSchedulerNrRequests()
                                 echo "86179"
                                 ;;
                             sdm8* )
-                                echo "86183"
+                                echo "86193"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "86179"
@@ -1838,23 +1838,23 @@ function reduceIoJitter()
                             if [ -w "/sys/block/$i/queue/iosched/async_depth" ]; then
                                 case "`getSocModelName`" in
                                     sm[6-8]* )
-                                        echo '33' >"/sys/block/$i/queue/iosched/async_depth"
+                                        echo '30' >"/sys/block/$i/queue/iosched/async_depth"
                                         ;;
                                     gs* )
-                                        echo '32' >"/sys/block/$i/queue/iosched/async_depth"
+                                        echo '30' >"/sys/block/$i/queue/iosched/async_depth"
                                         ;;
                                     mt68* )
-                                        echo '32' >"/sys/block/$i/queue/iosched/async_depth"
+                                        echo '30' >"/sys/block/$i/queue/iosched/async_depth"
                                         ;;
                                     * )
-                                        echo '32' >"/sys/block/$i/queue/iosched/async_depth"
+                                        echo '30' >"/sys/block/$i/queue/iosched/async_depth"
                                         ;;
                                 esac
                             fi
                             if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
                                 case "`getSocModelName`" in
                                     sm[6-8]* )
-                                        echo '6903144' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                        echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                                         ;;
                                     gs* )
                                         echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"

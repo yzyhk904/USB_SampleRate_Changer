@@ -20,7 +20,7 @@ if [ $# -gt 0 ];then
 
 fi
 
-dumpsys media.audio_flinger | sed -e '/^  Hal stream dump/,/^  Master balance:/d' -e '/^-/d'  -e '/^Output thread/,/^$/!d' \
+dumpsys media.audio_flinger | sed -e '/^  Hal stream dump/,/^  Normal mixer raw underrun counters:/d' -e '/^-/d'  -e '/^Output thread/,/^$/!d' \
     | awk '
         /^$/ ||
         /^Output thread/ ||

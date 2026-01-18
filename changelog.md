@@ -1,5 +1,13 @@
 ## Change logs
 
+# v3.0.9
+* Changed the bypass-offload-safer mode template for Tensor devices. Maybe a bug fixed sp that "usbv2" USB HAL driver can work now
+* Tuned I/O scheduling parameters for Tensor devices to optimize for "usbv2" HAL driver
+* Fixed a bug warning necessity to unlock USB sample rates even when Hifi maximizer was installed
+
+#v3.0.8
+* Tuned I/O scheduling parameters for MTK Dimensity
+
 # v3.07
 * Adjusted for dumpsys audioFlinger on A16 Pixles
 * Tuned I/O scheduling parameters for POCO F6
