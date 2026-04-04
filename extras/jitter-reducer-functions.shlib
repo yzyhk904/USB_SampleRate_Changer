@@ -1472,7 +1472,7 @@ function getSchedulerValues()
                     "boost" )
                         case "`getSocModelName`" in
                             sm[6-8]* )
-                                echo "138 0 36 516 0"
+                                echo "139 0 36 516 0"
                                 ;;
                             sdm8[5-9]* | sdm9* )
                                 echo "138 0 36 516 0"
@@ -1481,7 +1481,7 @@ function getSchedulerValues()
                                 echo "138 0 36 516 0"
                                 ;;
                             sdm8* )
-                                echo "138 0 36 516 0"
+                                echo "133 0 36 516 0"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
                                 echo "133 0 38 517 0"
@@ -1643,28 +1643,28 @@ function getSchedulerNrRequests()
                     "boost" )
                         case "`getSocModelName`" in
                             sm[6-8]* )
-                                echo "86179"
+                                echo "86181"
                                 ;;
                             sdm8[5-9]* | sdm9* )
-                                echo "86179"
+                                echo "86181"
                                 ;;
                             gs* )
-                                echo "86179"
+                                echo "86181"
                                 ;;
                             sdm8* )
                                 echo "86193"
                                 ;;
                             sdm* | msm* | sd* | exynos* )
-                                echo "86179"
+                                echo "86193"
                                 ;;
                             mt68* )
-                                echo "86179"
+                                echo "86181"
                                 ;;
                             mt67[7-9]? )
-                                echo "86179"
+                                echo "86181"
                                 ;;
                             * )
-                                echo "86179"
+                                echo "86181"
                                 ;;
                         esac
                         ;;
@@ -1857,7 +1857,7 @@ function reduceIoJitter()
                                         echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                                         ;;
                                     gs* )
-                                        echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                        echo '6903148' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                                         ;;
                                     * )
                                         echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"
@@ -1908,6 +1908,9 @@ function reduceIoJitter()
                         sleep 0.05
                     elif [ "$kerVersion" -ge 6 ] && validScheduler "/sys/block/$i/queue/scheduler" "mq-deadline"; then
                         echo 'mq-deadline' >"/sys/block/$i/queue/scheduler"
+                        sleep 0.05
+                    elif validScheduler "/sys/block/$i/queue/scheduler" "ssg"; then
+                        echo 'ssg' >"/sys/block/$i/queue/scheduler"
                         sleep 0.05
                     elif [ "`getprop ro.soc.manufacturer`" = "Mediatek"  -a  "$kerVersion" -eq 5 ] \
                           && validScheduler "/sys/block/$i/queue/scheduler" "mq-deadline"; then
