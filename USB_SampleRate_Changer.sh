@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# Version: 3.0.9
+# Version: 3.0.10
 #     by zyhk
 
 MYDIR="${0%/*}"
@@ -41,6 +41,10 @@ while [ $# -gt 0 ]; do
             ;;
         "-od" | "--offload-direct" )
             policyMode="offload-direct"
+            shift
+            ;;
+        "-os" | "--offload-safer" )
+            policyMode="offload-safer"
             shift
             ;;
         "-b" | "--bypass-offload" )
@@ -115,7 +119,7 @@ while [ $# -gt 0 ]; do
             fi
             ;;
         "-h" | "--help" | -* )
-            echo -n "Usage: ${0##*/} [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-direct]" 1>&2
+            echo -n "Usage: ${0##*/} [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-direct][--offload-safer]" 1>&2
             echo    "[--legacy][--safe][--safest][--safest-auto][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]" 1>&2
             echo -n "\nNote: ${0##*/} requires to unlock the USB audio class driver's limitation (upto 96kHz lock or 384kHz Qcomm offload lock)" 1>&2
             echo     " if you specify greater than 96kHz or 384kHz (in case of Qcomm offload)." 1>&2
@@ -290,17 +294,29 @@ or your bluetooth device cannot output sound!" 1>&2
 fi
 
 if [ ! \( "$policyMode" = "offload"  -o  "$policyMode" = "offload-hifi-playback"  -o  "$policyMode" = "offload-direct" \
-             -o  "$policyMode" = "bypass-offload" \)  -a  $sRate -gt 96000 ]; then
+             -o  "$policyMode" = "offload-safer" -o  "$policyMode" = "bypass-offload" \)  -a  $sRate -gt 96000 ]; then
     if [ ! -e "/data/adb/modules/usb-samplerate-unlocker"  -a  ! -e "/data/adb/modules/audio-samplerate-changer" \
             -a ! -e "/data/adb/modules/hifi-maximizer-mod" ]; then
         echo "    Warning: ${0##*/} requires to unlock the USB HAL driver's limitation (upto 96kHz lock) by \"usb-samplerate-unlocker\" or \"audio-samplerate-changer\"" 1>&2
     fi
-elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-direct" ]; then
+elif [ "$policyMode" = "offload"  -o  "$policyMode" = "offload-direct" -o "$policyMode" = "offload-safer" ]; then
     case "`getprop ro.board.platform`" in
-        mt* | exynos* | gs10? )
+        mt* | exynos* )
             if [ $sRate -gt 96000 ]; then
                 echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
                 echo     " (upto 96kHz lock)" 1>&2
+            fi
+        ;;
+       gs10? )
+            if [ ! -e "/data/adb/modules/usb-samplerate-unlocker"  -a  ! -e "/data/adb/modules/audio-samplerate-changer" \
+                        -a ! -e "/data/adb/modules/hifi-maximizer-mod" ]; then
+                if [ $sRate -gt 96000 ]; then
+                    echo -n "    Warning: ${0##*/} may not change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
+                    echo     " (upto 96kHz lock)" 1>&2
+                fi
+            elif [ $sRate -gt 192000 ]; then
+                echo -n "    Warning: ${0##*/} canot change to the specified sample rate ($sRate) because of the hardware offloading driver's limitation" 1>&2
+                echo     " (upto 192kHz lock)" 1>&2
             fi
         ;;
        gs* | zuma* )
@@ -329,6 +345,13 @@ if IsSeventhAudio; then
         "offload-direct" )
             template="$MYDIR/templates/offload_direct_template.xml"
             ;;
+        "offload-safer" )
+            case "`getprop ro.board.platform`" in
+                gs* | zuma* )
+                    USB_module="usbv2"
+            esac
+            template="$MYDIR/templates/offload_safer_template.xml"
+            ;;
         "bypass" )
             template="$MYDIR/templates/bypass_offload_template.xml"
             ;;
@@ -336,7 +359,7 @@ if IsSeventhAudio; then
             case "`getprop ro.board.platform`" in
                 gs* | zuma* )
                     USB_module="usbv2"
-                    #template="$MYDIR/templates/bypass_offload_safer_tensor_template.xml"
+                    #template="$MYDIR/templates/offload_safer_template.xml"
                     template="$MYDIR/templates/bypass_offload_safer_template.xml"
                     ;;
                 * )

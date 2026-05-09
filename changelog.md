@@ -1,5 +1,9 @@
 ## Change logs
 
+# v3.0.10
+* Added "--offload-safer" mode (primary sample rate is fixed at 48 kHz & 32bit, but USB one varies by specified values)
+* Tuned I/O scheduling parameters for POCO F6, POCO F3 and Pixel 6's 
+
 # v3.0.9
 * Changed the bypass-offload-safer mode template for Tensor devices. Maybe a bug fixed sp that "usbv2" USB HAL driver can work now
 * Tuned I/O scheduling parameters for Tensor devices to optimize for "usbv2" HAL driver

@@ -6,7 +6,7 @@ Additionally, this script disables DRC (Dynamic Range Control, i.e., a kind of c
 <br/>
 Finally, the Android OS mixer (AudioFlinger) recently changed its behavior so as to always bypass its resampling (or virtual analog low-pass filtering involved by sinc function interpolation) if the sampling frequency of its input is equal to that of its output. So the resampling doesn't distort sound, but does remove an effect easing jitter by buffering satisfying its filter length.
 
-* Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-drect][--legacy][--safe][--safest][--safest-auto][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
+* Usage: `sh /sdcard/USB_SampleRate_Changer/USB_SampleRate_Changer.sh [--reset] [--drc] [--bypass-offload][--bypass-offload-safer][--offload][--offload-hifi-playback][--offload-drect][--offload-safer][--legacy][--safe][--safest][--safest-auto][--usb-only] [[44k|48k|88k|96k|176k|192k|353k|384k|706k|768k] [[16|24|32|float]]]`,
 
 if you unpack the archive under "/sdcard" (Internal Storage). The arguments are a sample rate and a bit depth (or 32bit float) to which you want to change, respectively. Their default values are `44k` (sample rate: 44.1 kHz) and `32` (bit depth: 32 bits (signed integer)) except both safe and safest mode internal outputs (default values: 48 kHz, 32 or 16 bits).
 
@@ -18,6 +18,7 @@ if you unpack the archive under "/sdcard" (Internal Storage). The arguments are 
     - `--offload`: changes an audio policy configuration file for USB & Bluetooth hardware offloading (worse in audio quality; a large jitter USB driver and a Bluetooth driver forcing unnecessary resampling, i.e., typically 44.1 kHz -> 48 kHz -> 44.1 kHz double resampling). 
     - `--offload-hifi-playback`: changes an audio policy configuration file for USB hardware offloading including a USB audio "hifi_playback" mixer (worse in audio quality; its samplerate and audio format are automatically detected (for 7.0 audio implementations) or fixed at 192 kHz/96 kHz 32 bits mode otherwise) while disabling a2dp hardware offloading (better in audio quality).
     - `--offload-direct`: changes an audio policy configuration file for USB & Bluetooth hardware offloading (worse in audio quality) with "direct_pcm" and "compressed_offload" modes for 3.5 mm jack, bluetooth and USB audio output bypassing mixers. Added for comparing usual mixer modes to direct modes on Qcomm devices with&without DRC, especially to bluetooth audio "direct_pcm" mode with&without DRC.
+    - `--offload-safer`: changes an audio policy configuration file for USB hardware offloading (worse in audio quality) except Bluetooth while a 3.5 mm jack and an internal speaker keeping the same settings (48 kHz & 32 bits).
     - `--legacy`: changes an audio policy configuration file for a Bluetooth audio legacy HAL (<em>/system/{lib,lib64}/hw/audio.a2dp.default.so</em>).
     - `--safe`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps considerably traditional settings for an internal speaker and others.
     - `--safest`: changes an audio policy configuration file for a Bluetooth audio legacy HAL but keeps most traditional settings for an internal speaker and others.
