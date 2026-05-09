@@ -1475,10 +1475,10 @@ function getSchedulerValues()
                                 echo "139 0 36 516 0"
                                 ;;
                             sdm8[5-9]* | sdm9* )
-                                echo "138 0 36 516 0"
+                                echo "145 0 36 516 0"
                                 ;;
                             gs* )
-                                echo "138 0 36 516 0"
+                                echo "145 0 36 516 0"
                                 ;;
                             sdm8* )
                                 echo "133 0 36 516 0"
@@ -1487,7 +1487,7 @@ function getSchedulerValues()
                                 echo "133 0 38 517 0"
                                 ;;
                             mt68* )
-                                echo "139 0 36 516 0"
+                                echo "149 0 36 516 0"
                                 ;;
                             mt67[7-9]? )
                                 echo "139 0 36 516 0"
@@ -1646,7 +1646,7 @@ function getSchedulerNrRequests()
                                 echo "86181"
                                 ;;
                             sdm8[5-9]* | sdm9* )
-                                echo "86181"
+                                echo "86179"
                                 ;;
                             gs* )
                                 echo "86181"
@@ -1854,10 +1854,10 @@ function reduceIoJitter()
                             if [ -w "/sys/block/$i/queue/iosched/prio_aging_expire" ]; then
                                 case "`getSocModelName`" in
                                     sm[6-8]* )
-                                        echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                        echo '6903164' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                                         ;;
                                     gs* )
-                                        echo '6903148' >"/sys/block/$i/queue/iosched/prio_aging_expire"
+                                        echo '6903164' >"/sys/block/$i/queue/iosched/prio_aging_expire"
                                         ;;
                                     * )
                                         echo '6903152' >"/sys/block/$i/queue/iosched/prio_aging_expire"
@@ -1865,7 +1865,7 @@ function reduceIoJitter()
                                 esac
                             elif [ -w "/sys/block/$i/queue/iosched/aging_expire" ]; then
                                 # for MTK Dimensity
-                                echo '6903152' >"/sys/block/$i/queue/iosched/aging_expire"
+                                echo '6903164' >"/sys/block/$i/queue/iosched/aging_expire"
                             fi
                         fi
                         
