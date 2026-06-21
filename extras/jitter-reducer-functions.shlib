@@ -1478,7 +1478,7 @@ function getSchedulerValues()
                                 echo "145 0 36 516 0"
                                 ;;
                             gs* )
-                                echo "145 0 36 516 0"
+                                echo "150 0 36 516 0"
                                 ;;
                             sdm8* )
                                 echo "133 0 36 516 0"
